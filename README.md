@@ -102,14 +102,31 @@ NeuroSploit/
 
 ---
 
+## Offline LLM Support (LLaMA)
+
+```
+curl -fsSL https://ollama.com/install.sh | sh
+ollama list
+ollama serve
+ollama pull llama3.2:1b
+export MODEL_PROVIDER=ollama
+export LLAMA_MODEL=llama3.2:1b
+export LLAMA_BASE_URL=http://localhost:11434
+curl -s http://localhost:11434/api/generate \
+ -d '{"model":"llama3.1","prompt":"Return JSON: {\"ok\":true}","stream":false,"options":{"temperature":0}}'
+```
+
+---
+
 ## 🔮 Roadmap
 
 * [ ] Add support for **SQL Injection automation**.
 * [ ] Expand to **other vulnerable labs** (bWAPP, Juice Shop, VulnHub).
 * [ ] Integration with **Red Team C2 frameworks**.
-* [ ] Offline LLM support (LLaMA, Falcon).
+* [X] Offline LLM support (LLaMA, Falcon).
 
 ---
+
 
 ## ⚠️ Disclaimer
 
