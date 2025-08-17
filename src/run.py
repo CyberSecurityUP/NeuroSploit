@@ -5,7 +5,7 @@ from .agent.orchestrator import run_skill
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--target', required=False, default=settings.dvwa_url_env or "http://localhost:8080")
-    ap.add_argument('--skill', required=True, choices=['login','xss_reflected_low','sqli_low', 'xss_stored_low', 'xss_dom_low'])
+    ap.add_argument('--skill', required=True, choices=['login','xss_reflected_low','sqli_low', 'xss_stored_low', 'xss_dom_low', 'sqli_low_smart', 'xss_reflected_low_smart'])
     args = ap.parse_args()
 
     result = run_skill(args.target, args.skill)
