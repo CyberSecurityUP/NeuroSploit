@@ -223,18 +223,3 @@ Contributions are welcome! Please feel free to fork the repository, open issues,
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgements
-
-NeuroSploitv2 leverages the power of various Large Language Models and open-source security tools to deliver its capabilities.
-*   Google Gemini
-*   Anthropic Claude
-*   OpenAI GPT
-*   Ollama
-*   Nmap
-*   Metasploit
-*   Burp Suite
-*   SQLMap
-*   Hydra
-*   Subfinder
-*   Nuclei
