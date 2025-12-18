@@ -1,0 +1,140 @@
+{
+    "llm": {
+        "default_profile": "gemini_pro_default",
+        "profiles": {
+            "ollama_llama3_default": {
+                "provider": "ollama",
+                "model": "llama3:8b",
+                "api_key": "",
+                "temperature": 0.7,
+                "max_tokens": 4096,
+                "input_token_limit": 8000,
+                "output_token_limit": 4000,
+                "cache_enabled": true,
+                "search_context_level": "medium",
+                "pdf_support_enabled": false,
+                "guardrails_enabled": true,
+                "hallucination_mitigation_strategy": "grounding"
+            },
+            "claude_opus_default": {
+                "provider": "claude",
+                "model": "claude-3-opus-20240229",
+                "api_key": "${ANTHROPIC_API_KEY}",
+                "temperature": 0.3,
+                "max_tokens": 4096,
+                "input_token_limit": 200000,
+                "output_token_limit": 4000,
+                "cache_enabled": true,
+                "search_context_level": "high",
+                "pdf_support_enabled": true,
+                "guardrails_enabled": true,
+                "hallucination_mitigation_strategy": "self_reflection"
+            },
+            "gemini_pro_default": {
+                "provider": "gemini",
+                "model": "gemini-pro",
+                "api_key": "${GEMINI_API_KEY}",
+                "temperature": 0.7,
+                "max_tokens": 4096,
+                "input_token_limit": 30720,
+                "output_token_limit": 2048,
+                "cache_enabled": true,
+                "search_context_level": "medium",
+                "pdf_support_enabled": true,
+                "guardrails_enabled": true,
+                "hallucination_mitigation_strategy": "consistency_check"
+            },
+            "gpt_4o_default": {
+                "provider": "gpt",
+                "model": "gpt-4o",
+                "api_key": "${OPENAI_API_KEY}",
+                "temperature": 0.5,
+                "max_tokens": 4096,
+                "input_token_limit": 128000,
+                "output_token_limit": 4000,
+                "cache_enabled": true,
+                "search_context_level": "high",
+                "pdf_support_enabled": true,
+                "guardrails_enabled": true,
+                "hallucination_mitigation_strategy": "grounding"
+            }
+        }
+    },
+    "agent_roles": {
+        "bug_bounty_hunter": {
+            "enabled": true,
+            "llm_profile": "gemini_pro_default",
+            "tools_allowed": ["subfinder", "nuclei", "burpsuite", "sqlmap"],
+            "description": "Focuses on web application vulnerabilities, leveraging recon and exploitation tools."
+        },
+        "blue_team_agent": {
+            "enabled": true,
+            "llm_profile": "claude_opus_default",
+            "tools_allowed": [],
+            "description": "Analyzes logs and telemetry for threats, provides defensive strategies."
+        },
+        "exploit_expert": {
+            "enabled": true,
+            "llm_profile": "gpt_4o_default",
+            "tools_allowed": ["metasploit", "nmap"],
+            "description": "Devises exploitation strategies and payloads for identified vulnerabilities."
+        },
+        "red_team_agent": {
+            "enabled": true,
+            "llm_profile": "gemini_pro_default",
+            "tools_allowed": ["nmap", "metasploit", "hydra"],
+            "description": "Plans and executes simulated attacks to test an organization's defenses."
+        },
+        "replay_attack_specialist": {
+            "enabled": true,
+            "llm_profile": "ollama_llama3_default",
+            "tools_allowed": ["burpsuite"],
+            "description": "Identifies and leverages replay attack vectors in network traffic or authentication."
+        },
+        "pentest_generalist": {
+            "enabled": true,
+            "llm_profile": "gemini_pro_default",
+            "tools_allowed": ["nmap", "subfinder", "nuclei", "metasploit", "burpsuite", "sqlmap", "hydra"],
+            "description": "Performs comprehensive penetration tests across various domains."
+        },
+        "owasp_expert": {
+            "enabled": true,
+            "llm_profile": "gemini_pro_default",
+            "tools_allowed": ["burpsuite", "sqlmap"],
+            "description": "Specializes in assessing web applications against OWASP Top 10 vulnerabilities."
+        },
+        "cwe_expert": {
+            "enabled": true,
+            "llm_profile": "claude_opus_default",
+            "tools_allowed": [],
+            "description": "Analyzes code and reports for weaknesses based on MITRE CWE Top 25."
+        },
+        "malware_analyst": {
+            "enabled": true,
+            "llm_profile": "gpt_4o_default",
+            "tools_allowed": [],
+            "description": "Examines malware samples to understand functionality and identify IOCs."
+        }
+    },
+    "methodologies": {
+        "owasp_top10": true,
+        "cwe_top25": true,
+        "network_pentest": true,
+        "ad_pentest": true,
+        "web_security": true
+    },
+    "tools": {
+        "nmap": "/usr/bin/nmap",
+        "metasploit": "/usr/bin/msfconsole",
+        "burpsuite": "/usr/bin/burpsuite",
+        "sqlmap": "/usr/bin/sqlmap",
+        "hydra": "/usr/bin/hydra",
+        "subfinder": "/usr/local/bin/subfinder",
+        "nuclei": "/usr/local/bin/nuclei"
+    },
+    "output": {
+        "format": "json",
+        "verbose": true,
+        "save_artifacts": true
+    }
+}

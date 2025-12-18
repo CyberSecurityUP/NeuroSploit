@@ -1,0 +1,50 @@
+{
+    "llm": {
+        "provider": "gemini",
+        "model": "gemini-pro",
+        "api_key": "",
+        "temperature": 0.7,
+        "max_tokens": 4096
+    },
+    "agents": {
+        "recon": {
+            "enabled": true,
+            "priority": 1
+        },
+        "exploitation": {
+            "enabled": true,
+            "priority": 2
+        },
+        "privilege_escalation": {
+            "enabled": true,
+            "priority": 3
+        },
+        "persistence": {
+            "enabled": true,
+            "priority": 4
+        },
+        "lateral_movement": {
+            "enabled": true,
+            "priority": 5
+        }
+    },
+    "methodologies": {
+        "owasp_top10": true,
+        "cwe_top25": true,
+        "network_pentest": true,
+        "ad_pentest": true,
+        "web_security": true
+    },
+    "tools": {
+        "nmap": "/usr/bin/nmap",
+        "metasploit": "/usr/bin/msfconsole",
+        "burpsuite": "/usr/bin/burpsuite",
+        "sqlmap": "/usr/bin/sqlmap",
+        "hydra": "/usr/bin/hydra"
+    },
+    "output": {
+        "format": "json",
+        "verbose": true,
+        "save_artifacts": true
+    }
+}
