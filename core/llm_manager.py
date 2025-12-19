@@ -43,215 +43,76 @@ class LLMManager:
         self.guardrails_enabled = self.active_profile.get('guardrails_enabled', False)
         self.hallucination_mitigation_strategy = self.active_profile.get('hallucination_mitigation_strategy', None)
         
-        
-                # New prompt loading
-        
-        
-                self.json_prompts_file_path = Path("prompts/library.json")
-        
-        
-                self.md_prompts_dir_path = Path("prompts/md_library")
-        
-        
-                self.prompts = self._load_all_prompts() # New method to load both
-        
-        
-                
-        
-        
-                logger.info(f"Initialized LLM Manager - Provider: {self.provider}, Model: {self.model}, Profile: {self.default_profile_name}")
-        
-        
-        
-        
-        
-            def _get_api_key(self, api_key_config: str) -> str:
-        
-        
-                """Helper to get API key from config or environment variable"""
-        
-        
-                if api_key_config.startswith('${') and api_key_config.endswith('}'):
-        
-        
-                    env_var = api_key_config[2:-1]
-        
-        
-                    return os.getenv(env_var, '')
-        
-        
-                return api_key_config
-        
-        
-            
-        
-        
-            def _load_all_prompts(self) -> Dict:
-        
-        
-                """Load prompts from both JSON library and Markdown library files."""
-        
-        
-                all_prompts = {
-        
-        
-                    "json_prompts": {},
-        
-        
-                    "md_prompts": {}
-        
-        
-                }
-        
-        
-                
-        
-        
-                # Load from JSON library
-        
-        
-                if self.json_prompts_file_path.exists():
-        
-        
-                    try:
-        
-        
-                        with open(self.json_prompts_file_path, 'r') as f:
-        
-        
-                            all_prompts["json_prompts"] = json.load(f)
-        
-        
-                        logger.info(f"Loaded prompts from JSON library: {self.json_prompts_file_path}")
-        
-        
-                    except Exception as e:
-        
-        
-                        logger.error(f"Error loading prompts from {self.json_prompts_file_path}: {e}")
-        
-        
-                else:
-        
-        
-                    logger.warning(f"JSON prompts file not found at {self.json_prompts_file_path}. Some AI functionalities might be limited.")
-        
-        
-        
-        
-        
-                # Load from Markdown library
-        
-        
-                if self.md_prompts_dir_path.is_dir():
-        
-        
-                    for md_file in self.md_prompts_dir_path.glob("*.md"):
-        
-        
-                        try:
-        
-        
-                            content = md_file.read_text()
-        
-        
-                            prompt_name = md_file.stem # Use filename as prompt name
-        
-        
-        
-        
-        
-                            user_prompt_match = re.search(r"## User Prompt\n(.*?)(?=\n## System Prompt|\Z)", content, re.DOTALL)
-        
-        
-                            system_prompt_match = re.search(r"## System Prompt\n(.*?)(?=\n## User Prompt|\Z)", content, re.DOTALL)
-        
-        
-        
-        
-        
-                            user_prompt = user_prompt_match.group(1).strip() if user_prompt_match else ""
-        
-        
-                            system_prompt = system_prompt_match.group(1).strip() if system_prompt_match else ""
-        
-        
-        
-        
-        
-                            if user_prompt or system_prompt:
-        
-        
-                                all_prompts["md_prompts"][prompt_name] = {
-        
-        
-                                    "user_prompt": user_prompt,
-        
-        
-                                    "system_prompt": system_prompt
-        
-        
-                                }
-        
-        
-                            else:
-        
-        
-                                logger.warning(f"No valid User or System Prompt found in {md_file.name}. Skipping.")
-        
-        
-        
-        
-        
-                        except Exception as e:
-        
-        
-                            logger.error(f"Error loading prompt from {md_file.name}: {e}")
-        
-        
-                    logger.info(f"Loaded {len(all_prompts['md_prompts'])} prompts from Markdown library.")
-        
-        
-                else:
-        
-        
-                    logger.warning(f"Markdown prompts directory not found at {self.md_prompts_dir_path}. Some AI functionalities might be limited.")
-        
-        
-                
-        
-        
-                return all_prompts
-        
-        
-        
-        
-        
-            def get_prompt(self, library_type: str, category: str, name: str, default: str = "") -> str:
-        
-        
-                """Retrieve a specific prompt by library type, category, and name.
-        
-        
-                `library_type` can be "json_prompts" or "md_prompts".
-        
-        
-                `category` can be a JSON top-level key (e.g., 'exploitation') or an MD filename (e.g., 'red_team_agent').
-        
-        
-                `name` can be a JSON sub-key (e.g., 'ai_exploit_planning_user') or 'user_prompt'/'system_prompt' for MD.
-        
-        
-                """
-        
-        
-                return self.prompts.get(library_type, {}).get(category, {}).get(name, default)
-        
-        
-        
-        
-        
-            def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        # New prompt loading
+        self.json_prompts_file_path = Path("prompts/library.json")
+        self.md_prompts_dir_path = Path("prompts/md_library")
+        self.prompts = self._load_all_prompts() # New method to load both
+        
+        logger.info(f"Initialized LLM Manager - Provider: {self.provider}, Model: {self.model}, Profile: {self.default_profile_name}")
+        
+    def _get_api_key(self, api_key_config: str) -> str:
+        """Helper to get API key from config or environment variable"""
+        if api_key_config.startswith('${') and api_key_config.endswith('}'):
+            env_var = api_key_config[2:-1]
+            return os.getenv(env_var, '')
+        return api_key_config
+    
+    def _load_all_prompts(self) -> Dict:
+        """Load prompts from both JSON library and Markdown library files."""
+        all_prompts = {
+            "json_prompts": {},
+            "md_prompts": {}
+        }
+        
+        # Load from JSON library
+        if self.json_prompts_file_path.exists():
+            try:
+                with open(self.json_prompts_file_path, 'r') as f:
+                    all_prompts["json_prompts"] = json.load(f)
+                logger.info(f"Loaded prompts from JSON library: {self.json_prompts_file_path}")
+            except Exception as e:
+                logger.error(f"Error loading prompts from {self.json_prompts_file_path}: {e}")
+        else:
+            logger.warning(f"JSON prompts file not found at {self.json_prompts_file_path}. Some AI functionalities might be limited.")
+
+        # Load from Markdown library
+        if self.md_prompts_dir_path.is_dir():
+            for md_file in self.md_prompts_dir_path.glob("*.md"):
+                try:
+                    content = md_file.read_text()
+                    prompt_name = md_file.stem # Use filename as prompt name
+
+                    user_prompt_match = re.search(r"## User Prompt\n(.*?)(?=\n## System Prompt|\Z)", content, re.DOTALL)
+                    system_prompt_match = re.search(r"## System Prompt\n(.*?)(?=\n## User Prompt|\Z)", content, re.DOTALL)
+
+                    user_prompt = user_prompt_match.group(1).strip() if user_prompt_match else ""
+                    system_prompt = system_prompt_match.group(1).strip() if system_prompt_match else ""
+
+                    if user_prompt or system_prompt:
+                        all_prompts["md_prompts"][prompt_name] = {
+                            "user_prompt": user_prompt,
+                            "system_prompt": system_prompt
+                        }
+                    else:
+                        logger.warning(f"No valid User or System Prompt found in {md_file.name}. Skipping.")
+
+                except Exception as e:
+                    logger.error(f"Error loading prompt from {md_file.name}: {e}")
+            logger.info(f"Loaded {len(all_prompts['md_prompts'])} prompts from Markdown library.")
+        else:
+            logger.warning(f"Markdown prompts directory not found at {self.md_prompts_dir_path}. Some AI functionalities might be limited.")
+        
+        return all_prompts
+
+    def get_prompt(self, library_type: str, category: str, name: str, default: str = "") -> str:
+        """Retrieve a specific prompt by library type, category, and name.
+        `library_type` can be "json_prompts" or "md_prompts".
+        `category` can be a JSON top-level key (e.g., 'exploitation') or an MD filename (e.g., 'red_team_agent').
+        `name` can be a JSON sub-key (e.g., 'ai_exploit_planning_user') or 'user_prompt'/'system_prompt' for MD.
+        """
+        return self.prompts.get(library_type, {}).get(category, {}).get(name, default)
+
+    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """Generate response from LLM and apply hallucination mitigation if configured."""
         raw_response = ""
         try:
@@ -323,24 +184,25 @@ class LLMManager:
         
         try:
             if strategy == "grounding":
-                verification_prompt = (
-                    f"Review the following response:\n\n---\n{raw_response}\n---\n\n"
-                    f"Based *only* on the context provided in the original prompt (user: '{original_prompt}', system: '{original_system_prompt or "None"}'), "
-                    f"is this response factual and directly supported by the context? If not, correct it to be factual. "
-                    f"If the response is completely unsourced or makes claims beyond the context, state 'UNSOURCED'."
-                )
+                verification_prompt = f"""Review the following response:
+
+---
+{raw_response}
+---
+
+Based *only* on the context provided in the original prompt (user: '{original_prompt}', system: '{original_system_prompt or "None"}'), is this response factual and directly supported by the context? If not, correct it to be factual. If the response is completely unsourced or makes claims beyond the context, state 'UNSOURCED'."""
                 logger.debug("Applying grounding strategy: Re-prompting for factual verification.")
                 return self.generate(verification_prompt, "You are a fact-checker whose sole purpose is to verify LLM output against provided context.")
                 
             elif strategy == "self_reflection":
-                reflection_prompt = (
-                    f"Critically review the following response for accuracy, logical consistency, and adherence to the original prompt's instructions:\n\n"
-                    f"Original Prompt (User): {original_prompt}\n"
-                    f"Original Prompt (System): {original_system_prompt or "None"}\n\n"
-                    f"Generated Response: {raw_response}\n\n"
-                    f"Identify any potential hallucinations, inconsistencies, or areas where the response might have deviated from facts or instructions. "
-                    f"If you find issues, provide a corrected and more reliable version of the response. If the response is good, state 'ACCURATE'."
-                )
+                reflection_prompt = f"""Critically review the following response for accuracy, logical consistency, and adherence to the original prompt's instructions:
+
+Original Prompt (User): {original_prompt}
+Original Prompt (System): {original_system_prompt or "None"}
+
+Generated Response: {raw_response}
+
+Identify any potential hallucinations, inconsistencies, or areas where the response might have deviated from facts or instructions. If you find issues, provide a corrected and more reliable version of the response. If the response is good, state 'ACCURATE'."""
                 logger.debug("Applying self-reflection strategy: Re-prompting for self-critique.")
                 return self.generate(reflection_prompt, "You are an AI assistant designed to critically evaluate and improve other AI-generated content.")
                 
