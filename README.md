@@ -22,7 +22,7 @@ NeuroSploitv2 is an advanced, AI-powered penetration testing framework designed 
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-repo/NeuroSploitv2.git
+    git clone https://github.com/CyberSecurityUP/NeuroSploitv2.git
     cd NeuroSploitv2
     ```
 
