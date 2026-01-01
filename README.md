@@ -9,12 +9,21 @@ NeuroSploitv2 is an advanced, AI-powered penetration testing framework designed 
 ## ✨ Features
 
 *   **Modular Agent Roles:** Execute specialized AI agents tailored for specific security tasks (e.g., Red Team, Blue Team, Bug Bounty Hunter, Malware Analyst).
-*   **Flexible LLM Integration:** Supports multiple LLM providers including Gemini, Claude, GPT (OpenAI), and Ollama, configurable via profiles.
+*   **Flexible LLM Integration:** Supports multiple LLM providers including Gemini, Claude, GPT (OpenAI), Ollama, and LM Studio, configurable via profiles.
+*   **LM Studio Support:** Full integration with LM Studio for local model execution with OpenAI-compatible API.
 *   **Granular LLM Profiles:** Define distinct LLM configurations for each agent role, controlling parameters like model, temperature, token limits, caching, and context.
 *   **Markdown-based Prompts:** Agents utilize dynamic Markdown prompt templates, allowing for context-aware and highly specific instructions.
 *   **Hallucination Mitigation:** Implements strategies like grounding, self-reflection, and consistency checks to reduce LLM hallucinations and ensure focused output.
 *   **Guardrails:** Basic guardrails (e.g., keyword filtering, length checks) are in place to enhance safety and ethical adherence of LLM-generated content.
 *   **Extensible Tooling:** Integrate and manage external security tools (Nmap, Metasploit, Subfinder, Nuclei, etc.) directly through configuration.
+*   **Tool Chaining:** Execute multiple tools in sequence for complex reconnaissance and attack workflows.
+*   **Built-in Reconnaissance Tools:**
+    *   **OSINT Collector:** Gather intelligence from public sources (IP resolution, technology detection, email patterns, social media)
+    *   **Subdomain Finder:** Discover subdomains using Certificate Transparency logs and DNS brute-forcing
+    *   **DNS Enumerator:** Enumerate DNS records (A, AAAA, MX, NS, TXT, CNAME)
+*   **Lateral Movement Modules:** SMB and SSH-based lateral movement techniques
+*   **Persistence Mechanisms:** Cron-based (Linux) and Registry-based (Windows) persistence modules
+*   **Enhanced Security:** Secure subprocess execution with input validation, timeout protection, and no shell injection vulnerabilities
 *   **Structured Reporting:** Generates detailed JSON campaign results and user-friendly HTML reports.
 *   **Interactive Mode:** An intuitive command-line interface for direct interaction and control over agent execution.
 
@@ -22,7 +31,7 @@ NeuroSploitv2 is an advanced, AI-powered penetration testing framework designed 
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/CyberSecurityUP/NeuroSploitv2.git
+    git clone https://github.com/your-repo/NeuroSploitv2.git
     cd NeuroSploitv2
     ```
 
@@ -50,7 +59,10 @@ NeuroSploitv2 is an advanced, AI-powered penetration testing framework designed 
     export OPENAI_API_KEY="your_openai_api_key"
     export GEMINI_API_KEY="your_gemini_api_key"
     ```
-    For Ollama, ensure your local Ollama server is running.
+
+5.  **Configure Local LLM Servers (Optional):**
+    *   **Ollama:** Ensure your local Ollama server is running on `http://localhost:11434`
+    *   **LM Studio:** Start LM Studio server on `http://localhost:1234` with your preferred model loaded
 
 ## ⚙️ Configuration
 
@@ -99,7 +111,7 @@ This section defines your LLM profiles.
 
 *   `default_profile`: The name of the LLM profile to use by default.
 *   `profiles`: A dictionary where each key is a profile name and its value is an object containing:
-    *   `provider`: `ollama`, `claude`, `gpt`, `gemini`, `gemini-cli`.
+    *   `provider`: `ollama`, `claude`, `gpt`, `gemini`, `gemini-cli`, `lmstudio`.
     *   `model`: Specific model identifier (e.g., `llama3:8b`, `gemini-pro`, `claude-3-opus-20240229`, `gpt-4o`).
     *   `api_key`: API key or environment variable placeholder (e.g., `${GEMINI_API_KEY}`).
     *   `temperature`: Controls randomness in output (0.0-1.0).
@@ -223,3 +235,93 @@ Contributions are welcome! Please feel free to fork the repository, open issues,
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔧 Built-in Tools
+
+NeuroSploitv2 includes several built-in reconnaissance and post-exploitation tools:
+
+### Reconnaissance Tools
+*   **OSINT Collector** (`tools/recon/osint_collector.py`):
+    *   IP address resolution
+    *   Technology stack detection
+    *   Email pattern generation
+    *   Social media account discovery
+    *   Web framework identification
+
+*   **Subdomain Finder** (`tools/recon/subdomain_finder.py`):
+    *   Certificate Transparency log queries
+    *   Common subdomain brute-forcing
+    *   DNS resolution validation
+
+*   **DNS Enumerator** (`tools/recon/dns_enumerator.py`):
+    *   A, AAAA, MX, NS, TXT, CNAME record enumeration
+    *   IPv4 and IPv6 resolution
+    *   Mail server discovery
+
+### Lateral Movement
+*   **SMB Lateral** (`tools/lateral_movement/smb_lateral.py`):
+    *   Share enumeration framework
+    *   Pass-the-hash preparation
+    *   Remote command execution templates
+
+*   **SSH Lateral** (`tools/lateral_movement/ssh_lateral.py`):
+    *   SSH accessibility checks
+    *   Key enumeration paths
+    *   SSH tunnel creation helpers
+
+### Persistence Modules
+*   **Cron Persistence** (`tools/persistence/cron_persistence.py`):
+    *   Cron entry generation
+    *   Persistence location suggestions
+    *   Reverse shell payload templates
+
+*   **Registry Persistence** (`tools/persistence/registry_persistence.py`):
+    *   Windows registry key enumeration
+    *   Registry command generation
+    *   Startup persistence mechanisms
+
+## 🛡️ Security Features
+
+*   **Secure Tool Execution:** All external tools are executed with `shlex` argument parsing and no shell injection vulnerabilities
+*   **Input Validation:** Tool paths and arguments are validated before execution
+*   **Timeout Protection:** 60-second timeout on all tool executions to prevent hanging
+*   **Permission System:** Agent-based tool access control
+*   **Error Handling:** Comprehensive error handling with detailed logging
+
+## 🔗 Tool Chaining
+
+NeuroSploitv2 supports executing multiple tools in sequence for complex workflows:
+
+```python
+# LLM can request multiple tools
+[TOOL] nmap: -sV -sC target.com
+[TOOL] subfinder: -d target.com
+[TOOL] nuclei: -l subdomains.txt
+```
+
+The framework will execute each tool in order and provide results to the LLM for analysis.
+
+## 🙏 Acknowledgements
+
+NeuroSploitv2 leverages the power of various Large Language Models and open-source security tools to deliver its capabilities.
+
+### LLM Providers
+*   Google Gemini
+*   Anthropic Claude
+*   OpenAI GPT
+*   Ollama
+*   LM Studio
+
+### Security Tools
+*   Nmap
+*   Metasploit
+*   Burp Suite
+*   SQLMap
+*   Hydra
+*   Subfinder
+*   Nuclei
+
+## ⚠️ Disclaimer
+
+NeuroSploitv2 is designed for authorized security testing and educational purposes only. Always ensure you have explicit permission before testing any systems. Unauthorized access to computer systems is illegal.
+```

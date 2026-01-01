@@ -126,6 +126,8 @@ class LLMManager:
                 raw_response = self._generate_ollama(prompt, system_prompt)
             elif self.provider == 'gemini-cli':
                 raw_response = self._generate_gemini_cli(prompt, system_prompt)
+            elif self.provider == 'lmstudio':
+                raw_response = self._generate_lmstudio(prompt, system_prompt)
             else:
                 raise ValueError(f"Unsupported provider: {self.provider}")
         except Exception as e:
@@ -324,7 +326,7 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
         """Generate using Ollama local models"""
         try:
             url = "http://localhost:11434/api/generate"
-            
+
             data = {
                 "model": self.model,
                 "prompt": prompt,
@@ -334,19 +336,61 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
                     "num_predict": self.max_tokens
                 }
             }
-            
+
             if system_prompt:
                 data["system"] = system_prompt
-            
+
             response = requests.post(url, json=data, timeout=120)
             response.raise_for_status()
-            
+
             return response.json()["response"]
-            
+
         except Exception as e:
             logger.error(f"Ollama error: {e}")
             return f"Error: {str(e)}"
-    
+
+    def _generate_lmstudio(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        """
+        Generate using LM Studio local server.
+        LM Studio provides an OpenAI-compatible API at http://localhost:1234/v1
+        """
+        try:
+            # LM Studio uses OpenAI-compatible API
+            url = "http://localhost:1234/v1/chat/completions"
+
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+
+            data = {
+                "model": self.model,  # LM Studio auto-detects loaded model
+                "messages": messages,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+                "stream": False
+            }
+
+            logger.debug(f"Sending request to LM Studio at {url}")
+            response = requests.post(url, json=data, timeout=120)
+            response.raise_for_status()
+
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+
+        except requests.exceptions.ConnectionError:
+            logger.error("LM Studio connection error. Ensure LM Studio server is running on http://localhost:1234")
+            return "Error: Cannot connect to LM Studio. Please ensure LM Studio server is running on port 1234."
+        except requests.exceptions.Timeout:
+            logger.error("LM Studio request timeout")
+            return "Error: LM Studio request timeout after 120 seconds"
+        except KeyError as e:
+            logger.error(f"LM Studio response format error: {e}")
+            return f"Error: Unexpected response format from LM Studio: {str(e)}"
+        except Exception as e:
+            logger.error(f"LM Studio error: {e}")
+            return f"Error: {str(e)}"
+
     def analyze_vulnerability(self, vulnerability_data: Dict) -> Dict:
         """Analyze vulnerability and suggest exploits"""
         # This prompt will be fetched from library.json later

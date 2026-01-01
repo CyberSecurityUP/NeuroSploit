@@ -133,18 +133,35 @@ class NeuroSploitSetup:
         
         config = {
             "llm": {
-                "provider": "gemini",
-                "model": "gemini-pro",
-                "api_key": "",
-                "temperature": 0.7,
-                "max_tokens": 4096
+                "default_profile": "gemini_pro_default",
+                "profiles": {
+                    "gemini_pro_default": {
+                        "provider": "gemini",
+                        "model": "gemini-pro",
+                        "api_key": "${GEMINI_API_KEY}",
+                        "temperature": 0.7,
+                        "max_tokens": 4096,
+                        "input_token_limit": 30720,
+                        "output_token_limit": 2048,
+                        "cache_enabled": True,
+                        "search_context_level": "medium",
+                        "pdf_support_enabled": True,
+                        "guardrails_enabled": True,
+                        "hallucination_mitigation_strategy": "consistency_check"
+                    }
+                }
             },
-            "agents": {
-                "recon": {"enabled": True, "priority": 1},
-                "exploitation": {"enabled": True, "priority": 2},
-                "privilege_escalation": {"enabled": True, "priority": 3},
-                "persistence": {"enabled": True, "priority": 4},
-                "lateral_movement": {"enabled": True, "priority": 5}
+            "agent_roles": {
+                "pentest_generalist": {
+                    "enabled": True,
+                    "tools_allowed": ["nmap", "metasploit", "burpsuite", "sqlmap", "hydra"],
+                    "description": "Performs comprehensive penetration tests across various domains."
+                },
+                "bug_bounty_hunter": {
+                    "enabled": True,
+                    "tools_allowed": ["subfinder", "nuclei", "burpsuite", "sqlmap"],
+                    "description": "Focuses on web application vulnerabilities."
+                }
             },
             "methodologies": {
                 "owasp_top10": True,

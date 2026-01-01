@@ -1,21 +1,7 @@
 {
     "llm": {
-        "default_profile": "ollama_whiterabbit",
+        "default_profile": "gemini_pro_default",
         "profiles": {
-            "ollama_whiterabbit": {
-                "provider": "ollama",
-                "model": "lazarevtill/Llama-3-WhiteRabbitNeo-8B-v2.0:q4_0",
-                "api_key": "",
-                "temperature": 0.8,
-                "max_tokens": 4096,
-                "input_token_limit": 8000,
-                "output_token_limit": 4000,
-                "cache_enabled": false,
-                "search_context_level": "high",
-                "pdf_support_enabled": false,
-                "guardrails_enabled": false,
-                "hallucination_mitigation_strategy": null
-            },
             "ollama_llama3_default": {
                 "provider": "ollama",
                 "model": "llama3:8b",
@@ -71,20 +57,6 @@
                 "pdf_support_enabled": true,
                 "guardrails_enabled": true,
                 "hallucination_mitigation_strategy": "consistency_check"
-            },
-            "lmstudio_default": {
-                "provider": "lmstudio",
-                "model": "local-model",
-                "api_key": "",
-                "temperature": 0.7,
-                "max_tokens": 4096,
-                "input_token_limit": 32000,
-                "output_token_limit": 4096,
-                "cache_enabled": false,
-                "search_context_level": "medium",
-                "pdf_support_enabled": false,
-                "guardrails_enabled": true,
-                "hallucination_mitigation_strategy": null
             }
         }
     },
