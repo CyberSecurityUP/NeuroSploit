@@ -320,8 +320,3 @@ NeuroSploitv2 leverages the power of various Large Language Models and open-sour
 *   Hydra
 *   Subfinder
 *   Nuclei
-
-## ⚠️ Disclaimer
-
-NeuroSploitv2 is designed for authorized security testing and educational purposes only. Always ensure you have explicit permission before testing any systems. Unauthorized access to computer systems is illegal.
-```
