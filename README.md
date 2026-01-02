@@ -6,6 +6,8 @@
 
 NeuroSploitv2 is an advanced, AI-powered penetration testing framework designed to automate and augment various aspects of offensive security operations. Leveraging the capabilities of large language models (LLMs), NeuroSploitv2 provides specialized agent roles that can analyze targets, identify vulnerabilities, plan exploitation strategies, and assist in defensive measures, all while prioritizing ethical considerations and operational security.
 
+YouTube Demonstration Video: https://youtu.be/SQq1TVwlrxQ
+
 ## ✨ Features
 
 *   **Modular Agent Roles:** Execute specialized AI agents tailored for specific security tasks (e.g., Red Team, Blue Team, Bug Bounty Hunter, Malware Analyst).
