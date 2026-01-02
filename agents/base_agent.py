@@ -36,14 +36,35 @@ class BaseAgent:
             logger.warning(f"No user prompt template found for agent {self.agent_name}.")
             return user_input # Fallback to raw user input
 
-        # Create a dictionary with all the possible placeholders
+        # Create a dictionary with all the possible placeholders and default values
         format_dict = {
             "user_input": user_input,
-            "target_info_json": user_input, # for bug_bounty_hunter
-            "recon_data_json": json.dumps(additional_context or {}, indent=2), # for bug_bounty_hunter
+            # For bug_bounty_hunter agent
+            "target_info_json": user_input,
+            "recon_data_json": json.dumps(additional_context or {}, indent=2),
+            # For red_team_agent
+            "mission_objectives_json": user_input,
+            "target_environment_json": json.dumps(additional_context or {}, indent=2),
+            # For pentest agent
+            "scope_json": user_input,
+            "initial_info_json": json.dumps(additional_context or {}, indent=2),
+            # For blue_team_agent
+            "logs_alerts_json": user_input,
+            "telemetry_json": json.dumps(additional_context or {}, indent=2),
+            # For exploit_expert agent
+            "vulnerability_details_json": user_input,
+            "target_info_json": json.dumps(additional_context or {}, indent=2),
+            # For cwe_expert agent
+            "code_vulnerability_json": user_input,
+            # For malware_analysis agent
+            "malware_sample_json": user_input,
+            # For replay_attack agent
+            "traffic_logs_json": user_input,
+            # Generic additional context
             "additional_context_json": json.dumps(additional_context or {}, indent=2)
         }
 
+        # Override with actual additional_context values if provided
         if additional_context:
             for key, value in additional_context.items():
                 if isinstance(value, (dict, list)):
@@ -51,9 +72,14 @@ class BaseAgent:
                 else:
                     format_dict[key] = value
 
-        # Use a safe way to format, ignoring missing keys
-        formatted_prompt = user_prompt_template.format_map({k: v for k, v in format_dict.items() if f"{{{k}}}" in user_prompt_template})
-        
+        # Use a safe way to format, only including keys that exist in the template
+        try:
+            formatted_prompt = user_prompt_template.format_map(format_dict)
+        except KeyError as e:
+            logger.error(f"Missing key in format_dict: {e}")
+            # Fallback to user input if formatting fails
+            return user_input
+
         return formatted_prompt
 
     def execute(self, user_input: str, campaign_data: Dict = None) -> Dict:
