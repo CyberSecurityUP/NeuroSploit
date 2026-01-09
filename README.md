@@ -33,7 +33,7 @@ YouTube Demonstration Video: https://youtu.be/SQq1TVwlrxQ
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-repo/NeuroSploitv2.git
+    git clone https://github.com/CyberSecurityUP/NeuroSploitv2.git
     cd NeuroSploitv2
     ```
 
