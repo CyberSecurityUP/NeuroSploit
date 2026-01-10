@@ -1,251 +1,267 @@
-2025-12-19 11:32:18,555 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113218
-2025-12-19 11:32:55,262 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113255
-2025-12-19 11:33:54,241 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113354
-2025-12-19 11:34:29,519 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113429
-2025-12-19 11:35:39,664 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113539
-2025-12-19 11:35:39,664 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:35:39,666 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:35:39,668 - core.llm_manager - INFO - Loaded 8 prompts from Markdown library.
-2025-12-19 11:35:39,668 - core.llm_manager - INFO - Initialized LLM Manager - Provider: gemini, Model: gemini-pro, Profile: gemini_pro_default
-2025-12-19 11:35:39,668 - __main__ - ERROR - Prompts for agent role 'owasp_expert' not found in MD library.
-2025-12-19 11:37:59,476 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113759
-2025-12-19 11:38:04,329 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113804
-2025-12-19 11:38:04,329 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:38:04,330 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:38:04,331 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:38:04,331 - core.llm_manager - INFO - Initialized LLM Manager - Provider: gemini, Model: gemini-pro, Profile: gemini_pro_default
-2025-12-19 11:38:04,331 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:38:04,331 - agents.base_agent - INFO - Executing owasp_expert agent for input: Realize um teste no site http://testphp.vulnweb.co...
-2025-12-19 11:38:04,331 - agents.base_agent - ERROR - Missing key in prompt template for owasp_expert: 'web_app_details_json'. Falling back to basic prompt.
-2025-12-19 11:38:13,483 - core.llm_manager - ERROR - Error generating raw response: 
-  No API_KEY or ADC found. Please either:
-    - Set the `GOOGLE_API_KEY` environment variable.
-    - Manually pass the key with `genai.configure(api_key=my_api_key)`.
-    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.
-2025-12-19 11:38:13,484 - __main__ - INFO - Results saved to results/campaign_20251219_113804.json
-2025-12-19 11:38:13,484 - __main__ - INFO - Report generated: reports/report_20251219_113804.html
-2025-12-19 11:38:40,109 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113840
-2025-12-19 11:38:40,109 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:38:40,109 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:38:40,110 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:38:40,110 - core.llm_manager - INFO - Initialized LLM Manager - Provider: gemini, Model: gemini-pro, Profile: gemini_pro_default
-2025-12-19 11:38:40,110 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:38:40,110 - agents.base_agent - INFO - Executing owasp_expert agent for input: Realize um teste no site http://testphp.vulnweb.co...
-2025-12-19 11:38:49,301 - core.llm_manager - ERROR - Error generating raw response: 
-  No API_KEY or ADC found. Please either:
-    - Set the `GOOGLE_API_KEY` environment variable.
-    - Manually pass the key with `genai.configure(api_key=my_api_key)`.
-    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.
-2025-12-19 11:38:49,301 - __main__ - INFO - Results saved to results/campaign_20251219_113840.json
-2025-12-19 11:38:49,302 - __main__ - INFO - Report generated: reports/report_20251219_113840.html
-2025-12-19 11:39:42,429 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_113942
-2025-12-19 11:39:42,430 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:39:42,430 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:39:42,430 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:39:42,430 - core.llm_manager - INFO - Initialized LLM Manager - Provider: gemini, Model: gemini-pro, Profile: gemini_pro_default
-2025-12-19 11:39:42,430 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:39:42,430 - agents.base_agent - INFO - Executing owasp_expert agent for input: Realize um teste no site http://testphp.vulnweb.co...
-2025-12-19 11:39:51,400 - core.llm_manager - ERROR - Error generating raw response: 
-  No API_KEY or ADC found. Please either:
-    - Set the `GOOGLE_API_KEY` environment variable.
-    - Manually pass the key with `genai.configure(api_key=my_api_key)`.
-    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.
-2025-12-19 11:39:51,401 - __main__ - INFO - Results saved to results/campaign_20251219_113942.json
-2025-12-19 11:39:51,402 - __main__ - INFO - Report generated: reports/report_20251219_113942.html
-2025-12-19 11:40:25,811 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_114025
-2025-12-19 11:44:45,527 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_114445
-2025-12-19 11:45:10,765 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_114510
-2025-12-19 11:45:21,124 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_114521
-2025-12-19 11:46:17,722 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_114617
-2025-12-19 11:47:37,765 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:47:37,766 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:47:37,770 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:47:37,770 - core.llm_manager - INFO - Initialized LLM Manager - Provider: gemini, Model: gemini-pro, Profile: gemini_pro_default
-2025-12-19 11:47:37,770 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:47:37,770 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan http://testphp.vulnweb.com/...
-2025-12-19 11:47:47,262 - core.llm_manager - ERROR - Error generating raw response: 
-  No API_KEY or ADC found. Please either:
-    - Set the `GOOGLE_API_KEY` environment variable.
-    - Manually pass the key with `genai.configure(api_key=my_api_key)`.
-    - Or set up Application Default Credentials, see https://ai.google.dev/gemini-api/docs/oauth for more information.
-2025-12-19 11:47:47,263 - __main__ - INFO - Results saved to results/campaign_20251219_114617.json
-2025-12-19 11:47:47,263 - __main__ - INFO - Report generated: reports/report_20251219_114617.html
-2025-12-19 11:49:23,054 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_114923
-2025-12-19 11:49:23,054 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:49:23,054 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:49:23,055 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:49:23,055 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 11:49:23,055 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:49:23,055 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan example.com...
-2025-12-19 11:49:48,488 - __main__ - INFO - Results saved to results/campaign_20251219_114923.json
-2025-12-19 11:49:48,489 - __main__ - INFO - Report generated: reports/report_20251219_114923.html
-2025-12-19 11:50:08,882 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115008
-2025-12-19 11:50:08,882 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:50:08,882 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:50:08,884 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:50:08,884 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 11:50:08,884 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:50:08,884 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan hackersec.com...
-2025-12-19 11:50:29,383 - __main__ - INFO - Results saved to results/campaign_20251219_115008.json
-2025-12-19 11:50:29,384 - __main__ - INFO - Report generated: reports/report_20251219_115008.html
-2025-12-19 11:56:34,904 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115634
-2025-12-19 11:56:34,904 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:56:34,904 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:56:34,906 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:56:34,906 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 11:56:34,906 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:56:34,906 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan hackersec.com...
-2025-12-19 11:56:54,137 - __main__ - INFO - Results saved to results/campaign_20251219_115634.json
-2025-12-19 11:56:54,138 - __main__ - INFO - Report generated: reports/report_20251219_115634.html
-2025-12-19 11:57:13,435 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115713
-2025-12-19 11:57:13,435 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 11:57:13,436 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 11:57:13,438 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 11:57:13,438 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 11:57:13,438 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 11:57:13,438 - agents.base_agent - INFO - Executing owasp_expert agent for input: identifique vulnerabilidades no dominio hackersec....
-2025-12-19 11:57:36,170 - __main__ - INFO - Results saved to results/campaign_20251219_115713.json
-2025-12-19 11:57:36,170 - __main__ - INFO - Report generated: reports/report_20251219_115713.html
-2025-12-19 11:57:56,516 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115756
-2025-12-19 11:58:01,802 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115801
-2025-12-19 11:58:11,144 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115811
-2025-12-19 11:58:22,784 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115822
-2025-12-19 11:58:51,778 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_115851
-2025-12-19 12:02:00,697 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_120200
-2025-12-19 12:02:00,697 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:02:00,697 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:02:00,699 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:02:00,699 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:02:00,700 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:02:00,700 - agents.base_agent - INFO - Executing owasp_expert agent for input: identifique vulnerabilidades no dominio hackersec....
-2025-12-19 12:02:24,246 - __main__ - INFO - Results saved to results/campaign_20251219_120200.json
-2025-12-19 12:02:24,247 - __main__ - INFO - Report generated: reports/report_20251219_120200.html
-2025-12-19 12:02:39,920 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_120239
-2025-12-19 12:02:39,920 - __main__ - INFO - Starting execution for agent role: owasp_expert_profile
-2025-12-19 12:02:39,920 - __main__ - ERROR - Agent role 'owasp_expert_profile' not found in configuration.
-2025-12-19 12:03:53,173 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_120353
-2025-12-19 12:03:53,173 - __main__ - INFO - Starting execution for agent role: owasp_expert_profile
-2025-12-19 12:03:53,173 - __main__ - ERROR - Agent role 'owasp_expert_profile' not found in configuration.
-2025-12-19 12:03:57,672 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_120357
-2025-12-19 12:03:57,672 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:03:57,673 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:03:57,676 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:03:57,676 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:03:57,676 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:03:57,676 - agents.base_agent - INFO - Executing owasp_expert agent for input: identifique vulnerabilidades no dominio hackersec....
-2025-12-19 12:04:20,276 - __main__ - INFO - Results saved to results/campaign_20251219_120357.json
-2025-12-19 12:04:20,277 - __main__ - INFO - Report generated: reports/report_20251219_120357.html
-2025-12-19 12:09:45,332 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_120945
-2025-12-19 12:10:28,397 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_121028
-2025-12-19 12:13:17,354 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_121317
-2025-12-19 12:13:32,185 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_121332
-2025-12-19 12:14:31,136 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_121431
-2025-12-19 12:14:31,136 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:14:31,137 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:14:31,139 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:14:31,139 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:14:31,139 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:14:31,139 - agents.base_agent - INFO - Executing owasp_expert agent for input: identifique vulnerabilidades no dominio hackersec....
-2025-12-19 12:14:58,217 - __main__ - INFO - Results saved to results/campaign_20251219_121431.json
-2025-12-19 12:14:58,218 - __main__ - INFO - Report generated: reports/report_20251219_121431.html
-2025-12-19 12:15:43,666 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_121543
-2025-12-19 12:15:43,667 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:15:43,667 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:15:43,669 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:15:43,670 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:15:43,670 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:15:43,670 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 12:16:11,774 - __main__ - INFO - Results saved to results/campaign_20251219_121543.json
-2025-12-19 12:16:11,775 - __main__ - INFO - Report generated: reports/report_20251219_121543.html
-2025-12-19 12:19:12,710 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_121912
-2025-12-19 12:19:12,710 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:19:12,711 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:19:12,713 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:19:12,713 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:19:12,713 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:19:12,713 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 12:19:55,720 - __main__ - INFO - Results saved to results/campaign_20251219_121912.json
-2025-12-19 12:19:55,721 - __main__ - INFO - Report generated: reports/report_20251219_121912.html
-2025-12-19 12:31:03,782 - __main__ - INFO - Created default configuration at config/config.json
-2025-12-19 12:31:03,782 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_123103
-2025-12-19 12:31:03,783 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:31:03,783 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:31:03,785 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:31:03,785 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:31:03,785 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:31:03,785 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 12:31:23,207 - __main__ - INFO - Results saved to results/campaign_20251219_123103.json
-2025-12-19 12:31:23,208 - __main__ - INFO - Report generated: reports/report_20251219_123103.html
-2025-12-19 12:33:07,023 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_123307
-2025-12-19 12:33:07,023 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:33:07,024 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:33:07,026 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:33:07,026 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:33:07,026 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:33:07,026 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target http://testphp.vulnweb.com and identif...
-2025-12-19 12:33:25,214 - __main__ - INFO - Results saved to results/campaign_20251219_123307.json
-2025-12-19 12:33:25,215 - __main__ - INFO - Report generated: reports/report_20251219_123307.html
-2025-12-19 12:36:29,020 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_123629
-2025-12-19 12:36:29,020 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:36:29,021 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:36:29,023 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:36:29,023 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:36:29,023 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:36:29,023 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 12:36:45,283 - __main__ - INFO - Results saved to results/campaign_20251219_123629.json
-2025-12-19 12:37:01,705 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_123701
-2025-12-19 12:37:01,705 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:37:01,705 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:37:01,707 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:37:01,707 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:37:01,707 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:37:01,707 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 12:37:16,413 - __main__ - INFO - Results saved to results/campaign_20251219_123701.json
-2025-12-19 12:43:25,362 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_124325
-2025-12-19 12:43:25,362 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 12:43:25,363 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 12:43:25,365 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 12:43:25,365 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 12:43:25,365 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 12:43:25,365 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 12:43:47,234 - __main__ - INFO - Results saved to results/campaign_20251219_124325.json
-2025-12-19 12:43:47,235 - __main__ - INFO - Report generated: reports/report_20251219_124325.html
-2025-12-19 12:46:24,533 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_124624
-2025-12-19 12:51:12,912 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_125112
-2025-12-19 13:07:54,046 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_130754
-2025-12-19 13:08:09,699 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_130809
-2025-12-19 13:08:39,156 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_130839
-2025-12-19 13:08:39,156 - __main__ - INFO - Starting execution for agent role: owasp_expert
-2025-12-19 13:08:39,157 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 13:08:39,160 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 13:08:39,160 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 13:08:39,160 - agents.base_agent - INFO - Initialized owasp_expert agent. Description: Specializes in assessing web applications against OWASP Top 10 vulnerabilities.
-2025-12-19 13:08:39,160 - agents.base_agent - INFO - Executing owasp_expert agent for input: scan target hackersec.com...
-2025-12-19 13:08:59,868 - __main__ - INFO - Results saved to results/campaign_20251219_130839.json
-2025-12-19 13:08:59,893 - __main__ - INFO - Report generated: reports/report_20251219_130839.html
-2025-12-19 13:09:57,106 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_130957
-2025-12-19 13:10:51,790 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_131051
-2025-12-19 13:10:51,790 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
-2025-12-19 13:10:51,791 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 13:10:51,794 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 13:10:51,794 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 13:10:51,794 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
-2025-12-19 13:10:51,794 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: identify vulnerability in target testphp.vulnweb.c...
-2025-12-19 13:12:27,308 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_131227
-2025-12-19 13:12:27,308 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
-2025-12-19 13:12:27,308 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 13:12:27,310 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 13:12:27,310 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 13:12:27,310 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
-2025-12-19 13:12:27,310 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: identify vulnerability in target testphp.vulnweb.c...
-2025-12-19 13:12:41,925 - __main__ - INFO - Results saved to results/campaign_20251219_131227.json
-2025-12-19 13:12:41,946 - __main__ - INFO - Report generated: reports/report_20251219_131227.html
-2025-12-19 13:24:05,659 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20251219_132405
-2025-12-19 13:24:05,659 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
-2025-12-19 13:24:05,659 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
-2025-12-19 13:24:05,661 - core.llm_manager - INFO - Loaded 9 prompts from Markdown library.
-2025-12-19 13:24:05,661 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
-2025-12-19 13:24:05,661 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
-2025-12-19 13:24:05,661 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: identify vulnerability in target testphp.vulnweb.c...
-2025-12-19 13:24:18,057 - __main__ - INFO - Results saved to results/campaign_20251219_132405.json
-2025-12-19 13:24:18,078 - __main__ - INFO - Report generated: reports/report_20251219_132405.html
+2026-01-09 14:50:31,946 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145031
+2026-01-09 14:54:04,860 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145404
+2026-01-09 14:54:10,914 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145410
+2026-01-09 14:54:23,986 - __main__ - INFO - Tools configuration updated
+2026-01-09 14:54:29,502 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145429
+2026-01-09 14:54:38,874 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145438
+2026-01-09 14:54:59,563 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145459
+2026-01-09 14:55:18,292 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145518
+2026-01-09 14:55:41,508 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145541
+2026-01-09 14:56:11,734 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145611
+2026-01-09 14:56:11,735 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 14:56:11,735 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 14:56:11,737 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 14:56:11,737 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: llama3:8b, Profile: ollama_llama3_default
+2026-01-09 14:56:11,737 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
+2026-01-09 14:56:11,737 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: Analyze and finding XSS and SQL Injection vuln in ...
+2026-01-09 14:56:28,803 - __main__ - INFO - Results saved to results/campaign_20260109_145611.json
+2026-01-09 14:56:28,808 - __main__ - INFO - Report generated: reports/report_20260109_145611.html
+2026-01-09 14:58:00,149 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_145800
+2026-01-09 14:58:00,150 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 14:58:00,150 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 14:58:00,152 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 14:58:00,152 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: lazarevtill/Llama-3-WhiteRabbitNeo-8B-v2.0:q4_0, Profile: ollama_whiterabbit
+2026-01-09 14:58:00,152 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
+2026-01-09 14:58:00,153 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: Analyze and finding XSS and SQL Injection vuln in ...
+2026-01-09 14:59:58,160 - __main__ - INFO - Results saved to results/campaign_20260109_145800.json
+2026-01-09 14:59:58,169 - __main__ - INFO - Report generated: reports/report_20260109_145800.html
+2026-01-09 15:07:09,565 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_150709
+2026-01-09 15:07:09,565 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 15:07:09,566 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 15:07:09,568 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 15:07:09,568 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: lazarevtill/Llama-3-WhiteRabbitNeo-8B-v2.0:q4_0, Profile: ollama_whiterabbit
+2026-01-09 15:07:09,568 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
+2026-01-09 15:07:09,568 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: Analyze and finding XSS and SQL Injection vuln in ...
+2026-01-09 15:07:09,568 - agents.base_agent - INFO - Executing: /usr/bin/nmap -sV -sC -p 1-1000 --open testphp.vulnweb.com
+2026-01-09 15:07:09,570 - agents.base_agent - ERROR - Error executing nmap: [Errno 2] No such file or directory: '/usr/bin/nmap'
+2026-01-09 15:07:09,570 - agents.base_agent - INFO - Executing: /usr/bin/curl -s -I -k http://testphp.vulnweb.com/
+2026-01-09 15:07:10,603 - agents.base_agent - INFO - Executing: /usr/local/bin/nuclei -u http://testphp.vulnweb.com/ -silent -nc
+2026-01-09 15:11:16,445 - agents.base_agent - INFO - Executing: /usr/bin/nikto -h http://testphp.vulnweb.com/ -nointeractive
+2026-01-09 15:11:16,447 - agents.base_agent - ERROR - Error executing nikto: [Errno 2] No such file or directory: '/usr/bin/nikto'
+2026-01-09 15:11:16,447 - agents.base_agent - INFO - Executing: /usr/local/bin/sqlmap -u http://testphp.vulnweb.com/ --batch --level=2 --risk=2 --random-agent --threads=3
+2026-01-09 15:11:18,050 - agents.base_agent - INFO - Executing: /usr/bin/ffuf -u http://testphp.vulnweb.com/FUZZ -w /usr/share/wordlists/dirb/common.txt -mc 200,301,302,403 -t 50
+2026-01-09 15:11:18,051 - agents.base_agent - ERROR - Error executing ffuf: [Errno 2] No such file or directory: '/usr/bin/ffuf'
+2026-01-09 15:11:40,036 - __main__ - INFO - Results saved to results/campaign_20260109_150709.json
+2026-01-09 15:11:40,039 - __main__ - INFO - Report generated: reports/report_20260109_150709.html
+2026-01-09 15:17:31,641 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_151731
+2026-01-09 15:17:38,401 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_151738
+2026-01-09 15:17:42,099 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_151742
+2026-01-09 15:18:09,938 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_151809
+2026-01-09 15:19:08,248 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 15:19:08,251 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 15:19:08,254 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 15:19:08,254 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-3-opus-20240229, Profile: claude_opus_default
+2026-01-09 15:19:08,254 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
+2026-01-09 15:19:08,254 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: target http://testphp.vulnweb.com/listproducts.php...
+2026-01-09 15:19:08,254 - agents.base_agent - INFO - Executing: /usr/bin/nmap -sV -sC -p 1-1000 --open testphp.vulnweb.com
+2026-01-09 15:19:08,256 - agents.base_agent - ERROR - Error executing nmap: [Errno 2] No such file or directory: '/usr/bin/nmap'
+2026-01-09 15:19:08,256 - agents.base_agent - INFO - Executing: /usr/bin/curl -s -I -k http://testphp.vulnweb.com/listproducts.php
+2026-01-09 15:19:08,707 - agents.base_agent - INFO - Executing: /usr/local/bin/nuclei -u http://testphp.vulnweb.com/listproducts.php -silent -nc
+2026-01-09 15:22:18,265 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_152218
+2026-01-09 15:22:18,265 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 15:22:18,265 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 15:22:18,268 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 15:22:18,268 - core.llm_manager - INFO - Initialized LLM Manager - Provider: ollama, Model: lazarevtill/Llama-3-WhiteRabbitNeo-8B-v2.0:q4_0, Profile: ollama_whiterabbit
+2026-01-09 15:22:18,268 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
+2026-01-09 15:22:18,268 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: Test http://testphp.vulnweb.com/...
+2026-01-09 15:22:18,268 - agents.base_agent - INFO - Executing: /usr/bin/nmap -sV -sC -p 1-1000 --open testphp.vulnweb.com
+2026-01-09 15:22:18,269 - agents.base_agent - ERROR - Error executing nmap: [Errno 2] No such file or directory: '/usr/bin/nmap'
+2026-01-09 15:22:18,270 - agents.base_agent - INFO - Executing: /usr/bin/curl -s -I -k http://testphp.vulnweb.com/
+2026-01-09 15:22:18,706 - agents.base_agent - INFO - Executing: /usr/local/bin/nuclei -u http://testphp.vulnweb.com/ -silent -nc
+2026-01-09 15:22:30,920 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_152230
+2026-01-09 15:23:10,333 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_152310
+2026-01-09 15:23:10,333 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 15:23:10,333 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 15:23:10,334 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 15:23:10,334 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-3-opus-20240229, Profile: claude_opus_default
+2026-01-09 15:23:10,334 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent. Description: Focuses on web application vulnerabilities, leveraging recon and exploitation tools.
+2026-01-09 15:23:10,334 - agents.base_agent - INFO - Executing bug_bounty_hunter agent for input: Test http://testphp.vulnweb.com/...
+2026-01-09 15:23:10,334 - agents.base_agent - INFO - Executing: /usr/bin/nmap -sV -sC -p 1-1000 --open testphp.vulnweb.com
+2026-01-09 15:23:10,336 - agents.base_agent - ERROR - Error executing nmap: [Errno 2] No such file or directory: '/usr/bin/nmap'
+2026-01-09 15:23:10,336 - agents.base_agent - INFO - Executing: /usr/bin/curl -s -I -k http://testphp.vulnweb.com/
+2026-01-09 15:23:10,775 - agents.base_agent - INFO - Executing: /usr/local/bin/nuclei -u http://testphp.vulnweb.com/ -silent -nc
+2026-01-09 15:27:15,373 - agents.base_agent - INFO - Executing: /usr/bin/nikto -h http://testphp.vulnweb.com/ -nointeractive
+2026-01-09 15:27:15,374 - agents.base_agent - ERROR - Error executing nikto: [Errno 2] No such file or directory: '/usr/bin/nikto'
+2026-01-09 15:27:15,374 - agents.base_agent - INFO - Executing: /usr/local/bin/sqlmap -u http://testphp.vulnweb.com/ --batch --level=2 --risk=2 --random-agent --threads=3
+2026-01-09 15:27:16,525 - agents.base_agent - INFO - Executing: /usr/bin/ffuf -u http://testphp.vulnweb.com/FUZZ -w /usr/share/wordlists/dirb/common.txt -mc 200,301,302,403 -t 50
+2026-01-09 15:27:16,526 - agents.base_agent - ERROR - Error executing ffuf: [Errno 2] No such file or directory: '/usr/bin/ffuf'
+2026-01-09 15:27:17,047 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.466394 seconds
+2026-01-09 15:27:17,730 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.990376 seconds
+2026-01-09 15:27:18,981 - core.llm_manager - ERROR - Error generating raw response: Connection error.
+2026-01-09 15:27:18,983 - __main__ - INFO - Results saved to results/campaign_20260109_152310.json
+2026-01-09 15:27:18,985 - __main__ - INFO - Report generated: reports/report_20260109_152310.html
+2026-01-09 15:36:50,249 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_153650
+2026-01-09 15:36:50,249 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 15:36:50,249 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 15:36:50,252 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 15:36:50,252 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-3-opus-20240229, Profile: claude_opus_default
+2026-01-09 15:36:50,252 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent
+2026-01-09 15:39:31,557 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.416288 seconds
+2026-01-09 15:39:32,185 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.975090 seconds
+2026-01-09 15:39:33,424 - core.llm_manager - ERROR - Error generating raw response: Connection error.
+2026-01-09 15:39:33,661 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.494540 seconds
+2026-01-09 15:39:34,487 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.912874 seconds
+2026-01-09 15:39:35,719 - core.llm_manager - ERROR - Error generating raw response: Connection error.
+2026-01-09 15:39:35,721 - __main__ - INFO - Results saved to results/campaign_20260109_153650.json
+2026-01-09 21:21:25,368 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_212125
+2026-01-09 21:21:25,368 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 21:21:25,368 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 21:21:25,371 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 21:21:25,371 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-3-opus-20240229, Profile: claude_opus_default
+2026-01-09 21:21:25,371 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent
+2026-01-09 21:24:15,783 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.470846 seconds
+2026-01-09 21:24:16,476 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.883909 seconds
+2026-01-09 21:24:17,587 - core.llm_manager - ERROR - Error generating raw response: Connection error.
+2026-01-09 21:24:17,806 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.430765 seconds
+2026-01-09 21:24:18,929 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.832160 seconds
+2026-01-09 21:24:19,994 - core.llm_manager - ERROR - Error generating raw response: Connection error.
+2026-01-09 21:24:19,994 - __main__ - INFO - Results saved to results/campaign_20260109_212125.json
+2026-01-09 21:24:19,997 - __main__ - INFO - Report generated: reports/report_20260109_212125.html
+2026-01-09 21:30:56,421 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_213056
+2026-01-09 21:30:56,421 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 21:30:56,422 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 21:30:56,424 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 21:30:56,424 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-3-opus-20240229, Profile: claude_opus_default
+2026-01-09 21:30:56,424 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent
+2026-01-09 21:32:14,060 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.441367 seconds
+2026-01-09 21:32:14,709 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.982832 seconds
+2026-01-09 21:32:16,630 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.582831 seconds
+2026-01-09 21:32:18,418 - core.llm_manager - WARNING - Claude API connection error (attempt 1/3): Connection error.
+2026-01-09 21:32:18,418 - core.llm_manager - INFO - Retrying in 1.0s...
+2026-01-09 21:32:19,634 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.451210 seconds
+2026-01-09 21:32:20,310 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.839755 seconds
+2026-01-09 21:32:21,363 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.604430 seconds
+2026-01-09 21:32:23,171 - core.llm_manager - WARNING - Claude API connection error (attempt 2/3): Connection error.
+2026-01-09 21:32:23,171 - core.llm_manager - INFO - Retrying in 2.0s...
+2026-01-09 21:32:25,375 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.467985 seconds
+2026-01-09 21:32:26,054 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.900564 seconds
+2026-01-09 21:32:27,165 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.518861 seconds
+2026-01-09 21:32:28,901 - core.llm_manager - WARNING - Claude API connection error (attempt 3/3): Connection error.
+2026-01-09 21:32:28,902 - core.llm_manager - ERROR - Error generating raw response: Failed to connect to Claude API after 3 attempts: Connection error.
+2026-01-09 21:32:29,118 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.421690 seconds
+2026-01-09 21:32:29,758 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.833663 seconds
+2026-01-09 21:32:30,821 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.554424 seconds
+2026-01-09 21:32:32,730 - core.llm_manager - WARNING - Claude API connection error (attempt 1/3): Connection error.
+2026-01-09 21:32:32,730 - core.llm_manager - INFO - Retrying in 1.0s...
+2026-01-09 21:32:33,987 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.393485 seconds
+2026-01-09 21:32:34,599 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.968475 seconds
+2026-01-09 21:32:35,833 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.528886 seconds
+2026-01-09 21:32:37,592 - core.llm_manager - WARNING - Claude API connection error (attempt 2/3): Connection error.
+2026-01-09 21:32:37,592 - core.llm_manager - INFO - Retrying in 2.0s...
+2026-01-09 21:32:39,823 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.496181 seconds
+2026-01-09 21:32:40,528 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.836243 seconds
+2026-01-09 21:32:41,589 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.746444 seconds
+2026-01-09 21:32:43,570 - core.llm_manager - WARNING - Claude API connection error (attempt 3/3): Connection error.
+2026-01-09 21:32:43,570 - core.llm_manager - ERROR - Error generating raw response: Failed to connect to Claude API after 3 attempts: Connection error.
+2026-01-09 21:32:43,571 - __main__ - INFO - Results saved to results/campaign_20260109_213056.json
+2026-01-09 21:32:43,574 - __main__ - INFO - Report generated: reports/report_20260109_213056.html
+2026-01-09 21:40:59,505 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_214059
+2026-01-09 21:40:59,505 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 21:40:59,506 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 21:40:59,508 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 21:40:59,508 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 21:40:59,508 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent
+2026-01-09 21:43:45,178 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.473436 seconds
+2026-01-09 21:43:52,346 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.775400 seconds
+2026-01-09 21:43:59,704 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.551157 seconds
+2026-01-09 21:44:10,147 - core.llm_manager - WARNING - Claude API connection error (attempt 1/3): Connection error.
+2026-01-09 21:44:10,147 - core.llm_manager - INFO - Retrying in 1.0s...
+2026-01-09 21:44:17,431 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.377721 seconds
+2026-01-09 21:44:26,639 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.832601 seconds
+2026-01-09 21:44:36,229 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.559698 seconds
+2026-01-09 21:44:45,594 - core.llm_manager - WARNING - Claude API connection error (attempt 2/3): Connection error.
+2026-01-09 21:44:45,595 - core.llm_manager - INFO - Retrying in 2.0s...
+2026-01-09 21:45:40,601 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_214540
+2026-01-09 21:45:40,601 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 21:45:40,601 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 21:45:40,605 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 21:45:40,605 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 21:45:40,605 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent
+2026-01-09 21:48:23,437 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.466073 seconds
+2026-01-09 21:48:30,784 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.901871 seconds
+2026-01-09 21:48:39,254 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.891843 seconds
+2026-01-09 21:48:47,470 - core.llm_manager - WARNING - Claude API connection error (attempt 1/3): Connection error.
+2026-01-09 21:48:47,470 - core.llm_manager - INFO - Retrying in 1.0s...
+2026-01-09 21:48:55,693 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.495814 seconds
+2026-01-09 21:49:03,131 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.917409 seconds
+2026-01-09 21:49:09,718 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.668270 seconds
+2026-01-09 21:49:17,975 - core.llm_manager - WARNING - Claude API connection error (attempt 2/3): Connection error.
+2026-01-09 21:49:17,975 - core.llm_manager - INFO - Retrying in 2.0s...
+2026-01-09 21:49:27,741 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.461509 seconds
+2026-01-09 21:49:37,420 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.764362 seconds
+2026-01-09 21:49:46,856 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.681579 seconds
+2026-01-09 21:49:55,732 - core.llm_manager - WARNING - Claude API connection error (attempt 3/3): Connection error.
+2026-01-09 21:49:55,732 - core.llm_manager - ERROR - Error generating raw response: Failed to connect to Claude API after 3 attempts: Connection error.
+2026-01-09 21:50:12,483 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.391463 seconds
+2026-01-09 21:50:26,485 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.852497 seconds
+2026-01-09 21:50:44,334 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.998506 seconds
+2026-01-09 21:51:01,814 - core.llm_manager - WARNING - Claude API connection error (attempt 1/3): Connection error.
+2026-01-09 21:51:01,814 - core.llm_manager - INFO - Retrying in 1.0s...
+2026-01-09 21:51:18,215 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.376669 seconds
+2026-01-09 21:51:35,478 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.796112 seconds
+2026-01-09 21:51:53,615 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.699116 seconds
+2026-01-09 21:52:05,785 - core.llm_manager - WARNING - Claude API connection error (attempt 2/3): Connection error.
+2026-01-09 21:52:05,785 - core.llm_manager - INFO - Retrying in 2.0s...
+2026-01-09 21:52:24,787 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.464746 seconds
+2026-01-09 21:52:41,245 - anthropic._base_client - INFO - Retrying request to /v1/messages in 0.985268 seconds
+2026-01-09 21:52:58,448 - anthropic._base_client - INFO - Retrying request to /v1/messages in 1.620720 seconds
+2026-01-09 21:53:16,123 - core.llm_manager - WARNING - Claude API connection error (attempt 3/3): Connection error.
+2026-01-09 21:53:16,123 - core.llm_manager - ERROR - Error generating raw response: Failed to connect to Claude API after 3 attempts: Connection error.
+2026-01-09 21:53:16,124 - __main__ - INFO - Results saved to results/campaign_20260109_214540.json
+2026-01-09 21:53:16,127 - __main__ - INFO - Report generated: reports/report_20260109_214540.html
+2026-01-09 21:56:06,802 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_215606
+2026-01-09 21:56:06,802 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-09 21:56:06,803 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 21:56:06,804 - core.llm_manager - INFO - Loaded 12 prompts from Markdown library.
+2026-01-09 21:56:06,805 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 21:56:06,805 - agents.base_agent - INFO - Initialized bug_bounty_hunter agent
+2026-01-09 21:59:35,167 - __main__ - INFO - Results saved to results/campaign_20260109_215606.json
+2026-01-09 21:59:35,173 - __main__ - INFO - Report generated: reports/report_20260109_215606.html
+2026-01-09 22:01:55,119 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220155
+2026-01-09 22:01:55,120 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:01:55,120 - __main__ - ERROR - Agent role 'Pentestfull' not found in configuration.
+2026-01-09 22:02:52,978 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220252
+2026-01-09 22:02:52,978 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:02:52,978 - __main__ - ERROR - Agent role 'Pentestfull' not found in configuration.
+2026-01-09 22:03:51,858 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220351
+2026-01-09 22:03:51,858 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:03:51,858 - __main__ - ERROR - Agent role 'Pentestfull' not found in configuration.
+2026-01-09 22:04:11,723 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220411
+2026-01-09 22:04:11,723 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:04:11,723 - __main__ - ERROR - Agent role 'Pentestfull' not found in configuration.
+2026-01-09 22:04:25,438 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220425
+2026-01-09 22:04:28,726 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220428
+2026-01-09 22:05:50,800 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220550
+2026-01-09 22:05:50,800 - __main__ - INFO - Starting execution for agent role: /opt/NeuroSploitv2/prompts/md_library/Pentestfull.md
+2026-01-09 22:05:50,800 - __main__ - INFO - Agent role '/opt/NeuroSploitv2/prompts/md_library/Pentestfull.md' not in config.json, using dynamic mode with prompt file.
+2026-01-09 22:05:50,800 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 22:05:50,801 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-09 22:05:50,801 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 22:05:50,801 - __main__ - ERROR - Prompts for agent role '/opt/NeuroSploitv2/prompts/md_library/Pentestfull.md' not found in MD library.
+2026-01-09 22:06:02,465 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_220602
+2026-01-09 22:06:02,465 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:06:02,465 - __main__ - INFO - Agent role 'Pentestfull' not in config.json, using dynamic mode with prompt file.
+2026-01-09 22:06:02,465 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 22:06:02,466 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-09 22:06:02,466 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 22:06:02,466 - agents.base_agent - INFO - Initialized Pentestfull agent
+2026-01-09 22:16:20,776 - __main__ - INFO - Results saved to results/campaign_20260109_220602.json
+2026-01-09 22:16:20,782 - __main__ - INFO - Report generated: reports/report_20260109_220602.html
+2026-01-09 22:21:27,009 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_222127
+2026-01-09 22:21:27,009 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:21:27,009 - __main__ - INFO - Agent role 'Pentestfull' not in config.json, using dynamic mode with prompt file.
+2026-01-09 22:21:27,010 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 22:21:27,013 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-09 22:21:27,013 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 22:21:27,013 - agents.base_agent - INFO - Initialized Pentestfull agent
+2026-01-09 22:25:50,723 - __main__ - INFO - Results saved to results/campaign_20260109_222127.json
+2026-01-09 22:25:50,730 - __main__ - INFO - Report generated: reports/report_20260109_222127.html
+2026-01-09 22:29:14,140 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260109_222914
+2026-01-09 22:29:14,140 - __main__ - INFO - Starting execution for agent role: Pentestfull
+2026-01-09 22:29:14,140 - __main__ - INFO - Agent role 'Pentestfull' not in config.json, using dynamic mode with prompt file.
+2026-01-09 22:29:14,141 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-09 22:29:14,144 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-09 22:29:14,144 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-09 22:29:14,144 - agents.base_agent - INFO - Initialized Pentestfull - Autonomous Agent
+2026-01-09 22:31:51,657 - __main__ - INFO - Results saved to results/campaign_20260109_222914.json
+2026-01-09 22:31:51,665 - __main__ - INFO - Report generated: reports/report_20260109_222914.html
