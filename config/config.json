@@ -46,17 +46,17 @@
             },
             "claude_opus_default": {
                 "provider": "claude",
-                "model": "claude-3-opus-20240229",
+                "model": "claude-sonnet-4-20250514",
                 "api_key": "${ANTHROPIC_API_KEY}",
-                "temperature": 0.7,
-                "max_tokens": 4096,
+                "temperature": 0.8,
+                "max_tokens": 8192,
                 "input_token_limit": 200000,
-                "output_token_limit": 4096,
-                "cache_enabled": true,
+                "output_token_limit": 8192,
+                "cache_enabled": false,
                 "search_context_level": "high",
-                "pdf_support_enabled": true,
-                "guardrails_enabled": true,
-                "hallucination_mitigation_strategy": "self_reflection"
+                "pdf_support_enabled": false,
+                "guardrails_enabled": false,
+                "hallucination_mitigation_strategy": null
             },
             "gpt_4o_default": {
                 "provider": "gpt",
@@ -171,8 +171,20 @@
         "nmap": "/usr/bin/nmap",
         "metasploit": "/usr/bin/msfconsole",
         "burpsuite": "/usr/bin/burpsuite",
-        "sqlmap": "/usr/bin/sqlmap",
-        "hydra": "/usr/bin/hydra"
+        "sqlmap": "/usr/local/bin/sqlmap",
+        "hydra": "/usr/bin/hydra",
+        "nuclei": "/usr/local/bin/nuclei",
+        "nikto": "/usr/bin/nikto",
+        "gobuster": "/usr/bin/gobuster",
+        "ffuf": "/usr/bin/ffuf",
+        "subfinder": "/opt/homebrew/bin/subfinder",
+        "httpx": "/usr/local/bin/httpx",
+        "whatweb": "/usr/bin/whatweb",
+        "curl": "/usr/bin/curl",
+        "wpscan": "/usr/bin/wpscan",
+        "dirsearch": "/usr/local/bin/dirsearch",
+        "wafw00f": "/usr/local/bin/wafw00f",
+        "jq": "/usr/bin/jq"
     },
     "output": {
         "format": "json",
