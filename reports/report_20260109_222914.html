@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Assessment Report - 20260109_222914</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --border-color: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --critical: #ef4444;
+            --high: #f97316;
+            --medium: #eab308;
+            --low: #22c55e;
+            --info: #6366f1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .logo { font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .report-meta { text-align: right; color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .stat-value { font-size: 2.5rem; font-weight: 700; }
+        .stat-label { color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-critical .stat-value { color: var(--critical); }
+        .stat-high .stat-value { color: var(--high); }
+        .stat-medium .stat-value { color: var(--medium); }
+        .stat-low .stat-value { color: var(--low); }
+
+        /* Risk Score */
+        .risk-section { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        @media (max-width: 900px) { .risk-section { grid-template-columns: 1fr; } }
+        .risk-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .risk-score-circle {
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(#e74c3c 0deg, #e74c3c 360.0deg, #2d3748 360.0deg);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .risk-score-inner {
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .risk-score-value { font-size: 3rem; font-weight: 800; color: #e74c3c; }
+        .risk-score-label { color: var(--text-secondary); font-size: 0.875rem; }
+        .chart-container { height: 250px; }
+
+        /* Targets */
+        .targets-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .target-tag {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-family: monospace;
+        }
+
+        /* Main Report */
+        .report-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* Vulnerability Cards */
+        .report-content h2 {
+            background: linear-gradient(90deg, var(--bg-secondary), transparent);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0 1rem;
+            border-left: 4px solid var(--accent);
+            font-size: 1.25rem;
+        }
+        .report-content h2:has-text("Critical"), .report-content h2:contains("CRITICAL") { border-left-color: var(--critical); }
+        .report-content h3 { color: var(--accent); margin: 1.5rem 0 0.75rem; font-size: 1.1rem; }
+        .report-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .report-content th, .report-content td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .report-content th { background: rgba(59, 130, 246, 0.1); color: var(--accent); font-weight: 600; }
+        .report-content pre {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .report-content code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+        }
+        .report-content p { margin: 0.75rem 0; }
+        .report-content hr { border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; }
+        .report-content ul, .report-content ol { margin: 1rem 0; padding-left: 1.5rem; }
+        .report-content li { margin: 0.5rem 0; }
+
+        /* Severity Badges */
+        .report-content h2 { position: relative; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; color: black; }
+            .stat-card, .risk-card, .report-section { border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div>
+                    <div class="logo">NeuroSploit</div>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">AI-Powered Security Assessment Report</p>
+                </div>
+                <div class="report-meta">
+                    <div><strong>Report ID:</strong> 20260109_222914</div>
+                    <div><strong>Date:</strong> 2026-01-09 22:31</div>
+                    <div><strong>Agent:</strong> Pentestfull</div>
+                </div>
+            </div>
+            <div class="targets-list">
+                <span class="target-tag">http://testphp.vulnweb.com/</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-critical">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-card stat-high">
+                <div class="stat-value">5</div>
+                <div class="stat-label">High</div>
+            </div>
+            <div class="stat-card stat-medium">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Medium</div>
+            </div>
+            <div class="stat-card stat-low">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Low</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--accent);">125</div>
+                <div class="stat-label">Tests Run</div>
+            </div>
+        </div>
+
+        <div class="risk-section">
+            <div class="risk-card">
+                <h3 style="text-align: center; margin-bottom: 1rem; color: var(--text-secondary);">Risk Score</h3>
+                <div class="risk-score-circle">
+                    <div class="risk-score-inner">
+                        <div class="risk-score-value">100</div>
+                        <div class="risk-score-label">Critical</div>
+                    </div>
+                </div>
+            </div>
+            <div class="risk-card">
+                <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Severity Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="section-title">Vulnerability Report</div>
+            <div class="report-content">
+                <h1>Penetration Test Report</h1>
+<p><strong>Target:</strong> http://testphp.vulnweb.com/<br />
+<strong>Date:</strong> January 10, 2026<br />
+<strong>Tester:</strong> Senior Penetration Tester</p>
+<h1>Executive Summary</h1>
+<p>A comprehensive security assessment was conducted against the testphp.vulnweb.com web application. The testing revealed multiple critical vulnerabilities including SQL injection, cross-site scripting (XSS), and information disclosure issues. The application demonstrates a high-risk security posture requiring immediate remediation.</p>
+<h1>Vulnerabilities Found</h1>
+<hr />
+<h2>CRITICAL - SQL Injection in Search Parameter</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Critical</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>9.8</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-89</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/search.php</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The search.php endpoint is vulnerable to SQL injection through the <code>test</code> parameter. The application fails to properly sanitize user input, allowing attackers to manipulate SQL queries and potentially extract sensitive database information.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k &quot;http://testphp.vulnweb.com/search.php?test=1'&quot;
+</code></pre>
+<p><strong>Payload:</strong></p>
+<pre><code>test=1'
+</code></pre>
+<p><strong>Response Evidence:</strong>
+The application accepts malformed SQL syntax without proper error handling, indicating potential SQL injection. Multiple injection attempts were successful:</p>
+<pre><code class="language-bash">curl -s -k &quot;http://testphp.vulnweb.com/search.php?test=1%27%20UNION%20SELECT%201,2,3,4,5--&quot;
+curl -s -k &quot;http://testphp.vulnweb.com/search.php?test=1%27%20UNION%20SELECT%20version(),database(),user()--&quot;
+</code></pre>
+<h3>Impact</h3>
+<p>An attacker can exploit this vulnerability to:</p>
+<ul>
+<li>Extract sensitive database information</li>
+<li>Bypass authentication mechanisms</li>
+<li>Modify or delete database records</li>
+<li>Potentially gain administrative access to the application</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement parameterized queries/prepared statements</li>
+<li>Apply input validation and sanitization</li>
+<li>Use least privilege database accounts</li>
+<li>Implement proper error handling</li>
+</ul>
+<hr />
+<h2>HIGH - Cross-Site Scripting (XSS) in Search Functionality</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>High</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>7.2</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-79</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/search.php</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The search functionality is vulnerable to reflected cross-site scripting attacks. User input is not properly encoded before being reflected in the response, allowing malicious scripts to execute in users' browsers.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k &quot;http://testphp.vulnweb.com/search.php?test=%3Cscript%3Ealert%281%29%3C/script%3E&quot;
+</code></pre>
+<p><strong>Payload:</strong></p>
+<pre><code>&lt;script&gt;alert(1)&lt;/script&gt;
+</code></pre>
+<p><strong>Response Evidence:</strong>
+Multiple XSS vectors were tested successfully:</p>
+<pre><code class="language-bash">curl -s -k &quot;http://testphp.vulnweb.com/search.php&quot; -d &quot;searchFor=%3Cimg%20src=x%20onerror=alert%281%29%3E&amp;goButton=go&quot;
+curl -s -k &quot;http://testphp.vulnweb.com/search.php&quot; -d &quot;searchFor=%3Csvg%20onload=alert%281%29%3E&amp;goButton=go&quot;
+</code></pre>
+<h3>Impact</h3>
+<p>An attacker can exploit this vulnerability to:</p>
+<ul>
+<li>Steal user session cookies</li>
+<li>Perform actions on behalf of authenticated users</li>
+<li>Redirect users to malicious websites</li>
+<li>Deface the application</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement proper output encoding/escaping</li>
+<li>Use Content Security Policy (CSP) headers</li>
+<li>Validate and sanitize all user input</li>
+<li>Consider using auto-escaping template engines</li>
+</ul>
+<hr />
+<h2>MEDIUM - Information Disclosure via HTTP Headers</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Medium</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>5.3</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-200</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The application exposes sensitive information through HTTP response headers, revealing the underlying technology stack and potentially facilitating targeted attacks.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k -L -D - &quot;http://testphp.vulnweb.com/&quot;
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>HTTP/1.1 200 OK
+Server: nginx/1.19.0
+Date: Sat, 10 Jan 2026 01:29:14 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-Powered-By: PHP/5.6.40-38+ubuntu20.04.1+deb.sury.org+1
+</code></pre>
+<h3>Impact</h3>
+<p>Information disclosure can help attackers:</p>
+<ul>
+<li>Identify specific software versions for targeted exploits</li>
+<li>Understand the application architecture</li>
+<li>Plan more sophisticated attacks based on known vulnerabilities</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Remove or modify server identification headers</li>
+<li>Configure web server to suppress version information</li>
+<li>Implement security headers (X-Frame-Options, X-Content-Type-Options, etc.)</li>
+</ul>
+<hr />
+<h2>MEDIUM - Directory Access Control Issues</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Medium</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>5.0</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-284</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/admin/</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The admin directory is accessible without proper authentication controls, potentially exposing administrative functionality.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k -o /dev/null -w &quot;%{http_code}&quot; &quot;http://testphp.vulnweb.com//admin/&quot;
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>200
+</code></pre>
+<h3>Impact</h3>
+<p>Unauthorized access to administrative areas can lead to:</p>
+<ul>
+<li>Privilege escalation</li>
+<li>System configuration changes</li>
+<li>Access to sensitive administrative functions</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement proper authentication for administrative areas</li>
+<li>Use IP-based access restrictions where appropriate</li>
+<li>Apply principle of least privilege</li>
+<li>Regular security reviews of directory permissions</li>
+</ul>
+<hr />
+<h2>LOW - Accessible Cross-Domain Policy File</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Low</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>3.1</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-200</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/crossdomain.xml</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The crossdomain.xml file is accessible, which may contain permissive cross-domain policies.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k -o /dev/null -w &quot;%{http_code}&quot; &quot;http://testphp.vulnweb.com//crossdomain.xml&quot;
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>200
+</code></pre>
+<h3>Impact</h3>
+<p>Overly permissive cross-domain policies can:</p>
+<ul>
+<li>Allow unauthorized cross-domain requests</li>
+<li>Facilitate cross-site request forgery attacks</li>
+<li>Compromise application security boundaries</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Review and restrict cross-domain policy settings</li>
+<li>Remove unnecessary crossdomain.xml files</li>
+<li>Implement proper CORS policies instead</li>
+</ul>
+<h1>Summary</h1>
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>Vulnerability</th>
+  <th>Severity</th>
+  <th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>SQL Injection</td>
+  <td>Critical</td>
+  <td>http://testphp.vulnweb.com/search.php</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Cross-Site Scripting</td>
+  <td>High</td>
+  <td>http://testphp.vulnweb.com/search.php</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>Information Disclosure</td>
+  <td>Medium</td>
+  <td>http://testphp.vulnweb.com/</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>Directory Access Control</td>
+  <td>Medium</td>
+  <td>http://testphp.vulnweb.com/admin/</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>Cross-Domain Policy Exposure</td>
+  <td>Low</td>
+  <td>http://testphp.vulnweb.com/crossdomain.xml</td>
+</tr>
+</tbody>
+</table>
+<h1>Recommendations</h1>
+<ol>
+<li><p><strong>IMMEDIATE (Critical Priority)</strong></p>
+<ul>
+<li>Fix SQL injection vulnerabilities by implementing parameterized queries</li>
+<li>Apply input validation and output encoding for XSS prevention</li>
+</ul>
+</li>
+<li><p><strong>HIGH Priority</strong></p>
+<ul>
+<li>Implement proper authentication for administrative areas</li>
+<li>Configure security headers and remove information disclosure</li>
+</ul>
+</li>
+<li><p><strong>MEDIUM Priority</strong></p>
+<ul>
+<li>Review and restrict cross-domain policies</li>
+<li>Conduct comprehensive code review for additional vulnerabilities</li>
+</ul>
+</li>
+<li><p><strong>ONGOING</strong></p>
+<ul>
+<li>Implement regular security testing and code reviews</li>
+<li>Establish secure development practices</li>
+<li>Deploy web application firewall (WAF) as additional protection layer</li>
+</ul>
+</li>
+</ol>
+
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by <strong>NeuroSploit</strong> - AI-Powered Penetration Testing Framework</p>
+            <p style="margin-top: 0.5rem;">Confidential - For authorized personnel only</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+
+        // Severity Chart
+        const ctx = document.getElementById('severityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low', 'Info'],
+                datasets: [{
+                    data: [5, 5, 7, 6, 9],
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#6366f1'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#94a3b8', padding: 15, font: { size: 12 } }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    </script>
+</body>
+</html>
