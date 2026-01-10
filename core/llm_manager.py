@@ -7,11 +7,17 @@ Supports: Claude, GPT, Gemini, Ollama, and custom models
 import os
 import json
 import subprocess
+import time
 from typing import Dict, List, Optional, Any
 import logging
 import requests
-from pathlib import Path # Added for Path
-import re # Added for regex operations
+from pathlib import Path
+import re
+
+# Retry configuration
+MAX_RETRIES = 3
+RETRY_DELAY = 1.0  # seconds
+RETRY_MULTIPLIER = 2.0
 
 logger = logging.getLogger(__name__)
 
@@ -58,12 +64,12 @@ class LLMManager:
         return api_key_config
     
     def _load_all_prompts(self) -> Dict:
-        """Load prompts from both JSON library and Markdown library files."""
+        """Load prompts from JSON library and Markdown files (both prompts/ and prompts/md_library/)."""
         all_prompts = {
             "json_prompts": {},
             "md_prompts": {}
         }
-        
+
         # Load from JSON library
         if self.json_prompts_file_path.exists():
             try:
@@ -75,32 +81,45 @@ class LLMManager:
         else:
             logger.warning(f"JSON prompts file not found at {self.json_prompts_file_path}. Some AI functionalities might be limited.")
 
-        # Load from Markdown library
-        if self.md_prompts_dir_path.is_dir():
-            for md_file in self.md_prompts_dir_path.glob("*.md"):
-                try:
-                    content = md_file.read_text()
-                    prompt_name = md_file.stem # Use filename as prompt name
+        # Load from both prompts/ root and prompts/md_library/
+        prompts_root = Path("prompts")
+        md_dirs = [prompts_root, self.md_prompts_dir_path]
 
-                    user_prompt_match = re.search(r"## User Prompt\n(.*?)(?=\n## System Prompt|\Z)", content, re.DOTALL)
-                    system_prompt_match = re.search(r"## System Prompt\n(.*?)(?=\n## User Prompt|\Z)", content, re.DOTALL)
+        for md_dir in md_dirs:
+            if md_dir.is_dir():
+                for md_file in md_dir.glob("*.md"):
+                    try:
+                        content = md_file.read_text()
+                        prompt_name = md_file.stem  # Use filename as prompt name
 
-                    user_prompt = user_prompt_match.group(1).strip() if user_prompt_match else ""
-                    system_prompt = system_prompt_match.group(1).strip() if system_prompt_match else ""
+                        # Skip if already loaded (md_library has priority)
+                        if prompt_name in all_prompts["md_prompts"]:
+                            continue
 
-                    if user_prompt or system_prompt:
-                        all_prompts["md_prompts"][prompt_name] = {
-                            "user_prompt": user_prompt,
-                            "system_prompt": system_prompt
-                        }
-                    else:
-                        logger.warning(f"No valid User or System Prompt found in {md_file.name}. Skipping.")
+                        # Try structured format first (## User Prompt / ## System Prompt)
+                        user_prompt_match = re.search(r"## User Prompt\n(.*?)(?=\n## System Prompt|\Z)", content, re.DOTALL)
+                        system_prompt_match = re.search(r"## System Prompt\n(.*?)(?=\n## User Prompt|\Z)", content, re.DOTALL)
 
-                except Exception as e:
-                    logger.error(f"Error loading prompt from {md_file.name}: {e}")
-            logger.info(f"Loaded {len(all_prompts['md_prompts'])} prompts from Markdown library.")
-        else:
-            logger.warning(f"Markdown prompts directory not found at {self.md_prompts_dir_path}. Some AI functionalities might be limited.")
+                        user_prompt = user_prompt_match.group(1).strip() if user_prompt_match else ""
+                        system_prompt = system_prompt_match.group(1).strip() if system_prompt_match else ""
+
+                        # If no structured format, use entire content as system_prompt
+                        if not user_prompt and not system_prompt:
+                            system_prompt = content.strip()
+                            user_prompt = ""  # Will be filled with user input at runtime
+                            logger.debug(f"Loaded {md_file.name} as full-content prompt")
+
+                        if user_prompt or system_prompt:
+                            all_prompts["md_prompts"][prompt_name] = {
+                                "user_prompt": user_prompt,
+                                "system_prompt": system_prompt
+                            }
+                            logger.debug(f"Loaded prompt: {prompt_name}")
+
+                    except Exception as e:
+                        logger.error(f"Error loading prompt from {md_file.name}: {e}")
+
+        logger.info(f"Loaded {len(all_prompts['md_prompts'])} prompts from Markdown files.")
         
         return all_prompts
 
@@ -233,63 +252,267 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
             self.hallucination_mitigation_strategy = original_mitigation_state # Restore original state
     
     def _generate_claude(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        """Generate using Claude API"""
-        import anthropic
-        
-        client = anthropic.Anthropic(api_key=self.api_key)
-        
-        messages = [{"role": "user", "content": prompt}]
-        
-        response = client.messages.create(
-            model=self.model,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            system=system_prompt or "",
-            messages=messages
-        )
-        
-        return response.content[0].text
+        """Generate using Claude API with requests (bypasses httpx/SSL issues on macOS)"""
+        if not self.api_key:
+            raise ValueError("ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml")
+
+        url = "https://api.anthropic.com/v1/messages"
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
+
+        data = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+
+        if system_prompt:
+            data["system"] = system_prompt
+
+        last_error = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                logger.debug(f"Claude API request attempt {attempt + 1}/{MAX_RETRIES}")
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json=data,
+                    timeout=120
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    return result["content"][0]["text"]
+
+                elif response.status_code == 401:
+                    logger.error("Claude API authentication failed. Check your ANTHROPIC_API_KEY")
+                    raise ValueError(f"Invalid API key: {response.text}")
+
+                elif response.status_code == 429:
+                    last_error = f"Rate limit: {response.text}"
+                    logger.warning(f"Claude API rate limit hit (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** (attempt + 1))
+                        logger.info(f"Rate limited. Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+
+                elif response.status_code >= 500:
+                    last_error = f"Server error {response.status_code}: {response.text}"
+                    logger.warning(f"Claude API server error (attempt {attempt + 1}/{MAX_RETRIES}): {response.status_code}")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                        logger.info(f"Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+
+                else:
+                    logger.error(f"Claude API error: {response.status_code} - {response.text}")
+                    raise ValueError(f"API error {response.status_code}: {response.text}")
+
+            except requests.exceptions.Timeout as e:
+                last_error = e
+                logger.warning(f"Claude API timeout (attempt {attempt + 1}/{MAX_RETRIES})")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+            except requests.exceptions.ConnectionError as e:
+                last_error = e
+                logger.warning(f"Claude API connection error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                logger.warning(f"Claude API request error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+        raise ConnectionError(f"Failed to connect to Claude API after {MAX_RETRIES} attempts: {last_error}")
     
     def _generate_gpt(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        """Generate using OpenAI GPT API"""
-        import openai
-        
-        client = openai.OpenAI(api_key=self.api_key)
-        
+        """Generate using OpenAI GPT API with requests (bypasses SDK issues)"""
+        if not self.api_key:
+            raise ValueError("OPENAI_API_KEY not set. Please set the environment variable or configure in config.yaml")
+
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
-        
-        response = client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens
-        )
-        
-        return response.choices[0].message.content
+
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens
+        }
+
+        last_error = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                logger.debug(f"OpenAI API request attempt {attempt + 1}/{MAX_RETRIES}")
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json=data,
+                    timeout=120
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    return result["choices"][0]["message"]["content"]
+
+                elif response.status_code == 401:
+                    logger.error("OpenAI API authentication failed. Check your OPENAI_API_KEY")
+                    raise ValueError(f"Invalid API key: {response.text}")
+
+                elif response.status_code == 429:
+                    last_error = f"Rate limit: {response.text}"
+                    logger.warning(f"OpenAI API rate limit hit (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** (attempt + 1))
+                        logger.info(f"Rate limited. Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+
+                elif response.status_code >= 500:
+                    last_error = f"Server error {response.status_code}: {response.text}"
+                    logger.warning(f"OpenAI API server error (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                        logger.info(f"Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+
+                else:
+                    logger.error(f"OpenAI API error: {response.status_code} - {response.text}")
+                    raise ValueError(f"API error {response.status_code}: {response.text}")
+
+            except requests.exceptions.Timeout as e:
+                last_error = e
+                logger.warning(f"OpenAI API timeout (attempt {attempt + 1}/{MAX_RETRIES})")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+            except requests.exceptions.ConnectionError as e:
+                last_error = e
+                logger.warning(f"OpenAI API connection error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                logger.warning(f"OpenAI API request error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+        raise ConnectionError(f"Failed to connect to OpenAI API after {MAX_RETRIES} attempts: {last_error}")
     
     def _generate_gemini(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        """Generate using Google Gemini API"""
-        import google.generativeai as genai
-        
-        genai.configure(api_key=self.api_key)
-        model = genai.GenerativeModel(self.model)
-        
+        """Generate using Google Gemini API with requests (bypasses SDK issues)"""
+        if not self.api_key:
+            raise ValueError("GOOGLE_API_KEY not set. Please set the environment variable or configure in config.yaml")
+
+        # Use v1beta for generateContent endpoint
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+        headers = {
+            "Content-Type": "application/json"
+        }
+
         full_prompt = prompt
         if system_prompt:
             full_prompt = f"{system_prompt}\n\n{prompt}"
-        
-        response = model.generate_content(
-            full_prompt,
-            generation_config={
-                'temperature': self.temperature,
-                'max_output_tokens': self.max_tokens,
+
+        data = {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {
+                "temperature": self.temperature,
+                "maxOutputTokens": self.max_tokens
             }
-        )
-        
-        return response.text
+        }
+
+        last_error = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                logger.debug(f"Gemini API request attempt {attempt + 1}/{MAX_RETRIES}")
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json=data,
+                    timeout=120
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    return result["candidates"][0]["content"]["parts"][0]["text"]
+
+                elif response.status_code == 401 or response.status_code == 403:
+                    logger.error("Gemini API authentication failed. Check your GOOGLE_API_KEY")
+                    raise ValueError(f"Invalid API key: {response.text}")
+
+                elif response.status_code == 429:
+                    last_error = f"Rate limit: {response.text}"
+                    logger.warning(f"Gemini API rate limit hit (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** (attempt + 1))
+                        logger.info(f"Rate limited. Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+
+                elif response.status_code >= 500:
+                    last_error = f"Server error {response.status_code}: {response.text}"
+                    logger.warning(f"Gemini API server error (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                        logger.info(f"Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+
+                else:
+                    logger.error(f"Gemini API error: {response.status_code} - {response.text}")
+                    raise ValueError(f"API error {response.status_code}: {response.text}")
+
+            except requests.exceptions.Timeout as e:
+                last_error = e
+                logger.warning(f"Gemini API timeout (attempt {attempt + 1}/{MAX_RETRIES})")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+            except requests.exceptions.ConnectionError as e:
+                last_error = e
+                logger.warning(f"Gemini API connection error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                logger.warning(f"Gemini API request error (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                    logger.info(f"Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+
+        raise ConnectionError(f"Failed to connect to Gemini API after {MAX_RETRIES} attempts: {last_error}")
     
     def _generate_gemini_cli(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """Generate using Gemini CLI"""
