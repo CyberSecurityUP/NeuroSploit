@@ -92,7 +92,7 @@ pip3 install -r requirements.txt
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/NeuroSploitv2.git
+git clone https://github.com/CyberSecurityUP/NeuroSploit
 cd NeuroSploitv2
 
 # Create config from example
