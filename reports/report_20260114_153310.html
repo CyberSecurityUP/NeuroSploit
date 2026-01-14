@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Assessment Report - 20260114_153310</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --border-color: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --critical: #ef4444;
+            --high: #f97316;
+            --medium: #eab308;
+            --low: #22c55e;
+            --info: #6366f1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .logo { font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .report-meta { text-align: right; color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .stat-value { font-size: 2.5rem; font-weight: 700; }
+        .stat-label { color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-critical .stat-value { color: var(--critical); }
+        .stat-high .stat-value { color: var(--high); }
+        .stat-medium .stat-value { color: var(--medium); }
+        .stat-low .stat-value { color: var(--low); }
+
+        /* Risk Score */
+        .risk-section { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        @media (max-width: 900px) { .risk-section { grid-template-columns: 1fr; } }
+        .risk-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .risk-score-circle {
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(#e74c3c 0deg, #e74c3c 360.0deg, #2d3748 360.0deg);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .risk-score-inner {
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .risk-score-value { font-size: 3rem; font-weight: 800; color: #e74c3c; }
+        .risk-score-label { color: var(--text-secondary); font-size: 0.875rem; }
+        .chart-container { height: 250px; }
+
+        /* Targets */
+        .targets-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .target-tag {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-family: monospace;
+        }
+
+        /* Main Report */
+        .report-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* Vulnerability Cards */
+        .report-content h2 {
+            background: linear-gradient(90deg, var(--bg-secondary), transparent);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0 1rem;
+            border-left: 4px solid var(--accent);
+            font-size: 1.25rem;
+        }
+        .report-content h2:has-text("Critical"), .report-content h2:contains("CRITICAL") { border-left-color: var(--critical); }
+        .report-content h3 { color: var(--accent); margin: 1.5rem 0 0.75rem; font-size: 1.1rem; }
+        .report-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .report-content th, .report-content td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .report-content th { background: rgba(59, 130, 246, 0.1); color: var(--accent); font-weight: 600; }
+        .report-content pre {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .report-content code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+        }
+        .report-content p { margin: 0.75rem 0; }
+        .report-content hr { border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; }
+        .report-content ul, .report-content ol { margin: 1rem 0; padding-left: 1.5rem; }
+        .report-content li { margin: 0.5rem 0; }
+
+        /* Severity Badges */
+        .report-content h2 { position: relative; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; color: black; }
+            .stat-card, .risk-card, .report-section { border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div>
+                    <div class="logo">NeuroSploit</div>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">AI-Powered Security Assessment Report</p>
+                </div>
+                <div class="report-meta">
+                    <div><strong>Report ID:</strong> 20260114_153310</div>
+                    <div><strong>Date:</strong> 2026-01-14 15:34</div>
+                    <div><strong>Agent:</strong> bug_bounty_hunter</div>
+                </div>
+            </div>
+            <div class="targets-list">
+                <span class="target-tag">testphp.vulnweb.com</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card stat-critical">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-card stat-high">
+                <div class="stat-value">4</div>
+                <div class="stat-label">High</div>
+            </div>
+            <div class="stat-card stat-medium">
+                <div class="stat-value">4</div>
+                <div class="stat-label">Medium</div>
+            </div>
+            <div class="stat-card stat-low">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Low</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--accent);">52</div>
+                <div class="stat-label">Tests Run</div>
+            </div>
+        </div>
+
+        <div class="risk-section">
+            <div class="risk-card">
+                <h3 style="text-align: center; margin-bottom: 1rem; color: var(--text-secondary);">Risk Score</h3>
+                <div class="risk-score-circle">
+                    <div class="risk-score-inner">
+                        <div class="risk-score-value">100</div>
+                        <div class="risk-score-label">Critical</div>
+                    </div>
+                </div>
+            </div>
+            <div class="risk-card">
+                <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Severity Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="section-title">Vulnerability Report</div>
+            <div class="report-content">
+                <h1>Executive Summary</h1>
+<p>A comprehensive penetration test was conducted against testphp.vulnweb.com, a deliberately vulnerable web application used for security testing. The assessment identified multiple critical vulnerabilities including SQL injection, Local File Inclusion (LFI), information disclosure, and HTTP Parameter Pollution. These vulnerabilities pose significant security risks and require immediate remediation.</p>
+<h1>Vulnerabilities Found</h1>
+<hr />
+<h2>CRITICAL - SQL Injection in listproducts.php</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Critical</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>9.8</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-89</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/listproducts.php</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The <code>cat</code> parameter in listproducts.php is vulnerable to SQL injection. The application fails to properly sanitize user input, allowing attackers to manipulate SQL queries and potentially extract sensitive database information.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k &quot;http://testphp.vulnweb.com/listproducts.php?cat=1'&quot;
+</code></pre>
+<p><strong>Payload:</strong></p>
+<pre><code>cat=1'
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot;
+&quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;
+&lt;html&gt;&lt;!-- InstanceBegin template=&quot;/Templates/main_dynamic_template.dwt.php&quot; codeOutsideHTMLIsLocked=&quot;false&quot; --&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=iso-8859-2&quot;&gt;
+
+&lt;!-- InstanceBeginEditable name=&quot;document_title_rgn&quot; --&gt;
+&lt;title&gt;pictures&lt;/title&gt;
+&lt;!-- InstanceEndEditable --&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot; type=&quot;text/css&quot;&gt;
+</code></pre>
+<p>The application returns a different response structure when a single quote is injected, indicating the SQL query is being modified and the application is vulnerable to SQL injection.</p>
+<h3>Impact</h3>
+<p>An attacker could exploit this vulnerability to:</p>
+<ul>
+<li>Extract sensitive database information</li>
+<li>Bypass authentication mechanisms</li>
+<li>Modify or delete database records</li>
+<li>Potentially gain unauthorized access to the underlying system</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement parameterized queries or prepared statements</li>
+<li>Apply input validation and sanitization</li>
+<li>Use least privilege database accounts</li>
+<li>Implement proper error handling to prevent information disclosure</li>
+</ul>
+<hr />
+<h2>HIGH - Local File Inclusion in showimage.php</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>High</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>8.6</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-22</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/showimage.php</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The <code>file</code> parameter in showimage.php is vulnerable to Local File Inclusion (LFI). The application attempts to open files based on user input without proper validation, allowing attackers to potentially access sensitive system files.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k &quot;testphp.vulnweb.com/showimage.php?file=....//....//....//etc/passwd&quot;
+</code></pre>
+<p><strong>Payload:</strong></p>
+<pre><code>file=....//....//....//etc/passwd
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>Warning: fopen(....//....//....//etc/passwd): failed to open stream: No such file or directory in /hj/var/www/showimage.php on line 13
+
+Warning: fpassthru() expects parameter 1 to be resource, boolean given in /hj/var/www/showimage.php on line 19
+</code></pre>
+<p>The error messages reveal the server-side file path structure (/hj/var/www/showimage.php) and confirm that the application is attempting to open files based on user input.</p>
+<h3>Impact</h3>
+<p>An attacker could exploit this vulnerability to:</p>
+<ul>
+<li>Read sensitive system files</li>
+<li>Access configuration files containing credentials</li>
+<li>Gather information about the server environment</li>
+<li>Potentially execute arbitrary code through log poisoning</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement a whitelist of allowed files</li>
+<li>Use proper input validation and sanitization</li>
+<li>Implement path traversal protection</li>
+<li>Remove or sanitize error messages that reveal system information</li>
+</ul>
+<hr />
+<h2>MEDIUM - Information Disclosure via Error Messages</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Medium</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>5.3</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-209</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/showimage.php</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The application exposes sensitive information through detailed error messages, revealing server-side file paths and internal application structure.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k &quot;testphp.vulnweb.com/showimage.php?file=....//....//....//etc/passwd&quot;
+</code></pre>
+<p><strong>Payload:</strong></p>
+<pre><code>file=....//....//....//etc/passwd
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>Warning: fopen(....//....//....//etc/passwd): failed to open stream: No such file or directory in /hj/var/www/showimage.php on line 13
+
+Warning: fpassthru() expects parameter 1 to be resource, boolean given in /hj/var/www/showimage.php on line 19
+</code></pre>
+<h3>Impact</h3>
+<p>Information disclosure can help attackers:</p>
+<ul>
+<li>Map the application structure</li>
+<li>Identify technology stack and versions</li>
+<li>Plan more targeted attacks</li>
+<li>Understand file system layout</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement custom error pages</li>
+<li>Log detailed errors server-side only</li>
+<li>Return generic error messages to users</li>
+<li>Configure proper error handling in production</li>
+</ul>
+<hr />
+<h2>LOW - HTTP Parameter Pollution</h2>
+<table>
+<thead>
+<tr>
+  <th>Field</th>
+  <th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Severity</td>
+  <td>Low</td>
+</tr>
+<tr>
+  <td>CVSS</td>
+  <td>3.7</td>
+</tr>
+<tr>
+  <td>CWE</td>
+  <td>CWE-444</td>
+</tr>
+<tr>
+  <td>Location</td>
+  <td>http://testphp.vulnweb.com/hpp/</td>
+</tr>
+</tbody>
+</table>
+<h3>Description</h3>
+<p>The application contains an HTTP Parameter Pollution (HPP) example page that demonstrates how duplicate parameters can be manipulated to bypass security controls.</p>
+<h3>Proof of Concept</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-bash">curl -s -k &quot;testphp.vulnweb.com/hpp/?pp=12&quot;
+</code></pre>
+<p><strong>Payload:</strong></p>
+<pre><code>pp=12
+</code></pre>
+<p><strong>Response Evidence:</strong></p>
+<pre><code>&lt;title&gt;HTTP Parameter Pollution Example&lt;/title&gt;
+
+&lt;a href=&quot;?pp=12&quot;&gt;check&lt;/a&gt;&lt;br/&gt;
+&lt;a href=&quot;params.php?p=valid&amp;pp=12&quot;&gt;link1&lt;/a&gt;&lt;br/&gt;&lt;a href=&quot;params.php?p=valid&amp;pp=12&quot;&gt;link2&lt;/a&gt;&lt;br/&gt;&lt;form action=&quot;params.php?p=valid&amp;pp=12&quot;&gt;&lt;input type=submit name=aaaa/&gt;&lt;/form&gt;&lt;br/&gt;
+&lt;hr&gt;
+&lt;a href='http://blog.mindedsecurity.com/2009/05/client-side-http-parameter-pollution.html'&gt;Original article&lt;/a&gt;
+</code></pre>
+<h3>Impact</h3>
+<p>HTTP Parameter Pollution can potentially:</p>
+<ul>
+<li>Bypass input validation</li>
+<li>Cause inconsistent parameter handling</li>
+<li>Lead to security control bypasses</li>
+<li>Create unexpected application behavior</li>
+</ul>
+<h3>Remediation</h3>
+<ul>
+<li>Implement consistent parameter handling</li>
+<li>Validate and sanitize all input parameters</li>
+<li>Use proper input validation frameworks</li>
+<li>Remove demonstration/test pages from production</li>
+</ul>
+<hr />
+<h1>Summary</h1>
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>Vulnerability</th>
+  <th>Severity</th>
+  <th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>SQL Injection</td>
+  <td>Critical</td>
+  <td>http://testphp.vulnweb.com/listproducts.php</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Local File Inclusion</td>
+  <td>High</td>
+  <td>http://testphp.vulnweb.com/showimage.php</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>Information Disclosure</td>
+  <td>Medium</td>
+  <td>http://testphp.vulnweb.com/showimage.php</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>HTTP Parameter Pollution</td>
+  <td>Low</td>
+  <td>http://testphp.vulnweb.com/hpp/</td>
+</tr>
+</tbody>
+</table>
+<h1>Recommendations</h1>
+<ol>
+<li><strong>Immediate Priority (Critical)</strong>: Fix SQL injection vulnerabilities by implementing parameterized queries and proper input validation</li>
+<li><strong>High Priority</strong>: Address Local File Inclusion vulnerabilities by implementing file access controls and input sanitization</li>
+<li><strong>Medium Priority</strong>: Configure proper error handling to prevent information disclosure</li>
+<li><strong>Low Priority</strong>: Remove test/demonstration pages and implement consistent parameter handling</li>
+<li><strong>General</strong>: Conduct regular security assessments and implement a secure development lifecycle (SDLC)</li>
+</ol>
+
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by <strong>NeuroSploit</strong> - AI-Powered Penetration Testing Framework</p>
+            <p style="margin-top: 0.5rem;">Confidential - For authorized personnel only</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+
+        // Severity Chart
+        const ctx = document.getElementById('severityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low', 'Info'],
+                datasets: [{
+                    data: [5, 4, 4, 7, 11],
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#6366f1'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#94a3b8', padding: 15, font: { size: 12 } }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    </script>
+</body>
+</html>

@@ -265,3 +265,75 @@
 2026-01-09 22:29:14,144 - agents.base_agent - INFO - Initialized Pentestfull - Autonomous Agent
 2026-01-09 22:31:51,657 - __main__ - INFO - Results saved to results/campaign_20260109_222914.json
 2026-01-09 22:31:51,665 - __main__ - INFO - Report generated: reports/report_20260109_222914.html
+2026-01-12 17:21:27,363 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260112_172127
+2026-01-12 17:21:29,430 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260112_172129
+2026-01-14 15:09:17,266 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_150917
+2026-01-14 15:09:17,266 - tools.recon.recon_tools - INFO - [*] Enumerando subdominios para: testphp.vulnweb.com
+2026-01-14 15:11:16,801 - tools.recon.recon_tools - WARNING -     [-] findomain nao instalado, pulando...
+2026-01-14 15:11:16,804 - tools.recon.recon_tools - INFO - [*] Verificando 1 hosts...
+2026-01-14 15:11:16,924 - tools.recon.recon_tools - INFO - [*] Coletando URLs para: testphp.vulnweb.com
+2026-01-14 15:11:52,022 - tools.recon.recon_tools - INFO - [*] Scanning ports em: testphp.vulnweb.com
+2026-01-14 15:12:25,018 - tools.recon.recon_tools - INFO - Enumerating DNS for: testphp.vulnweb.com
+2026-01-14 15:12:27,928 - tools.recon.recon_tools - INFO - [*] Scanning vulnerabilidades em 0 alvos
+2026-01-14 15:12:34,717 - core.context_builder - INFO - Construindo contexto consolidado para LLM...
+2026-01-14 15:12:34,746 - core.context_builder - INFO - Construindo contexto consolidado para LLM...
+2026-01-14 15:12:34,751 - core.context_builder - INFO - Contexto salvo em: results/context_20260114_151234.json e results/context_20260114_151234.txt
+2026-01-14 15:12:34,752 - core.context_builder - INFO - Construindo contexto consolidado para LLM...
+2026-01-14 15:13:20,595 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_151320
+2026-01-14 15:23:03,054 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_152303
+2026-01-14 15:23:08,950 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_152308
+2026-01-14 15:23:08,957 - core.context_builder - INFO - Building consolidated context for LLM...
+2026-01-14 15:23:08,957 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-14 15:23:08,957 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-14 15:23:08,961 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-14 15:23:08,961 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-14 15:23:08,961 - agents.base_agent - INFO - Initialized bug_bounty_hunter - Autonomous Agent
+2026-01-14 15:31:21,907 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_153121
+2026-01-14 15:31:21,914 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-14 15:31:21,914 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-14 15:31:21,918 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-14 15:31:21,918 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-14 15:31:21,918 - agents.base_agent - INFO - Initialized bug_bounty_hunter - Autonomous Agent
+2026-01-14 15:31:21,918 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:21,918 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,660 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,661 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,661 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,661 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,661 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,662 - core.llm_manager - ERROR - Error generating raw response: ANTHROPIC_API_KEY not set. Please set the environment variable or configure in config.yaml
+2026-01-14 15:31:24,663 - __main__ - INFO - Results saved to results/campaign_20260114_153121.json
+2026-01-14 15:31:24,671 - __main__ - INFO - Report generated: reports/report_20260114_153121.html
+2026-01-14 15:33:10,425 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_153310
+2026-01-14 15:33:10,432 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-14 15:33:10,433 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-14 15:33:10,436 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-14 15:33:10,436 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-14 15:33:10,436 - agents.base_agent - INFO - Initialized bug_bounty_hunter - Autonomous Agent
+2026-01-14 15:34:52,538 - __main__ - INFO - Results saved to results/campaign_20260114_153310.json
+2026-01-14 15:34:52,553 - __main__ - INFO - Report generated: reports/report_20260114_153310.html
+2026-01-14 15:42:34,899 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_154234
+2026-01-14 15:42:34,905 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-14 15:42:34,906 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-14 15:42:34,909 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-14 15:42:34,909 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-14 15:42:34,909 - agents.base_agent - INFO - Initialized bug_bounty_hunter - Autonomous Agent
+2026-01-14 15:43:10,660 - __main__ - INFO - Results saved to results/campaign_20260114_154234.json
+2026-01-14 15:43:10,678 - __main__ - INFO - Report generated: reports/report_20260114_154234.html
+2026-01-14 15:44:21,315 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_154421
+2026-01-14 15:45:48,645 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_154548
+2026-01-14 15:45:48,653 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-14 15:45:48,653 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-14 15:45:48,657 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-14 15:45:48,657 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-14 15:45:48,657 - agents.base_agent - INFO - Initialized bug_bounty_hunter - Autonomous Agent
+2026-01-14 15:46:01,225 - __main__ - INFO - Results saved to results/campaign_20260114_154548.json
+2026-01-14 15:46:01,237 - __main__ - INFO - Report generated: reports/report_20260114_154548.html
+2026-01-14 15:51:05,195 - __main__ - INFO - NeuroSploitv2 initialized - Session: 20260114_155105
+2026-01-14 15:51:05,203 - __main__ - INFO - Starting execution for agent role: bug_bounty_hunter
+2026-01-14 15:51:05,204 - core.llm_manager - INFO - Loaded prompts from JSON library: prompts/library.json
+2026-01-14 15:51:05,207 - core.llm_manager - INFO - Loaded 13 prompts from Markdown files.
+2026-01-14 15:51:05,207 - core.llm_manager - INFO - Initialized LLM Manager - Provider: claude, Model: claude-sonnet-4-20250514, Profile: claude_opus_default
+2026-01-14 15:51:05,207 - agents.base_agent - INFO - Initialized bug_bounty_hunter - Autonomous Agent
+2026-01-14 15:51:46,632 - __main__ - INFO - Results saved to results/campaign_20260114_155105.json
+2026-01-14 15:51:46,653 - __main__ - INFO - Report generated: reports/report_20260114_155105.html

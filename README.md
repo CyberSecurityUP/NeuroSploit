@@ -1,324 +1,705 @@
-# NeuroSploitv2 - AI-Powered Penetration Testing Framework
+# NeuroSploit v2
 
-![NeuroSploitv2 Logo](https://img.shields.io/badge/NeuroSploitv2-AI--Powered%20Pentesting-blueviolet)
+![NeuroSploitv2](https://img.shields.io/badge/NeuroSploitv2-AI--Powered%20Pentesting-blueviolet)
 ![Version](https://img.shields.io/badge/Version-2.0.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
+![Python](https://img.shields.io/badge/Python-3.8+-yellow)
 
-NeuroSploitv2 is an advanced, AI-powered penetration testing framework designed to automate and augment various aspects of offensive security operations. Leveraging the capabilities of large language models (LLMs), NeuroSploitv2 provides specialized agent roles that can analyze targets, identify vulnerabilities, plan exploitation strategies, and assist in defensive measures, all while prioritizing ethical considerations and operational security.
+**AI-Powered Penetration Testing Framework with Adaptive Intelligence**
 
-YouTube Demonstration Video: https://youtu.be/SQq1TVwlrxQ
+NeuroSploit v2 is an advanced security assessment framework that combines reconnaissance tools with adaptive AI analysis. It intelligently collects data, analyzes attack surfaces, and performs targeted security testing using LLM-powered decision making.
 
-## ✨ Features
+---
 
-*   **Modular Agent Roles:** Execute specialized AI agents tailored for specific security tasks (e.g., Red Team, Blue Team, Bug Bounty Hunter, Malware Analyst).
-*   **Flexible LLM Integration:** Supports multiple LLM providers including Gemini, Claude, GPT (OpenAI), Ollama, and LM Studio, configurable via profiles.
-*   **LM Studio Support:** Full integration with LM Studio for local model execution with OpenAI-compatible API.
-*   **Granular LLM Profiles:** Define distinct LLM configurations for each agent role, controlling parameters like model, temperature, token limits, caching, and context.
-*   **Markdown-based Prompts:** Agents utilize dynamic Markdown prompt templates, allowing for context-aware and highly specific instructions.
-*   **Hallucination Mitigation:** Implements strategies like grounding, self-reflection, and consistency checks to reduce LLM hallucinations and ensure focused output.
-*   **Guardrails:** Basic guardrails (e.g., keyword filtering, length checks) are in place to enhance safety and ethical adherence of LLM-generated content.
-*   **Extensible Tooling:** Integrate and manage external security tools (Nmap, Metasploit, Subfinder, Nuclei, etc.) directly through configuration.
-*   **Tool Chaining:** Execute multiple tools in sequence for complex reconnaissance and attack workflows.
-*   **Built-in Reconnaissance Tools:**
-    *   **OSINT Collector:** Gather intelligence from public sources (IP resolution, technology detection, email patterns, social media)
-    *   **Subdomain Finder:** Discover subdomains using Certificate Transparency logs and DNS brute-forcing
-    *   **DNS Enumerator:** Enumerate DNS records (A, AAAA, MX, NS, TXT, CNAME)
-*   **Lateral Movement Modules:** SMB and SSH-based lateral movement techniques
-*   **Persistence Mechanisms:** Cron-based (Linux) and Registry-based (Windows) persistence modules
-*   **Enhanced Security:** Secure subprocess execution with input validation, timeout protection, and no shell injection vulnerabilities
-*   **Structured Reporting:** Generates detailed JSON campaign results and user-friendly HTML reports.
-*   **Interactive Mode:** An intuitive command-line interface for direct interaction and control over agent execution.
+## What's New in v2
 
-## 🚀 Installation
+- **Adaptive AI Mode** - AI automatically determines if context is sufficient; runs tools only when needed
+- **3 Execution Modes** - CLI, Interactive, and guided Experience/Wizard mode
+- **Consolidated Recon** - All reconnaissance outputs merged into a single context file
+- **Context-Based Analysis** - Analyze pre-collected recon data without re-running tools
+- **Professional Reports** - Auto-generated HTML reports with charts and findings
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/CyberSecurityUP/NeuroSploitv2.git
-    cd NeuroSploitv2
-    ```
+---
 
-2.  **Create a virtual environment (recommended):**
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+## Table of Contents
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-    *(Note: `requirements.txt` should contain `anthropic`, `openai`, `google-generativeai`, `requests` as used in `llm_manager.py`)*
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [3 Execution Modes](#3-execution-modes)
+- [Workflow](#workflow)
+- [Adaptive AI Mode](#adaptive-ai-mode)
+- [Configuration](#configuration)
+- [CLI Reference](#cli-reference)
+- [Agent Roles](#agent-roles)
+- [Built-in Tools](#built-in-tools)
+- [Output Files](#output-files)
+- [Examples](#examples)
+- [Architecture](#architecture)
+- [Security Notice](#security-notice)
 
-4.  **Configure API Keys:**
-    NeuroSploitv2 uses environment variables for LLM API keys. Set them in your environment or a `.env` file (and load it, if you set up dotenv).
-    *   `ANTHROPIC_API_KEY` for Claude
-    *   `OPENAI_API_KEY` for GPT models
-    *   `GEMINI_API_KEY` for Gemini models
+---
 
-    Example (`.bashrc` or `.zshrc`):
-    ```bash
-    export ANTHROPIC_API_KEY="your_anthropic_api_key"
-    export OPENAI_API_KEY="your_openai_api_key"
-    export GEMINI_API_KEY="your_gemini_api_key"
-    ```
+## Features
 
-5.  **Configure Local LLM Servers (Optional):**
-    *   **Ollama:** Ensure your local Ollama server is running on `http://localhost:11434`
-    *   **LM Studio:** Start LM Studio server on `http://localhost:1234` with your preferred model loaded
+### Core Capabilities
 
-## ⚙️ Configuration
+| Feature | Description |
+|---------|-------------|
+| **Adaptive AI** | Automatically runs tools when context is insufficient |
+| **Multi-Mode** | CLI, Interactive, and Wizard execution modes |
+| **Consolidated Recon** | All tool outputs merged into single context file |
+| **Multi-LLM Support** | Claude, OpenAI, Gemini, Ollama, LM Studio |
+| **Professional Reports** | HTML reports with charts and findings |
+| **Extensible** | Custom agents, tools, and prompts |
 
-The `config/config.json` file is the central place for configuring NeuroSploitv2. A default `config.json` will be created if one doesn't exist.
+### Security Testing
 
-### `llm` Section
+| Category | Tests |
+|----------|-------|
+| **Injection** | SQL Injection, XSS, Command Injection, Template Injection |
+| **File Attacks** | LFI, Path Traversal, File Upload, XXE |
+| **Server-Side** | SSRF, RCE, Deserialization |
+| **Authentication** | Auth Bypass, IDOR, Session Issues, JWT |
+| **Reconnaissance** | Subdomain Enum, Port Scan, Tech Detection, URL Collection |
 
-This section defines your LLM profiles.
+### Reconnaissance Tools
+
+| Tool | Purpose |
+|------|---------|
+| subfinder, amass, assetfinder | Subdomain enumeration |
+| httpx, httprobe | HTTP probing |
+| gau, waybackurls, waymore | URL collection |
+| katana, gospider | Web crawling |
+| naabu, nmap | Port scanning |
+| nuclei | Vulnerability scanning |
+
+---
+
+## Installation
+
+### Prerequisites
+
+```bash
+# Python 3.8+
+python3 --version
+
+# Install dependencies
+pip3 install -r requirements.txt
+```
+
+### Setup
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/NeuroSploitv2.git
+cd NeuroSploitv2
+
+# Create config from example
+cp config/config-example.json config/config.json
+
+# Edit with your LLM API keys
+nano config/config.json
+
+# Create required directories
+mkdir -p results reports logs
+
+# Install security tools (recommended)
+python3 neurosploit.py --install-tools
+```
+
+### Environment Variables
+
+```bash
+# Set in .bashrc, .zshrc, or .env
+export ANTHROPIC_API_KEY="your_key"
+export OPENAI_API_KEY="your_key"
+export GEMINI_API_KEY="your_key"
+```
+
+---
+
+## Quick Start
+
+### Option 1: Wizard Mode (Recommended for beginners)
+
+```bash
+python3 neurosploit.py -e
+```
+
+Follow the guided prompts to configure your scan.
+
+### Option 2: Two-Step Workflow
+
+```bash
+# Step 1: Run reconnaissance
+python3 neurosploit.py --recon example.com
+
+# Step 2: AI analysis
+python3 neurosploit.py --input "Find XSS and SQLi vulnerabilities" \
+  -cf results/context_*.json \
+  --llm-profile claude_opus_default
+```
+
+### Option 3: Interactive Mode
+
+```bash
+python3 neurosploit.py -i
+```
+
+---
+
+## 3 Execution Modes
+
+### 1. CLI Mode
+
+Direct command-line execution with all parameters:
+
+```bash
+# Reconnaissance
+python3 neurosploit.py --recon example.com
+
+# AI Analysis with context
+python3 neurosploit.py --input "Analyze for XSS and SQLi" \
+  -cf results/context_X.json \
+  --llm-profile claude_opus_default
+
+# Full pentest scan
+python3 neurosploit.py --scan https://example.com
+
+# Quick scan
+python3 neurosploit.py --quick-scan https://example.com
+```
+
+### 2. Interactive Mode (`-i`)
+
+REPL interface with tab completion:
+
+```bash
+python3 neurosploit.py -i
+```
+
+```
+        ╔═══════════════════════════════════════════════════════════╗
+        ║         NeuroSploitv2 - AI Offensive Security             ║
+        ║                  Interactive Mode                         ║
+        ╚═══════════════════════════════════════════════════════════╝
+
+NeuroSploit> help
+NeuroSploit> recon example.com
+NeuroSploit> analyze results/context_X.json
+NeuroSploit> scan https://example.com
+NeuroSploit> experience
+NeuroSploit> exit
+```
+
+**Available Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `recon <target>` | Run full reconnaissance |
+| `analyze <file.json>` | LLM analysis of context file |
+| `scan <target>` | Full pentest with tools |
+| `quick_scan <target>` | Fast essential checks |
+| `experience` / `wizard` | Start guided setup |
+| `set_agent <name>` | Set default agent role |
+| `set_profile <name>` | Set LLM profile |
+| `list_roles` | Show available agents |
+| `list_profiles` | Show LLM profiles |
+| `check_tools` | Check installed tools |
+| `install_tools` | Install required tools |
+| `discover_ollama` | Find local Ollama models |
+
+### 3. Experience/Wizard Mode (`-e`)
+
+Guided step-by-step configuration:
+
+```bash
+python3 neurosploit.py -e
+```
+
+```
+        ╔═══════════════════════════════════════════════════════════╗
+        ║       NEUROSPLOIT - EXPERIENCE MODE (WIZARD)              ║
+        ║           Step-by-step Configuration                      ║
+        ╚═══════════════════════════════════════════════════════════╝
+
+[STEP 1/6] Choose Operation Mode
+--------------------------------------------------
+  1. AI Analysis   - Analyze recon context with LLM (no tools)
+  2. Full Scan     - Run real pentest tools + AI analysis
+  3. Quick Scan    - Fast essential checks + AI analysis
+  4. Recon Only    - Run reconnaissance tools, save context
+
+[STEP 2/6] Set Target
+[STEP 3/6] Context File
+[STEP 4/6] LLM Profile
+[STEP 5/6] Agent Role
+[STEP 6/6] Custom Prompt
+
+============================================================
+  CONFIGURATION SUMMARY
+============================================================
+  Mode:         analysis
+  Target:       example.com
+  Context File: results/context_20240115.json
+  LLM Profile:  claude_opus_default
+  Agent Role:   bug_bounty_hunter
+  Prompt:       Find XSS and SQLi vulnerabilities...
+============================================================
+
+  Execute with this configuration? [Y/n]:
+```
+
+---
+
+## Workflow
+
+### Recommended Workflow
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   STEP 1        │     │   STEP 2        │     │   STEP 3        │
+│   RECON         │────▶│   AI ANALYSIS   │────▶│   REPORT        │
+│                 │     │                 │     │                 │
+│ - Subdomains    │     │ - Adaptive AI   │     │ - HTML Report   │
+│ - URLs          │     │ - Auto-test     │     │ - JSON Results  │
+│ - Ports         │     │ - if needed     │     │ - Findings      │
+│ - Technologies  │     │                 │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+### Step 1: Reconnaissance
+
+```bash
+python3 neurosploit.py --recon example.com
+```
+
+Runs all discovery tools and consolidates output:
+
+- **Subdomain Enumeration**: subfinder, amass, assetfinder
+- **HTTP Probing**: httpx, httprobe
+- **URL Collection**: gau, waybackurls, waymore
+- **Web Crawling**: katana, gospider
+- **Port Scanning**: naabu, nmap
+- **Vulnerability Scanning**: nuclei
+
+**Output:** `results/context_YYYYMMDD_HHMMSS.json`
+
+### Step 2: AI Analysis
+
+```bash
+python3 neurosploit.py --input "Test for SQL injection and XSS" \
+  -cf results/context_X.json \
+  --llm-profile claude_opus_default
+```
+
+The Adaptive AI:
+1. Analyzes your request
+2. Checks if context has sufficient data
+3. Runs additional tests if needed
+4. Provides comprehensive analysis
+
+---
+
+## Adaptive AI Mode
+
+The AI automatically determines if context data is sufficient:
+
+```
+======================================================================
+  NEUROSPLOIT ADAPTIVE AI - BUG_BOUNTY_HUNTER
+======================================================================
+  Mode: Adaptive (LLM + Tools when needed)
+  Target: testphp.vulnweb.com
+  Context loaded with:
+    - Subdomains: 1
+    - URLs: 12085
+    - URLs with params: 10989
+======================================================================
+
+[PHASE 1] Analyzing Context Sufficiency
+--------------------------------------------------
+  [*] User wants: xss, sqli
+  [*] Data sufficient: No
+  [*] Missing: XSS test results, SQL injection evidence
+
+[PHASE 2] Collecting Missing Data
+--------------------------------------------------
+  [!] Context insufficient for: XSS test results
+  [*] Running tools to collect data...
+
+  [XSS] Running XSS tests...
+  [>] curl: -s -k "http://target.com/search?q=%3Cscript%3Ealert(1)%3C/script%3E"
+  [!] FOUND: XSS
+
+  [SQLi] Running SQL Injection tests...
+  [>] curl: -s -k "http://target.com/product?id=1'"
+  [!] FOUND: SQL Injection
+
+  [+] Ran 15 tool commands to fill context gaps
+
+[PHASE 3] AI Analysis
+--------------------------------------------------
+  [*] Generating final analysis with collected evidence...
+  [+] Analysis complete
+```
+
+### How It Works
+
+| Scenario | AI Action |
+|----------|-----------|
+| Context has XSS evidence | LLM-only analysis (no tools) |
+| Context missing XSS evidence | Run XSS tests, then analyze |
+| User asks for port scan | Check context, run nmap if missing |
+| General analysis request | Use available context data |
+
+### Supported Auto-Tests
+
+When context is insufficient, AI can automatically run:
+
+| Test | Trigger Keywords |
+|------|------------------|
+| XSS | xss, cross-site, reflected, stored |
+| SQLi | sqli, sql, injection, database |
+| LFI | lfi, file, inclusion, traversal |
+| SSRF | ssrf, server-side, request |
+| RCE | rce, command, execution, shell |
+| Crawl | crawl, discover, spider, urls |
+| Port Scan | port, scan, nmap, service |
+
+---
+
+## Configuration
+
+### config/config.json
 
 ```json
-"llm": {
-    "default_profile": "gemini_pro_default",
+{
+  "llm": {
+    "default_profile": "claude_opus_default",
     "profiles": {
-        "ollama_llama3_default": {
-            "provider": "ollama",
-            "model": "llama3:8b",
-            "api_key": "",
-            "temperature": 0.7,
-            "max_tokens": 4096,
-            "input_token_limit": 8000,
-            "output_token_limit": 4000,
-            "cache_enabled": true,
-            "search_context_level": "medium",
-            "pdf_support_enabled": false,
-            "guardrails_enabled": true,
-            "hallucination_mitigation_strategy": "grounding"
-        },
-        "gemini_pro_default": {
-            "provider": "gemini",
-            "model": "gemini-pro",
-            "api_key": "${GEMINI_API_KEY}",
-            "temperature": 0.7,
-            "max_tokens": 4096,
-            "input_token_limit": 30720,
-            "output_token_limit": 2048,
-            "cache_enabled": true,
-            "search_context_level": "medium",
-            "pdf_support_enabled": true,
-            "guardrails_enabled": true,
-            "hallucination_mitigation_strategy": "consistency_check"
-        },
-        // ... other profiles like claude_opus_default, gpt_4o_default
+      "claude_opus_default": {
+        "provider": "claude",
+        "model": "claude-sonnet-4-20250514",
+        "api_key": "${ANTHROPIC_API_KEY}",
+        "temperature": 0.7,
+        "max_tokens": 8192,
+        "guardrails_enabled": true,
+        "hallucination_mitigation_strategy": "grounding"
+      },
+      "ollama_local": {
+        "provider": "ollama",
+        "model": "llama3:8b",
+        "api_key": "",
+        "temperature": 0.7
+      },
+      "gpt_4o": {
+        "provider": "gpt",
+        "model": "gpt-4o",
+        "api_key": "${OPENAI_API_KEY}",
+        "temperature": 0.7
+      }
     }
+  },
+  "agent_roles": {
+    "bug_bounty_hunter": {
+      "enabled": true,
+      "description": "Aggressive bug bounty hunting",
+      "llm_profile": "claude_opus_default",
+      "tools_allowed": ["subfinder", "nuclei", "sqlmap"]
+    },
+    "red_team_agent": {
+      "enabled": true,
+      "description": "Red team operations specialist"
+    }
+  },
+  "tools": {
+    "nmap": "/usr/bin/nmap",
+    "sqlmap": "/usr/bin/sqlmap",
+    "nuclei": "/usr/local/bin/nuclei"
+  }
 }
 ```
 
-*   `default_profile`: The name of the LLM profile to use by default.
-*   `profiles`: A dictionary where each key is a profile name and its value is an object containing:
-    *   `provider`: `ollama`, `claude`, `gpt`, `gemini`, `gemini-cli`, `lmstudio`.
-    *   `model`: Specific model identifier (e.g., `llama3:8b`, `gemini-pro`, `claude-3-opus-20240229`, `gpt-4o`).
-    *   `api_key`: API key or environment variable placeholder (e.g., `${GEMINI_API_KEY}`).
-    *   `temperature`: Controls randomness in output (0.0-1.0).
-    *   `max_tokens`: Maximum tokens in the LLM's response.
-    *   `input_token_limit`: Maximum tokens allowed in the input prompt.
-    *   `output_token_limit`: Maximum tokens allowed in the output response.
-    *   `cache_enabled`: Whether to cache LLM responses for this profile.
-    *   `search_context_level`: (`low`, `medium`, `high`) How much external context to inject into prompts.
-    *   `pdf_support_enabled`: Whether the model/provider can directly process PDFs.
-    *   `guardrails_enabled`: Enables content safety and ethical checks.
-    *   `hallucination_mitigation_strategy`: `grounding`, `self_reflection`, `consistency_check`.
+### LLM Providers
 
-### `agent_roles` Section
+| Provider | Config Value | Notes |
+|----------|--------------|-------|
+| Claude (Anthropic) | `"provider": "claude"` | Best for security analysis |
+| OpenAI | `"provider": "gpt"` | GPT-4, GPT-4o |
+| Google | `"provider": "gemini"` | Gemini Pro |
+| Ollama | `"provider": "ollama"` | Local models |
+| LM Studio | `"provider": "lmstudio"` | Local with OpenAI API |
 
-This section defines the various AI agent personas.
+---
+
+## CLI Reference
+
+```
+usage: neurosploit.py [-h] [--recon TARGET] [--context-file FILE]
+                      [--target TARGET] [--scan TARGET] [--quick-scan TARGET]
+                      [--install-tools] [--check-tools] [-r AGENT_ROLE] [-i]
+                      [-e] [--input INPUT] [--llm-profile LLM_PROFILE]
+
+NeuroSploitv2 - AI-Powered Penetration Testing Framework
+
+Arguments:
+  --recon TARGET        Run FULL RECON on target
+  --context-file, -cf   Load recon context from JSON file
+  --target, -t          Specify target URL/domain
+  --scan TARGET         Run FULL pentest scan with tools
+  --quick-scan TARGET   Run QUICK pentest scan
+  --install-tools       Install required security tools
+  --check-tools         Check status of installed tools
+  -r, --agent-role      Agent role to execute (optional)
+  -i, --interactive     Start interactive mode
+  -e, --experience      Start wizard mode (guided setup)
+  --input               Input prompt for the AI agent
+  --llm-profile         LLM profile to use
+  --list-agents         List available agent roles
+  --list-profiles       List LLM profiles
+  -v, --verbose         Enable verbose output
+```
+
+---
+
+## Agent Roles
+
+Predefined agents in `config.json` with prompts in `prompts/`:
+
+| Agent | Description |
+|-------|-------------|
+| `bug_bounty_hunter` | Web app vulnerabilities, high-impact findings |
+| `red_team_agent` | Simulated attack campaigns |
+| `blue_team_agent` | Threat detection and response |
+| `exploit_expert` | Exploitation strategies and payloads |
+| `pentest_generalist` | Broad penetration testing |
+| `owasp_expert` | OWASP Top 10 assessment |
+| `malware_analyst` | Malware examination and IOCs |
+
+### Custom Agents
+
+1. Create prompt file: `prompts/my_agent.md`
+2. Add to config:
 
 ```json
 "agent_roles": {
-    "bug_bounty_hunter": {
-        "enabled": true,
-        "llm_profile": "gemini_pro_default",
-        "tools_allowed": ["subfinder", "nuclei", "burpsuite", "sqlmap"],
-        "description": "Focuses on web application vulnerabilities, leveraging recon and exploitation tools."
-    },
-    // ... other agent roles
+  "my_agent": {
+    "enabled": true,
+    "description": "My custom agent",
+    "llm_profile": "claude_opus_default"
+  }
 }
 ```
 
-*   Each key is an agent role name (e.g., `red_team_agent`, `malware_analyst`).
-*   `enabled`: `true` to enable the agent, `false` to disable.
-*   `llm_profile`: The name of the LLM profile from the `llm.profiles` section to use for this agent.
-*   `tools_allowed`: A list of tools (from the `tools` section) that this agent is permitted to use.
-*   `description`: A brief description of the agent's purpose.
+---
 
-### `tools` Section
+## Built-in Tools
 
-Defines the paths to external security tools.
+### Reconnaissance
 
-```json
-"tools": {
-    "nmap": "/usr/bin/nmap",
-    "metasploit": "/usr/bin/msfconsole",
-    "burpsuite": "/usr/bin/burpsuite",
-    "sqlmap": "/usr/bin/sqlmap",
-    "hydra": "/usr/bin/hydra",
-    "subfinder": "/usr/local/bin/subfinder",
-    "nuclei": "/usr/local/bin/nuclei"
-}
-```
+| Tool | File | Features |
+|------|------|----------|
+| OSINT Collector | `tools/recon/osint_collector.py` | IP resolution, tech detection, email patterns |
+| Subdomain Finder | `tools/recon/subdomain_finder.py` | CT logs, DNS brute-force |
+| DNS Enumerator | `tools/recon/dns_enumerator.py` | A, AAAA, MX, NS, TXT, CNAME |
+| Full Recon Runner | `tools/recon/recon_tools.py` | Orchestrates all recon tools |
 
-Ensure these paths are correct for your system.
+### Post-Exploitation
 
-## 🚀 Usage
+| Tool | File | Features |
+|------|------|----------|
+| SMB Lateral | `tools/lateral_movement/smb_lateral.py` | Share enum, pass-the-hash |
+| SSH Lateral | `tools/lateral_movement/ssh_lateral.py` | SSH tunnels, key enum |
+| Cron Persistence | `tools/persistence/cron_persistence.py` | Linux persistence |
+| Registry Persistence | `tools/persistence/registry_persistence.py` | Windows persistence |
 
-NeuroSploitv2 can be run in two modes: command-line execution or interactive mode.
+---
 
-### Command-line Execution
+## Output Files
 
-To execute a specific agent role with a given input:
+| File | Location | Description |
+|------|----------|-------------|
+| Context JSON | `results/context_*.json` | Consolidated recon data |
+| Context TXT | `results/context_*.txt` | Human-readable context |
+| Campaign JSON | `results/campaign_*.json` | Full execution results |
+| HTML Report | `reports/report_*.html` | Professional report with charts |
+
+### HTML Report Features
+
+- Executive summary
+- Severity statistics with charts
+- Risk score calculation
+- Vulnerability details with PoCs
+- Remediation recommendations
+- Modern dark theme UI
+
+---
+
+## Examples
+
+### Basic Recon
 
 ```bash
-python neurosploit.py --agent-role <agent_role_name> --input "<your_task_or_target>"
-# Example:
-python neurosploit.py --agent-role red_team_agent --input "Conduct a phishing simulation against example.com's HR department."
-python neurosploit.py --agent-role bug_bounty_hunter --input "Analyze example.com for common web vulnerabilities (OWASP Top 10)."
+# Domain recon
+python3 neurosploit.py --recon example.com
+
+# URL recon
+python3 neurosploit.py --recon https://example.com
 ```
 
-*   `--agent-role`: Specify the name of the agent role to use (e.g., `red_team_agent`, `malware_analyst`).
-*   `--input`: Provide the task or target information for the agent to process.
-*   `-c`/`--config`: (Optional) Path to a custom configuration file.
-*   `-v`/`--verbose`: (Optional) Enable verbose logging output.
-
-### Interactive Mode
-
-Start the framework in interactive mode for a conversational experience:
+### AI Analysis
 
 ```bash
-python neurosploit.py -i
+# Specific vulnerability analysis
+python3 neurosploit.py --input "Find SQL injection and XSS vulnerabilities. Provide PoC with CVSS scores." \
+  -cf results/context_20240115.json \
+  --llm-profile claude_opus_default
+
+# Comprehensive assessment
+python3 neurosploit.py --input "Perform comprehensive security assessment. Analyze attack surface, test for OWASP Top 10, prioritize critical findings." \
+  -cf results/context_X.json
 ```
 
-Once in interactive mode, you can use the following commands:
+### Pentest Scan
 
-*   `run_agent <agent_role_name> "<user_input>"`: Execute a specific agent with your task.
-    *   Example: `run_agent pentest_generalist "Perform an external network penetration test on 192.168.1.0/24."`
-*   `list_roles`: Display all configured agent roles, their status, LLM profile, allowed tools, and descriptions.
-*   `config`: Show the current loaded configuration.
-*   `help`: Display available commands.
-*   `exit` / `quit`: Exit interactive mode.
+```bash
+# Full scan with context
+python3 neurosploit.py --scan https://example.com -cf results/context_X.json
 
-## 👤 Agent Roles
-
-NeuroSploitv2 comes with several predefined agent roles, each with a unique persona and focus:
-
-*   **`bug_bounty_hunter`**: Identifies web application vulnerabilities, focusing on high-impact findings.
-*   **`blue_team_agent`**: Detects and responds to threats by analyzing security logs and telemetry.
-*   **`exploit_expert`**: Crafts exploitation strategies and payloads for discovered vulnerabilities.
-*   **`red_team_agent`**: Plans and executes simulated attack campaigns against target environments.
-*   **`replay_attack_specialist`**: Focuses on identifying and leveraging replay attack vectors.
-*   **`pentest_generalist`**: Performs broad penetration tests across various domains.
-*   **`owasp_expert`**: Assesses web applications against the OWASP Top 10.
-*   **`cwe_expert`**: Analyzes code and reports for weaknesses based on MITRE CWE Top 25.
-*   **`malware_analyst`**: Examines malware samples to understand functionality and identify IOCs.
-
-## 📚 Prompt System
-
-Agent roles are powered by `.md` (Markdown) prompt files located in `prompts/md_library/`. Each `.md` file defines a `User Prompt` and a `System Prompt` that guide the LLM's behavior and context for that specific agent role. This allows for highly customized and effective AI-driven interactions.
-
-## 📊 Output and Reporting
-
-Results from agent executions are saved in the `results/` directory as JSON files (e.g., `campaign_YYYYMMDD_HHMMSS.json`). Additionally, an HTML report (`report_YYYYMMDD_HHMMSS.html`) is generated in the `reports/` directory, providing a human-readable summary of the agent's activities and findings.
-
-## 🧩 Extensibility
-
-*   **Custom Agent Roles:** Easily define new agent roles by creating a new `.md` file in `prompts/md_library/` and adding its configuration to the `agent_roles` section in `config.json`.
-*   **Custom Tools:** Add new tools to the `tools` section in `config.json` and grant specific agent roles permission to use them.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to fork the repository, open issues, and submit pull requests.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔧 Built-in Tools
-
-NeuroSploitv2 includes several built-in reconnaissance and post-exploitation tools:
-
-### Reconnaissance Tools
-*   **OSINT Collector** (`tools/recon/osint_collector.py`):
-    *   IP address resolution
-    *   Technology stack detection
-    *   Email pattern generation
-    *   Social media account discovery
-    *   Web framework identification
-
-*   **Subdomain Finder** (`tools/recon/subdomain_finder.py`):
-    *   Certificate Transparency log queries
-    *   Common subdomain brute-forcing
-    *   DNS resolution validation
-
-*   **DNS Enumerator** (`tools/recon/dns_enumerator.py`):
-    *   A, AAAA, MX, NS, TXT, CNAME record enumeration
-    *   IPv4 and IPv6 resolution
-    *   Mail server discovery
-
-### Lateral Movement
-*   **SMB Lateral** (`tools/lateral_movement/smb_lateral.py`):
-    *   Share enumeration framework
-    *   Pass-the-hash preparation
-    *   Remote command execution templates
-
-*   **SSH Lateral** (`tools/lateral_movement/ssh_lateral.py`):
-    *   SSH accessibility checks
-    *   Key enumeration paths
-    *   SSH tunnel creation helpers
-
-### Persistence Modules
-*   **Cron Persistence** (`tools/persistence/cron_persistence.py`):
-    *   Cron entry generation
-    *   Persistence location suggestions
-    *   Reverse shell payload templates
-
-*   **Registry Persistence** (`tools/persistence/registry_persistence.py`):
-    *   Windows registry key enumeration
-    *   Registry command generation
-    *   Startup persistence mechanisms
-
-## 🛡️ Security Features
-
-*   **Secure Tool Execution:** All external tools are executed with `shlex` argument parsing and no shell injection vulnerabilities
-*   **Input Validation:** Tool paths and arguments are validated before execution
-*   **Timeout Protection:** 60-second timeout on all tool executions to prevent hanging
-*   **Permission System:** Agent-based tool access control
-*   **Error Handling:** Comprehensive error handling with detailed logging
-
-## 🔗 Tool Chaining
-
-NeuroSploitv2 supports executing multiple tools in sequence for complex workflows:
-
-```python
-# LLM can request multiple tools
-[TOOL] nmap: -sV -sC target.com
-[TOOL] subfinder: -d target.com
-[TOOL] nuclei: -l subdomains.txt
+# Quick scan
+python3 neurosploit.py --quick-scan https://example.com -r bug_bounty_hunter
 ```
 
-The framework will execute each tool in order and provide results to the LLM for analysis.
+### Wizard Mode
 
-## 🙏 Acknowledgements
+```bash
+python3 neurosploit.py -e
+# Follow interactive prompts...
+```
 
-NeuroSploitv2 leverages the power of various Large Language Models and open-source security tools to deliver its capabilities.
+---
+
+## Architecture
+
+```
+NeuroSploitv2/
+├── neurosploit.py              # Main entry point
+├── config/
+│   ├── config.json             # Configuration
+│   └── config-example.json     # Example config
+├── agents/
+│   └── base_agent.py           # Adaptive AI agent
+├── core/
+│   ├── llm_manager.py          # LLM provider abstraction
+│   ├── context_builder.py      # Recon consolidation
+│   ├── pentest_executor.py     # Tool execution
+│   ├── report_generator.py     # Report generation
+│   └── tool_installer.py       # Tool installation
+├── tools/
+│   ├── recon/
+│   │   ├── recon_tools.py      # Advanced recon
+│   │   ├── osint_collector.py  # OSINT gathering
+│   │   ├── subdomain_finder.py # Subdomain enum
+│   │   └── dns_enumerator.py   # DNS enumeration
+│   ├── lateral_movement/
+│   │   ├── smb_lateral.py      # SMB techniques
+│   │   └── ssh_lateral.py      # SSH techniques
+│   └── persistence/
+│       ├── cron_persistence.py # Linux persistence
+│       └── registry_persistence.py # Windows persistence
+├── prompts/
+│   ├── library.json            # Prompt library
+│   └── *.md                    # Agent prompts
+├── results/                    # Output directory
+├── reports/                    # Generated reports
+└── logs/                       # Log files
+```
+
+---
+
+## Security Features
+
+- **Secure Tool Execution**: `shlex` parsing, no shell injection
+- **Input Validation**: Tool paths and arguments validated
+- **Timeout Protection**: 60-second default timeout
+- **Permission System**: Agent-based tool access control
+- **Error Handling**: Comprehensive logging
+
+---
+
+## Troubleshooting
+
+### LLM Connection Issues
+
+```bash
+# Check API key
+echo $ANTHROPIC_API_KEY
+
+# Test with local Ollama
+python3 neurosploit.py -i
+NeuroSploit> discover_ollama
+```
+
+### Missing Tools
+
+```bash
+# Check status
+python3 neurosploit.py --check-tools
+
+# Install
+python3 neurosploit.py --install-tools
+```
+
+### Permission Issues
+
+```bash
+mkdir -p results reports logs
+chmod 755 results reports logs
+```
+
+---
+
+## Security Notice
+
+**This tool is for authorized security testing only.**
+
+- Only test systems you own or have written permission to test
+- Follow responsible disclosure practices
+- Comply with all applicable laws and regulations
+- Unauthorized access to computer systems is illegal
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+---
+
+## Acknowledgements
 
 ### LLM Providers
-*   Google Gemini
-*   Anthropic Claude
-*   OpenAI GPT
-*   Ollama
-*   LM Studio
+- Anthropic Claude
+- OpenAI GPT
+- Google Gemini
+- Ollama
+- LM Studio
 
 ### Security Tools
-*   Nmap
-*   Metasploit
-*   Burp Suite
-*   SQLMap
-*   Hydra
-*   Subfinder
-*   Nuclei
+- Nmap, Nuclei, SQLMap
+- Subfinder, Amass, httpx
+- Katana, Gospider, gau
+
+---
+
+**NeuroSploit v2** - *Intelligent Adaptive Security Testing*

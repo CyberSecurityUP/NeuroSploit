@@ -33,7 +33,9 @@ from core.llm_manager import LLMManager
 from core.tool_installer import ToolInstaller, run_installer_menu, PENTEST_TOOLS
 from core.pentest_executor import PentestExecutor
 from core.report_generator import ReportGenerator
+from core.context_builder import ReconContextBuilder
 from agents.base_agent import BaseAgent
+from tools.recon.recon_tools import FullReconRunner
 
 class Completer:
     def __init__(self, neurosploit):
@@ -41,7 +43,8 @@ class Completer:
         self.commands = [
             "help", "run_agent", "config", "list_roles", "list_profiles",
             "set_profile", "set_agent", "discover_ollama", "install_tools",
-            "scan", "quick_scan", "check_tools", "exit", "quit"
+            "scan", "quick_scan", "recon", "full_recon", "check_tools",
+            "experience", "wizard", "analyze", "exit", "quit"
         ]
         self.agent_roles = list(self.neurosploit.config.get('agent_roles', {}).keys())
         self.llm_profiles = list(self.neurosploit.config.get('llm', {}).get('profiles', {}).keys())
@@ -79,15 +82,14 @@ class Completer:
 
 class NeuroSploitv2:
     """Main framework class for NeuroSploitv2"""
-    
+
     def __init__(self, config_path: str = "config/config.json"):
         """Initialize the framework"""
         self.config_path = config_path
         self.config = self._load_config()
-        # self.agents = {} # Removed as agents will be dynamically created per role
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self._setup_directories()
-        
+
         # LLMManager instance will be created dynamically per agent role to select specific profiles
         self.llm_manager_instance: Optional[LLMManager] = None
         self.selected_agent_role: Optional[str] = None
@@ -96,6 +98,237 @@ class NeuroSploitv2:
         self.tool_installer = ToolInstaller()
 
         logger.info(f"NeuroSploitv2 initialized - Session: {self.session_id}")
+
+    def experience_mode(self):
+        """
+        Experience/Wizard Mode - Guided step-by-step configuration.
+        Navigate through options to build your pentest configuration.
+        """
+        print("""
+        ╔═══════════════════════════════════════════════════════════╗
+        ║       NEUROSPLOIT - EXPERIENCE MODE (WIZARD)              ║
+        ║           Step-by-step Configuration                      ║
+        ╚═══════════════════════════════════════════════════════════╝
+        """)
+
+        config = {
+            "target": None,
+            "context_file": None,
+            "llm_profile": None,
+            "agent_role": None,
+            "prompt": None,
+            "mode": None
+        }
+
+        # Step 1: Choose Mode
+        print("\n[STEP 1/6] Choose Operation Mode")
+        print("-" * 50)
+        print("  1. AI Analysis   - Analyze recon context with LLM (no tools)")
+        print("  2. Full Scan     - Run real pentest tools + AI analysis")
+        print("  3. Quick Scan    - Fast essential checks + AI analysis")
+        print("  4. Recon Only    - Run reconnaissance tools, save context")
+        print("  0. Cancel")
+
+        while True:
+            choice = input("\n  Select mode [1-4]: ").strip()
+            if choice == "0":
+                print("\n[!] Cancelled.")
+                return
+            if choice in ["1", "2", "3", "4"]:
+                config["mode"] = {"1": "analysis", "2": "full_scan", "3": "quick_scan", "4": "recon"}[choice]
+                break
+            print("  Invalid choice. Enter 1-4 or 0 to cancel.")
+
+        # Step 2: Target
+        print(f"\n[STEP 2/6] Set Target")
+        print("-" * 50)
+        target = input("  Enter target URL or domain: ").strip()
+        if not target:
+            print("\n[!] Target is required. Cancelled.")
+            return
+        config["target"] = target
+
+        # Step 3: Context File (for analysis mode)
+        if config["mode"] == "analysis":
+            print(f"\n[STEP 3/6] Context File")
+            print("-" * 50)
+            print("  Context file contains recon data collected previously.")
+
+            # List available context files
+            context_files = list(Path("results").glob("context_*.json"))
+            if context_files:
+                print("\n  Available context files:")
+                for i, f in enumerate(context_files[-10:], 1):
+                    print(f"    {i}. {f.name}")
+                print(f"    {len(context_files[-10:])+1}. Enter custom path")
+
+                choice = input(f"\n  Select file [1-{len(context_files[-10:])+1}]: ").strip()
+                try:
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(context_files[-10:]):
+                        config["context_file"] = str(context_files[-10:][idx])
+                    else:
+                        custom = input("  Enter context file path: ").strip()
+                        if custom:
+                            config["context_file"] = custom
+                except ValueError:
+                    custom = input("  Enter context file path: ").strip()
+                    if custom:
+                        config["context_file"] = custom
+            else:
+                custom = input("  Enter context file path (or press Enter to skip): ").strip()
+                if custom:
+                    config["context_file"] = custom
+
+            if not config["context_file"]:
+                print("\n[!] Analysis mode requires a context file. Cancelled.")
+                return
+        else:
+            print(f"\n[STEP 3/6] Context File (Optional)")
+            print("-" * 50)
+            use_context = input("  Load existing context file? [y/N]: ").strip().lower()
+            if use_context == 'y':
+                context_files = list(Path("results").glob("context_*.json"))
+                if context_files:
+                    print("\n  Available context files:")
+                    for i, f in enumerate(context_files[-10:], 1):
+                        print(f"    {i}. {f.name}")
+                    choice = input(f"\n  Select file [1-{len(context_files[-10:])}] or path: ").strip()
+                    try:
+                        idx = int(choice) - 1
+                        if 0 <= idx < len(context_files[-10:]):
+                            config["context_file"] = str(context_files[-10:][idx])
+                    except ValueError:
+                        if choice:
+                            config["context_file"] = choice
+
+        # Step 4: LLM Profile
+        print(f"\n[STEP 4/6] LLM Profile")
+        print("-" * 50)
+        profiles = list(self.config.get('llm', {}).get('profiles', {}).keys())
+        default_profile = self.config.get('llm', {}).get('default_profile', '')
+
+        if profiles:
+            print("  Available LLM profiles:")
+            for i, p in enumerate(profiles, 1):
+                marker = " (default)" if p == default_profile else ""
+                print(f"    {i}. {p}{marker}")
+
+            choice = input(f"\n  Select profile [1-{len(profiles)}] or Enter for default: ").strip()
+            if choice:
+                try:
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(profiles):
+                        config["llm_profile"] = profiles[idx]
+                except ValueError:
+                    pass
+
+            if not config["llm_profile"]:
+                config["llm_profile"] = default_profile
+        else:
+            print("  No LLM profiles configured. Using default.")
+            config["llm_profile"] = default_profile
+
+        # Step 5: Agent Role (optional)
+        print(f"\n[STEP 5/6] Agent Role (Optional)")
+        print("-" * 50)
+        roles = list(self.config.get('agent_roles', {}).keys())
+
+        if roles:
+            print("  Available agent roles:")
+            for i, r in enumerate(roles, 1):
+                desc = self.config['agent_roles'][r].get('description', '')[:50]
+                print(f"    {i}. {r} - {desc}")
+            print(f"    {len(roles)+1}. None (use default)")
+
+            choice = input(f"\n  Select role [1-{len(roles)+1}]: ").strip()
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(roles):
+                    config["agent_role"] = roles[idx]
+            except ValueError:
+                pass
+
+        # Step 6: Custom Prompt
+        if config["mode"] in ["analysis", "full_scan", "quick_scan"]:
+            print(f"\n[STEP 6/6] Custom Prompt")
+            print("-" * 50)
+            print("  Enter your instructions for the AI agent.")
+            print("  (What should it analyze, test, or look for?)")
+            print("  Press Enter twice to finish.\n")
+
+            lines = []
+            while True:
+                line = input("  > ")
+                if line == "" and lines and lines[-1] == "":
+                    break
+                lines.append(line)
+
+            config["prompt"] = "\n".join(lines).strip()
+
+            if not config["prompt"]:
+                config["prompt"] = f"Perform comprehensive security assessment on {config['target']}"
+        else:
+            print(f"\n[STEP 6/6] Skipped (Recon mode)")
+            config["prompt"] = None
+
+        # Summary and Confirmation
+        print(f"\n{'='*60}")
+        print("  CONFIGURATION SUMMARY")
+        print(f"{'='*60}")
+        print(f"  Mode:         {config['mode']}")
+        print(f"  Target:       {config['target']}")
+        print(f"  Context File: {config['context_file'] or 'None'}")
+        print(f"  LLM Profile:  {config['llm_profile']}")
+        print(f"  Agent Role:   {config['agent_role'] or 'default'}")
+        if config["prompt"]:
+            print(f"  Prompt:       {config['prompt'][:60]}...")
+        print(f"{'='*60}")
+
+        confirm = input("\n  Execute with this configuration? [Y/n]: ").strip().lower()
+        if confirm == 'n':
+            print("\n[!] Cancelled.")
+            return
+
+        # Execute based on mode
+        print(f"\n[*] Starting execution...")
+
+        context = None
+        if config["context_file"]:
+            from core.context_builder import load_context_from_file
+            context = load_context_from_file(config["context_file"])
+            if context:
+                print(f"[+] Loaded context from: {config['context_file']}")
+
+        if config["mode"] == "recon":
+            self.run_full_recon(config["target"], with_ai_analysis=bool(config["agent_role"]))
+
+        elif config["mode"] == "analysis":
+            agent_role = config["agent_role"] or "bug_bounty_hunter"
+            self.execute_agent_role(
+                agent_role,
+                config["prompt"],
+                llm_profile_override=config["llm_profile"],
+                recon_context=context
+            )
+
+        elif config["mode"] == "full_scan":
+            self.execute_real_scan(
+                config["target"],
+                scan_type="full",
+                agent_role=config["agent_role"],
+                recon_context=context
+            )
+
+        elif config["mode"] == "quick_scan":
+            self.execute_real_scan(
+                config["target"],
+                scan_type="quick",
+                agent_role=config["agent_role"],
+                recon_context=context
+            )
+
+        print(f"\n[+] Execution complete!")
         
     def _setup_directories(self):
         """Create necessary directories"""
@@ -129,8 +362,17 @@ class NeuroSploitv2:
         else:
             self.llm_manager_instance = LLMManager({"llm": llm_config})
 
-    def execute_agent_role(self, agent_role_name: str, user_input: str, additional_context: Optional[Dict] = None, llm_profile_override: Optional[str] = None):
-        """Execute a specific agent role with a given input."""
+    def execute_agent_role(self, agent_role_name: str, user_input: str, additional_context: Optional[Dict] = None, llm_profile_override: Optional[str] = None, recon_context: Optional[Dict] = None):
+        """
+        Execute a specific agent role with a given input.
+
+        Args:
+            agent_role_name: Name of the agent role to use
+            user_input: The prompt/task for the agent
+            additional_context: Additional campaign data
+            llm_profile_override: Override the default LLM profile
+            recon_context: Pre-collected recon context (skips discovery if provided)
+        """
         logger.info(f"Starting execution for agent role: {agent_role_name}")
 
         agent_roles_config = self.config.get('agent_roles', {})
@@ -155,7 +397,7 @@ class NeuroSploitv2:
         if not self.llm_manager_instance:
             logger.error("LLM Manager could not be initialized.")
             return {"error": "LLM Manager initialization failed."}
-        
+
         # Get the prompts for the selected agent role
         # Assuming agent_role_name directly maps to the .md filename
         agent_prompts = self.llm_manager_instance.prompts.get("md_prompts", {}).get(agent_role_name)
@@ -165,8 +407,9 @@ class NeuroSploitv2:
 
         # Instantiate and execute the BaseAgent
         agent_instance = BaseAgent(agent_role_name, self.config, self.llm_manager_instance, agent_prompts)
-        
-        results = agent_instance.execute(user_input, additional_context)
+
+        # Execute with recon_context if provided (uses context-based flow)
+        results = agent_instance.execute(user_input, additional_context, recon_context=recon_context)
         
         # Save results
         campaign_results = {
@@ -516,7 +759,7 @@ class NeuroSploitv2:
         
         logger.info(f"Report generated: {report_file}")
 
-    def execute_real_scan(self, target: str, scan_type: str = "full", agent_role: str = None) -> Dict:
+    def execute_real_scan(self, target: str, scan_type: str = "full", agent_role: str = None, recon_context: Dict = None) -> Dict:
         """
         Execute a real penetration test with actual tools and generate professional report.
 
@@ -550,7 +793,9 @@ class NeuroSploitv2:
             return {"error": f"Missing tools: {missing_tools}"}
 
         # Execute the scan
-        executor = PentestExecutor(target, self.config)
+        executor = PentestExecutor(target, self.config, recon_context=recon_context)
+        if recon_context:
+            print(f"[+] Using recon context with {recon_context.get('attack_surface', {}).get('total_subdomains', 0)} subdomains, {recon_context.get('attack_surface', {}).get('live_hosts', 0)} live hosts")
 
         if scan_type == "quick":
             scan_result = executor.run_quick_scan()
@@ -610,6 +855,99 @@ Provide:
             "results": results_dict,
             "html_report": html_report,
             "json_report": json_report
+        }
+
+    def run_full_recon(self, target: str, with_ai_analysis: bool = True) -> Dict:
+        """
+        Run full advanced recon and consolidate all outputs.
+
+        This command runs all recon tools:
+        - Subdomain enumeration (subfinder, amass, assetfinder)
+        - HTTP probing (httpx, httprobe)
+        - URL collection (gau, waybackurls, waymore)
+        - Web crawling (katana, gospider)
+        - Port scanning (naabu, nmap)
+        - DNS enumeration
+        - Vulnerability scanning (nuclei)
+
+        All results are consolidated into a single context file
+        that will be used by the LLM to enhance testing.
+        """
+        print(f"\n{'='*70}")
+        print("    NEUROSPLOIT - FULL ADVANCED RECON")
+        print(f"{'='*70}")
+        print(f"\n[*] Target: {target}")
+        print(f"[*] Session ID: {self.session_id}")
+        print(f"[*] With AI analysis: {with_ai_analysis}\n")
+
+        # Execute full recon
+        recon_runner = FullReconRunner(self.config)
+
+        # Determine target type
+        target_type = "url" if target.startswith(('http://', 'https://')) else "domain"
+
+        recon_results = recon_runner.run(target, target_type)
+
+        # If requested, run AI analysis
+        llm_analysis = ""
+        if with_ai_analysis and self.selected_agent_role:
+            print(f"\n[*] Running AI analysis with {self.selected_agent_role}...")
+            llm_profile = self.config.get('agent_roles', {}).get(self.selected_agent_role, {}).get('llm_profile')
+            self._initialize_llm_manager(llm_profile)
+
+            if self.llm_manager_instance:
+                agent_prompts = self.llm_manager_instance.prompts.get("md_prompts", {}).get(self.selected_agent_role, {})
+                if agent_prompts:
+                    agent = BaseAgent(self.selected_agent_role, self.config, self.llm_manager_instance, agent_prompts)
+
+                    analysis_prompt = f"""
+Analise o seguinte contexto de reconhecimento e identifique:
+1. Vetores de ataque mais promissores
+2. Vulnerabilidades potenciais baseadas nas tecnologias detectadas
+3. Endpoints prioritarios para teste
+4. Recomendacoes de proximos passos para o pentest
+
+CONTEXTO DE RECON:
+{recon_results.get('context_text', '')}
+"""
+                    analysis_result = agent.execute(analysis_prompt, recon_results.get('context', {}))
+                    llm_analysis = analysis_result.get("llm_response", "")
+
+        # Generate report if vulnerabilities found
+        context = recon_results.get('context', {})
+        vulns = context.get('vulnerabilities', {}).get('all', [])
+
+        if vulns or llm_analysis:
+            print("\n[*] Generating report...")
+            from core.report_generator import ReportGenerator
+
+            report_data = {
+                "target": target,
+                "scan_started": datetime.now().isoformat(),
+                "scan_completed": datetime.now().isoformat(),
+                "attack_surface": context.get('attack_surface', {}),
+                "vulnerabilities": vulns,
+                "technologies": context.get('data', {}).get('technologies', []),
+                "open_ports": context.get('data', {}).get('open_ports', [])
+            }
+
+            report_gen = ReportGenerator(report_data, llm_analysis)
+            html_report = report_gen.save_report("reports")
+            print(f"[+] HTML Report: {html_report}")
+
+        print(f"\n{'='*70}")
+        print("[+] ADVANCED RECON COMPLETE!")
+        print(f"[+] Consolidated context: {recon_results.get('context_file', '')}")
+        print(f"[+] Text context: {recon_results.get('context_text_file', '')}")
+        print(f"{'='*70}\n")
+
+        return {
+            "session_id": self.session_id,
+            "target": target,
+            "recon_results": recon_results,
+            "llm_analysis": llm_analysis,
+            "context_file": recon_results.get('context_file', ''),
+            "context_text_file": recon_results.get('context_text_file', '')
         }
 
     def check_tools_status(self):
@@ -763,6 +1101,43 @@ Provide:
                         self.execute_real_scan(target, scan_type="quick", agent_role=agent_role)
                     else:
                         print("Usage: quick_scan <target_url>")
+                elif cmd.startswith('recon ') or cmd.startswith('full_recon '):
+                    parts = cmd.split(maxsplit=1)
+                    if len(parts) > 1:
+                        target = parts[1].strip().strip('"')
+                        with_ai = self.selected_agent_role is not None
+                        self.run_full_recon(target, with_ai_analysis=with_ai)
+                    else:
+                        print("Usage: recon <target_domain_or_url>")
+                        print("       full_recon <target_domain_or_url>")
+                        print("\nThis command runs all recon tools:")
+                        print("  - Subdomain enumeration (subfinder, amass, assetfinder)")
+                        print("  - HTTP probing (httpx)")
+                        print("  - URL collection (gau, waybackurls)")
+                        print("  - Web crawling (katana, gospider)")
+                        print("  - Port scanning (naabu, nmap)")
+                        print("  - Vulnerability scanning (nuclei)")
+                        print("\nAll outputs are consolidated into a single context file")
+                        print("for use by the LLM.")
+                elif cmd.lower() in ['experience', 'wizard']:
+                    self.experience_mode()
+                elif cmd.startswith('analyze '):
+                    parts = cmd.split(maxsplit=1)
+                    if len(parts) > 1:
+                        context_file = parts[1].strip().strip('"')
+                        if os.path.exists(context_file):
+                            from core.context_builder import load_context_from_file
+                            context = load_context_from_file(context_file)
+                            if context:
+                                prompt = input("Enter analysis prompt: ").strip()
+                                if prompt:
+                                    agent_role = self.selected_agent_role or "bug_bounty_hunter"
+                                    self.execute_agent_role(agent_role, prompt, recon_context=context)
+                        else:
+                            print(f"Context file not found: {context_file}")
+                    else:
+                        print("Usage: analyze <context_file.json>")
+                        print("       Then enter your analysis prompt")
                 else:
                     print("Unknown command. Type 'help' for available commands.")
             except KeyboardInterrupt:
@@ -833,12 +1208,32 @@ Provide:
                     NeuroSploitv2 - Command Reference
 =======================================================================
 
+MODES:
+  experience / wizard      - GUIDED step-by-step setup (recommended!)
+  analyze <context.json>   - LLM-only analysis with context file
+
+RECON COMMANDS (Data Collection):
+  recon <target>           - Run FULL RECON and consolidate outputs
+  full_recon <target>      - Alias for recon
+
+  The recon command runs ALL reconnaissance tools:
+    - Subdomain enumeration (subfinder, amass, assetfinder)
+    - HTTP probing (httpx, httprobe)
+    - URL collection (gau, waybackurls, waymore)
+    - Web crawling (katana, gospider)
+    - Port scanning (naabu, nmap)
+    - DNS enumeration
+    - Vulnerability scanning (nuclei)
+
+  All outputs are CONSOLIDATED into a single context file
+  for use by the LLM!
+
 SCANNING COMMANDS (Execute Real Tools):
-  scan <target>            - Run FULL pentest scan with real tools (nmap, nuclei, nikto, etc.)
+  scan <target>            - Run FULL pentest scan with real tools
   quick_scan <target>      - Run QUICK scan (essential checks only)
 
 TOOL MANAGEMENT:
-  install_tools            - Install required pentest tools (nmap, sqlmap, nuclei, etc.)
+  install_tools            - Install required pentest tools
   check_tools              - Check which tools are installed
 
 AGENT COMMANDS (AI Analysis):
@@ -856,11 +1251,18 @@ GENERAL:
   help                     - Show this help menu
   exit/quit                - Exit the framework
 
+RECOMMENDED WORKFLOW:
+  1. recon example.com              - First run full recon
+  2. analyze results/context_X.json - LLM-only analysis with context
+     OR
+  1. experience                     - Use guided wizard mode
+
 EXAMPLES:
+  experience                         - Start guided wizard
+  recon example.com                  - Full recon with consolidated output
+  analyze results/context_X.json     - LLM analysis of context file
   scan https://example.com           - Full pentest scan
   quick_scan 192.168.1.1             - Quick vulnerability check
-  install_tools                      - Install nmap, sqlmap, nuclei, etc.
-  run_agent bug_bounty_hunter "Analyze https://target.com"
 =======================================================================
         """)
 
@@ -871,21 +1273,50 @@ def main():
         description='NeuroSploitv2 - AI-Powered Penetration Testing Framework',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  # Run real pentest scan
+3 EXECUTION MODES:
+==================
+
+1. CLI MODE (Direct command-line):
+   python neurosploit.py --input "Your prompt" -cf context.json --llm-profile PROFILE
+
+2. INTERACTIVE MODE (-i):
+   python neurosploit.py -i
+   Then use commands: recon, analyze, scan, etc.
+
+3. EXPERIENCE/WIZARD MODE (-e):
+   python neurosploit.py -e
+   Guided step-by-step configuration - RECOMMENDED for beginners!
+
+EXAMPLES:
+=========
+  # Step 1: Run recon to collect data
+  python neurosploit.py --recon example.com
+
+  # Step 2: LLM-only analysis (no tool execution)
+  python neurosploit.py --input "Analyze for SQLi and XSS" -cf results/context_X.json --llm-profile claude_opus
+
+  # Or use wizard mode
+  python neurosploit.py -e
+
+  # Run full pentest scan with tools
   python neurosploit.py --scan https://example.com
-  python neurosploit.py --quick-scan 192.168.1.1
-
-  # Install required tools
-  python neurosploit.py --install-tools
-
-  # AI-powered analysis
-  python neurosploit.py --agent-role red_team_agent --input "Analyze target.com"
 
   # Interactive mode
   python neurosploit.py -i
         """
     )
+
+    # Recon options
+    parser.add_argument('--recon', metavar='TARGET',
+                       help='Run FULL RECON on target (subdomain enum, http probe, url collection, etc.)')
+
+    # Context file option
+    parser.add_argument('--context-file', '-cf', metavar='FILE',
+                       help='Load recon context from JSON file (use with --scan or run_agent)')
+
+    # Target option (for use with context or agent without running recon)
+    parser.add_argument('--target', '-t', metavar='TARGET',
+                       help='Specify target URL/domain (use with -cf or --input)')
 
     # Scanning options
     parser.add_argument('--scan', metavar='TARGET',
@@ -901,9 +1332,11 @@ Examples:
 
     # Agent options
     parser.add_argument('-r', '--agent-role',
-                       help='Name of the agent role to execute')
+                       help='Name of the agent role to execute (optional)')
     parser.add_argument('-i', '--interactive', action='store_true',
                        help='Start in interactive mode')
+    parser.add_argument('-e', '--experience', action='store_true',
+                       help='Start in experience/wizard mode (guided setup)')
     parser.add_argument('--input', help='Input prompt/task for the agent role')
     parser.add_argument('--llm-profile', help='LLM profile to use for the execution')
 
@@ -934,15 +1367,31 @@ Examples:
     elif args.check_tools:
         framework.check_tools_status()
 
+    # Handle recon
+    elif args.recon:
+        framework.run_full_recon(args.recon, with_ai_analysis=bool(args.agent_role))
+
     # Handle full scan
     elif args.scan:
         agent_role = args.agent_role or "bug_bounty_hunter"
-        framework.execute_real_scan(args.scan, scan_type="full", agent_role=agent_role)
+        context = None
+        if args.context_file:
+            from core.context_builder import load_context_from_file
+            context = load_context_from_file(args.context_file)
+            if context:
+                print(f"[+] Loaded context from: {args.context_file}")
+        framework.execute_real_scan(args.scan, scan_type="full", agent_role=agent_role, recon_context=context)
 
     # Handle quick scan
     elif args.quick_scan:
         agent_role = args.agent_role or "bug_bounty_hunter"
-        framework.execute_real_scan(args.quick_scan, scan_type="quick", agent_role=agent_role)
+        context = None
+        if args.context_file:
+            from core.context_builder import load_context_from_file
+            context = load_context_from_file(args.context_file)
+            if context:
+                print(f"[+] Loaded context from: {args.context_file}")
+        framework.execute_real_scan(args.quick_scan, scan_type="quick", agent_role=agent_role, recon_context=context)
 
     # Handle list commands
     elif args.list_agents:
@@ -950,13 +1399,67 @@ Examples:
     elif args.list_profiles:
         framework.list_llm_profiles()
 
+    # Handle experience/wizard mode
+    elif args.experience:
+        framework.experience_mode()
+
     # Handle interactive mode
     elif args.interactive:
         framework.interactive_mode()
 
-    # Handle agent execution
+    # Handle agent execution with optional context
     elif args.agent_role and args.input:
-        framework.execute_agent_role(args.agent_role, args.input, llm_profile_override=args.llm_profile)
+        context = None
+        if args.context_file:
+            from core.context_builder import load_context_from_file
+            context = load_context_from_file(args.context_file)
+            if context:
+                print(f"[+] Loaded context from: {args.context_file}")
+
+        framework.execute_agent_role(
+            args.agent_role,
+            args.input,
+            llm_profile_override=args.llm_profile,
+            recon_context=context
+        )
+
+    # Handle input-only mode with context file (no role specified)
+    # Use default agent or just LLM interaction
+    elif args.input and args.context_file:
+        from core.context_builder import load_context_from_file
+        context = load_context_from_file(args.context_file)
+        if context:
+            print(f"[+] Loaded context from: {args.context_file}")
+
+            # Use default agent role or bug_bounty_hunter
+            agent_role = args.agent_role or "bug_bounty_hunter"
+            framework.execute_agent_role(
+                agent_role,
+                args.input,
+                llm_profile_override=args.llm_profile,
+                recon_context=context
+            )
+        else:
+            print("[!] Failed to load context file")
+
+    # Handle target with context file (AI pentest without recon)
+    elif args.target and args.context_file:
+        from core.context_builder import load_context_from_file
+        context = load_context_from_file(args.context_file)
+        if context:
+            print(f"[+] Loaded context from: {args.context_file}")
+
+            agent_role = args.agent_role or "bug_bounty_hunter"
+            input_prompt = args.input or f"Perform security assessment on {args.target}"
+
+            framework.execute_agent_role(
+                agent_role,
+                input_prompt,
+                llm_profile_override=args.llm_profile,
+                recon_context=context
+            )
+        else:
+            print("[!] Failed to load context file")
 
     else:
         parser.print_help()

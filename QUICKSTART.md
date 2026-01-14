@@ -2,8 +2,6 @@
 
 ## 🚀 Fast Track Setup (5 minutes)
 
-YouTube Video: https://youtu.be/SQq1TVwlrxQ
-
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
