@@ -37,6 +37,23 @@ from core.context_builder import ReconContextBuilder
 from agents.base_agent import BaseAgent
 from tools.recon.recon_tools import FullReconRunner
 
+# Import AI Agents
+try:
+    from backend.core.ai_pentest_agent import AIPentestAgent
+except ImportError:
+    AIPentestAgent = None
+
+try:
+    from backend.core.autonomous_agent import AutonomousAgent, OperationMode
+    from backend.core.task_library import get_task_library, Task, TaskCategory
+except ImportError:
+    AutonomousAgent = None
+    OperationMode = None
+    get_task_library = None
+    Task = None
+    TaskCategory = None
+
+
 class Completer:
     def __init__(self, neurosploit):
         self.neurosploit = neurosploit
@@ -44,7 +61,12 @@ class Completer:
             "help", "run_agent", "config", "list_roles", "list_profiles",
             "set_profile", "set_agent", "discover_ollama", "install_tools",
             "scan", "quick_scan", "recon", "full_recon", "check_tools",
-            "experience", "wizard", "analyze", "exit", "quit"
+            "experience", "wizard", "analyze", "agent", "ai_agent",
+            # New autonomous agent modes
+            "pentest", "full_auto", "recon_only", "prompt_only", "analyze_only",
+            # Task library
+            "tasks", "task", "list_tasks", "create_task", "run_task",
+            "exit", "quit"
         ]
         self.agent_roles = list(self.neurosploit.config.get('agent_roles', {}).keys())
         self.llm_profiles = list(self.neurosploit.config.get('llm', {}).get('profiles', {}).keys())
@@ -950,6 +972,465 @@ CONTEXTO DE RECON:
             "context_text_file": recon_results.get('context_text_file', '')
         }
 
+    def run_ai_agent(
+        self,
+        target: str,
+        prompt_file: Optional[str] = None,
+        context_file: Optional[str] = None,
+        llm_profile: Optional[str] = None
+    ) -> Dict:
+        """
+        Run the AI Offensive Security Agent.
+
+        This is an autonomous agent that:
+        - Uses LLM for intelligent vulnerability testing
+        - Confirms vulnerabilities with AI (no false positives)
+        - Uses recon data to inform testing
+        - Accepts custom .md prompt files
+        - Generates PoC code
+
+        Args:
+            target: Target URL to test
+            prompt_file: Optional .md file with custom testing instructions
+            context_file: Optional recon context JSON file
+            llm_profile: Optional LLM profile to use
+        """
+        if not AIPentestAgent:
+            print("[!] AI Agent not available. Check backend installation.")
+            return {"error": "AI Agent not installed"}
+
+        print(f"\n{'='*70}")
+        print("    NEUROSPLOIT AI OFFENSIVE SECURITY AGENT")
+        print(f"{'='*70}")
+        print(f"\n[*] Target: {target}")
+        if prompt_file:
+            print(f"[*] Prompt file: {prompt_file}")
+        if context_file:
+            print(f"[*] Context file: {context_file}")
+        print(f"[*] Session ID: {self.session_id}")
+        print()
+
+        # Load recon context if provided
+        recon_context = None
+        if context_file:
+            from core.context_builder import load_context_from_file
+            recon_context = load_context_from_file(context_file)
+            if recon_context:
+                print(f"[+] Loaded recon context: {len(recon_context.get('data', {}).get('endpoints', []))} endpoints")
+
+        # Initialize LLM manager
+        profile = llm_profile or self.config.get('llm', {}).get('default_profile')
+        self._initialize_llm_manager(profile)
+
+        # Run the agent
+        import asyncio
+
+        async def run_agent():
+            async def log_callback(level: str, message: str):
+                prefix = {
+                    "info": "[*]",
+                    "warning": "[!]",
+                    "error": "[X]",
+                    "debug": "[D]",
+                }.get(level, "[*]")
+                print(f"{prefix} {message}")
+
+            async with AIPentestAgent(
+                target=target,
+                llm_manager=self.llm_manager_instance,
+                log_callback=log_callback,
+                prompt_file=prompt_file,
+                recon_context=recon_context,
+                config=self.config,
+                max_depth=5
+            ) as agent:
+                report = await agent.run()
+                return report
+
+        try:
+            report = asyncio.run(run_agent())
+        except Exception as e:
+            logger.error(f"Agent error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
+
+        # Save results
+        if report and report.get("findings"):
+            result_file = f"results/agent_{self.session_id}.json"
+            with open(result_file, 'w') as f:
+                json.dump(report, f, indent=2, default=str)
+            print(f"\n[+] Results saved: {result_file}")
+
+            # Generate HTML report
+            self._generate_agent_report(report)
+
+        print(f"\n{'='*70}")
+        print("[+] AI AGENT COMPLETE!")
+        print(f"    Vulnerabilities found: {len(report.get('findings', []))}")
+        print(f"{'='*70}\n")
+
+        return report
+
+    def run_autonomous_agent(
+        self,
+        target: str,
+        mode: str = "full_auto",
+        task_id: Optional[str] = None,
+        prompt: Optional[str] = None,
+        prompt_file: Optional[str] = None,
+        context_file: Optional[str] = None,
+        llm_profile: Optional[str] = None
+    ) -> Dict:
+        """
+        Run the Autonomous AI Security Agent.
+
+        Modes:
+        - recon_only: Just reconnaissance, no testing
+        - full_auto: Complete workflow (Recon -> Analyze -> Test -> Report)
+        - prompt_only: AI decides everything based on prompt (HIGH TOKEN USAGE!)
+        - analyze_only: Analysis of provided data, no active testing
+
+        Args:
+            target: Target URL/domain
+            mode: Operation mode
+            task_id: Task from library to execute
+            prompt: Custom prompt
+            prompt_file: Path to .md prompt file
+            context_file: Path to recon context JSON
+            llm_profile: LLM profile to use
+        """
+        if not AutonomousAgent:
+            print("[!] Autonomous Agent not available. Check installation.")
+            return {"error": "Agent not installed"}
+
+        print(f"\n{'='*70}")
+        print("   NEUROSPLOIT AUTONOMOUS AI AGENT")
+        print(f"{'='*70}")
+        print(f"\n[*] Target: {target}")
+        print(f"[*] Mode: {mode.upper()}")
+
+        # Warning for prompt_only mode
+        if mode == "prompt_only":
+            print("\n[!] WARNING: PROMPT-ONLY MODE")
+            print("[!] This mode uses significantly more tokens than other modes.")
+            print("[!] The AI will decide what tools to use based on your prompt.\n")
+
+        # Load task from library
+        task = None
+        if task_id and get_task_library:
+            library = get_task_library()
+            task = library.get_task(task_id)
+            if task:
+                print(f"[*] Task: {task.name}")
+                prompt = task.prompt
+            else:
+                print(f"[!] Task not found: {task_id}")
+
+        # Load prompt from file
+        if prompt_file:
+            print(f"[*] Prompt file: {prompt_file}")
+            try:
+                path = Path(prompt_file)
+                for search in [path, Path("prompts") / path, Path("prompts/md_library") / path]:
+                    if search.exists():
+                        prompt = search.read_text()
+                        break
+            except Exception as e:
+                print(f"[!] Error loading prompt file: {e}")
+
+        # Load recon context
+        recon_context = None
+        if context_file:
+            from core.context_builder import load_context_from_file
+            recon_context = load_context_from_file(context_file)
+            if recon_context:
+                print(f"[+] Loaded context: {context_file}")
+
+        # Get operation mode
+        mode_map = {
+            "recon_only": OperationMode.RECON_ONLY,
+            "full_auto": OperationMode.FULL_AUTO,
+            "prompt_only": OperationMode.PROMPT_ONLY,
+            "analyze_only": OperationMode.ANALYZE_ONLY,
+        }
+        op_mode = mode_map.get(mode, OperationMode.FULL_AUTO)
+
+        # Initialize LLM
+        profile = llm_profile or self.config.get('llm', {}).get('default_profile')
+        self._initialize_llm_manager(profile)
+
+        print(f"[*] Session: {self.session_id}\n")
+
+        # Run agent
+        import asyncio
+
+        async def run():
+            async def log_cb(level: str, message: str):
+                prefix = {"info": "[*]", "warning": "[!]", "error": "[X]", "debug": "[D]"}.get(level, "[*]")
+                print(f"{prefix} {message}")
+
+            async def progress_cb(progress: int, message: str):
+                bar = "=" * (progress // 5) + ">" + " " * (20 - progress // 5)
+                print(f"\r[{bar}] {progress}% - {message}", end="", flush=True)
+                if progress == 100:
+                    print()
+
+            async with AutonomousAgent(
+                target=target,
+                mode=op_mode,
+                llm_manager=self.llm_manager_instance,
+                log_callback=log_cb,
+                progress_callback=progress_cb,
+                task=task,
+                custom_prompt=prompt,
+                recon_context=recon_context,
+                config=self.config,
+                prompt_file=prompt_file
+            ) as agent:
+                return await agent.run()
+
+        try:
+            report = asyncio.run(run())
+        except Exception as e:
+            logger.error(f"Agent error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"error": str(e)}
+
+        # Save results
+        result_file = f"results/autonomous_{self.session_id}.json"
+        with open(result_file, 'w') as f:
+            json.dump(report, f, indent=2, default=str)
+        print(f"\n[+] Results saved: {result_file}")
+
+        # Generate HTML report
+        if report.get("findings"):
+            self._generate_autonomous_report(report)
+
+        return report
+
+    def list_tasks(self):
+        """List all available tasks from library"""
+        if not get_task_library:
+            print("[!] Task library not available")
+            return
+
+        library = get_task_library()
+        tasks = library.list_tasks()
+
+        print(f"\n{'='*70}")
+        print("   TASK LIBRARY")
+        print(f"{'='*70}\n")
+
+        # Group by category
+        by_category = {}
+        for task in tasks:
+            cat = task.category
+            if cat not in by_category:
+                by_category[cat] = []
+            by_category[cat].append(task)
+
+        for category, cat_tasks in by_category.items():
+            print(f"[{category.upper()}]")
+            for task in cat_tasks:
+                preset = " (preset)" if task.is_preset else ""
+                print(f"  {task.id:<25} - {task.name}{preset}")
+            print()
+
+        print(f"Total: {len(tasks)} tasks")
+        print("\nUse: run_task <task_id> <target>")
+
+    def create_task(self, name: str, prompt: str, category: str = "custom"):
+        """Create a new task in the library"""
+        if not get_task_library or not Task:
+            print("[!] Task library not available")
+            return
+
+        library = get_task_library()
+        task = Task(
+            id=f"custom_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            name=name,
+            description=prompt[:100],
+            category=category,
+            prompt=prompt,
+            is_preset=False
+        )
+        library.create_task(task)
+        print(f"[+] Task created: {task.id}")
+        return task
+
+    def _generate_autonomous_report(self, report: Dict):
+        """Generate HTML report from autonomous agent results"""
+        from core.report_generator import ReportGenerator
+
+        # Convert to scan format
+        scan_data = {
+            "target": report.get("target", ""),
+            "scan_started": report.get("scan_date", ""),
+            "scan_completed": datetime.now().isoformat(),
+            "vulnerabilities": [],
+            "technologies": report.get("summary", {}).get("technologies", []),
+        }
+
+        for finding in report.get("findings", []):
+            vuln = {
+                "title": finding.get("title", "Unknown"),
+                "severity": finding.get("severity", "medium"),
+                "description": finding.get("description", ""),
+                "technical_details": finding.get("technical_details", ""),
+                "affected_endpoint": finding.get("endpoint", ""),
+                "payload": finding.get("payload", ""),
+                "evidence": finding.get("evidence", ""),
+                "impact": finding.get("impact", ""),
+                "poc_code": finding.get("poc_code", ""),
+                "exploitation_steps": finding.get("exploitation_steps", []),
+                "remediation": finding.get("remediation", ""),
+                "references": finding.get("references", []),
+            }
+
+            # Add CVSS
+            if finding.get("cvss"):
+                cvss = finding["cvss"]
+                vuln["cvss_score"] = cvss.get("score", 0)
+                vuln["cvss_vector"] = cvss.get("vector", "")
+
+            # Add CWE
+            if finding.get("cwe_id"):
+                vuln["cwe_id"] = finding["cwe_id"]
+
+            scan_data["vulnerabilities"].append(vuln)
+
+        # Generate LLM analysis summary
+        summary = report.get("summary", {})
+        llm_analysis = f"""
+## Autonomous AI Agent Assessment Report
+
+**Target:** {report.get('target', '')}
+**Mode:** {report.get('mode', 'full_auto').upper()}
+**Scan Date:** {report.get('scan_date', '')}
+
+### Executive Summary
+Risk Level: **{summary.get('risk_level', 'UNKNOWN')}**
+
+### Findings Summary
+| Severity | Count |
+|----------|-------|
+| Critical | {summary.get('critical', 0)} |
+| High | {summary.get('high', 0)} |
+| Medium | {summary.get('medium', 0)} |
+| Low | {summary.get('low', 0)} |
+| Info | {summary.get('info', 0)} |
+
+**Total Findings:** {summary.get('total_findings', 0)}
+**Endpoints Tested:** {summary.get('endpoints_tested', 0)}
+
+### Technologies Detected
+{', '.join(summary.get('technologies', [])) or 'None detected'}
+
+### Detailed Findings
+"""
+        for i, finding in enumerate(report.get("findings", []), 1):
+            cvss_info = ""
+            if finding.get("cvss"):
+                cvss_info = f"**CVSS:** {finding['cvss'].get('score', 'N/A')} ({finding['cvss'].get('vector', '')})"
+
+            llm_analysis += f"""
+---
+#### {i}. {finding.get('title', 'Unknown')} [{finding.get('severity', 'medium').upper()}]
+{cvss_info}
+**CWE:** {finding.get('cwe_id', 'N/A')}
+**Endpoint:** `{finding.get('endpoint', 'N/A')}`
+
+**Description:**
+{finding.get('description', 'No description')}
+
+**Impact:**
+{finding.get('impact', 'No impact assessment')}
+
+**Evidence:**
+```
+{finding.get('evidence', 'No evidence')}
+```
+
+**Proof of Concept:**
+```python
+{finding.get('poc_code', '# No PoC available')}
+```
+
+**Remediation:**
+{finding.get('remediation', 'No remediation provided')}
+
+"""
+
+        # Recommendations
+        if report.get("recommendations"):
+            llm_analysis += "\n### Recommendations\n"
+            for rec in report["recommendations"]:
+                llm_analysis += f"- {rec}\n"
+
+        report_gen = ReportGenerator(scan_data, llm_analysis)
+        html_report = report_gen.save_report("reports")
+        print(f"[+] HTML Report: {html_report}")
+
+    def _generate_agent_report(self, report: Dict):
+        """Generate HTML report from AI agent results"""
+        from core.report_generator import ReportGenerator
+
+        # Convert agent report to scan format
+        scan_data = {
+            "target": report.get("target", ""),
+            "scan_started": report.get("scan_date", ""),
+            "scan_completed": datetime.now().isoformat(),
+            "vulnerabilities": [],
+            "technologies": report.get("summary", {}).get("technologies", []),
+        }
+
+        for finding in report.get("findings", []):
+            scan_data["vulnerabilities"].append({
+                "title": f"{finding['type'].upper()} - {finding['severity'].upper()}",
+                "severity": finding["severity"],
+                "description": finding.get("evidence", ""),
+                "affected_endpoint": finding.get("endpoint", ""),
+                "payload": finding.get("payload", ""),
+                "poc_code": finding.get("poc_code", ""),
+                "exploitation_steps": finding.get("exploitation_steps", []),
+                "llm_analysis": finding.get("llm_analysis", ""),
+            })
+
+        # Generate LLM analysis summary
+        llm_analysis = f"""
+## AI Agent Analysis Summary
+
+**Target:** {report.get('target', '')}
+**Scan Date:** {report.get('scan_date', '')}
+**LLM Enabled:** {report.get('llm_enabled', False)}
+
+### Summary
+- Total Endpoints: {report.get('summary', {}).get('total_endpoints', 0)}
+- Total Parameters: {report.get('summary', {}).get('total_parameters', 0)}
+- Vulnerabilities Found: {report.get('summary', {}).get('total_vulnerabilities', 0)}
+  - Critical: {report.get('summary', {}).get('critical', 0)}
+  - High: {report.get('summary', {}).get('high', 0)}
+  - Medium: {report.get('summary', {}).get('medium', 0)}
+  - Low: {report.get('summary', {}).get('low', 0)}
+
+### Findings
+"""
+        for i, finding in enumerate(report.get("findings", []), 1):
+            llm_analysis += f"""
+#### {i}. {finding['type'].upper()} [{finding['severity'].upper()}]
+- **Endpoint:** {finding.get('endpoint', '')}
+- **Payload:** `{finding.get('payload', '')}`
+- **Evidence:** {finding.get('evidence', '')}
+- **Confidence:** {finding.get('confidence', 'medium')}
+- **LLM Analysis:** {finding.get('llm_analysis', 'N/A')}
+"""
+
+        report_gen = ReportGenerator(scan_data, llm_analysis)
+        html_report = report_gen.save_report("reports")
+        print(f"[+] HTML Report: {html_report}")
+
     def check_tools_status(self):
         """Check and display status of all pentest tools"""
         print("\n" + "="*60)
@@ -1138,6 +1619,181 @@ CONTEXTO DE RECON:
                     else:
                         print("Usage: analyze <context_file.json>")
                         print("       Then enter your analysis prompt")
+                elif cmd.startswith('agent ') or cmd.startswith('ai_agent '):
+                    # AI Agent command
+                    # Format: agent <target> [--prompt <file.md>] [--context <context.json>]
+                    parts = cmd.split()
+                    if len(parts) >= 2:
+                        target = parts[1].strip().strip('"')
+                        prompt_file = None
+                        context_file = None
+
+                        # Parse optional arguments
+                        i = 2
+                        while i < len(parts):
+                            if parts[i] in ['--prompt', '-p'] and i + 1 < len(parts):
+                                prompt_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            elif parts[i] in ['--context', '-c'] and i + 1 < len(parts):
+                                context_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            else:
+                                i += 1
+
+                        # Get LLM profile
+                        llm_profile = self.config.get('llm', {}).get('default_profile')
+                        self.run_ai_agent(target, prompt_file, context_file, llm_profile)
+                    else:
+                        print("Usage: agent <target_url> [--prompt <file.md>] [--context <context.json>]")
+                        print("")
+                        print("Examples:")
+                        print("  agent https://example.com")
+                        print("  agent https://example.com --prompt bug_bounty.md")
+                        print("  agent https://example.com --context results/context_X.json")
+                        print("")
+                        print("The AI Agent will:")
+                        print("  1. Use LLM for intelligent vulnerability testing")
+                        print("  2. Confirm findings with AI (no false positives)")
+                        print("  3. Generate PoC code for exploits")
+                        print("  4. Use recon data if context file provided")
+
+                # === NEW AUTONOMOUS AGENT MODES ===
+                elif cmd.startswith('pentest ') or cmd.startswith('full_auto '):
+                    # Full autonomous pentest mode
+                    parts = cmd.split()
+                    if len(parts) >= 2:
+                        target = parts[1].strip().strip('"')
+                        task_id = None
+                        prompt_file = None
+                        context_file = None
+
+                        i = 2
+                        while i < len(parts):
+                            if parts[i] in ['--task', '-t'] and i + 1 < len(parts):
+                                task_id = parts[i + 1].strip()
+                                i += 2
+                            elif parts[i] in ['--prompt', '-p'] and i + 1 < len(parts):
+                                prompt_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            elif parts[i] in ['--context', '-c'] and i + 1 < len(parts):
+                                context_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            else:
+                                i += 1
+
+                        self.run_autonomous_agent(target, "full_auto", task_id, None, prompt_file, context_file)
+                    else:
+                        print("Usage: pentest <target> [--task <task_id>] [--prompt <file.md>] [--context <file.json>]")
+                        print("")
+                        print("Full autonomous pentest: Recon -> Analyze -> Test -> Report")
+
+                elif cmd.startswith('recon_only '):
+                    # Recon-only mode
+                    parts = cmd.split()
+                    if len(parts) >= 2:
+                        target = parts[1].strip().strip('"')
+                        self.run_autonomous_agent(target, "recon_only")
+                    else:
+                        print("Usage: recon_only <target>")
+                        print("Just reconnaissance, no vulnerability testing")
+
+                elif cmd.startswith('prompt_only '):
+                    # Prompt-only mode (high token usage)
+                    parts = cmd.split()
+                    if len(parts) >= 2:
+                        target = parts[1].strip().strip('"')
+                        prompt = None
+                        prompt_file = None
+
+                        i = 2
+                        while i < len(parts):
+                            if parts[i] in ['--prompt', '-p'] and i + 1 < len(parts):
+                                prompt_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            else:
+                                i += 1
+
+                        if not prompt_file:
+                            print("Enter your prompt (end with empty line):")
+                            lines = []
+                            while True:
+                                line = input()
+                                if not line:
+                                    break
+                                lines.append(line)
+                            prompt = "\n".join(lines)
+
+                        print("\n[!] WARNING: PROMPT-ONLY MODE uses more tokens!")
+                        self.run_autonomous_agent(target, "prompt_only", None, prompt, prompt_file)
+                    else:
+                        print("Usage: prompt_only <target> [--prompt <file.md>]")
+                        print("")
+                        print("WARNING: This mode uses significantly more tokens!")
+                        print("The AI will decide what tools to use based on your prompt.")
+
+                elif cmd.startswith('analyze_only '):
+                    # Analyze-only mode
+                    parts = cmd.split()
+                    if len(parts) >= 2:
+                        target = parts[1].strip().strip('"')
+                        context_file = None
+
+                        i = 2
+                        while i < len(parts):
+                            if parts[i] in ['--context', '-c'] and i + 1 < len(parts):
+                                context_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            else:
+                                i += 1
+
+                        self.run_autonomous_agent(target, "analyze_only", None, None, None, context_file)
+                    else:
+                        print("Usage: analyze_only <target> [--context <file.json>]")
+                        print("Analysis only, no active testing")
+
+                # === TASK LIBRARY COMMANDS ===
+                elif cmd in ['tasks', 'list_tasks']:
+                    self.list_tasks()
+
+                elif cmd.startswith('run_task '):
+                    parts = cmd.split()
+                    if len(parts) >= 3:
+                        task_id = parts[1].strip()
+                        target = parts[2].strip().strip('"')
+                        context_file = None
+
+                        i = 3
+                        while i < len(parts):
+                            if parts[i] in ['--context', '-c'] and i + 1 < len(parts):
+                                context_file = parts[i + 1].strip().strip('"')
+                                i += 2
+                            else:
+                                i += 1
+
+                        self.run_autonomous_agent(target, "full_auto", task_id, None, None, context_file)
+                    else:
+                        print("Usage: run_task <task_id> <target> [--context <file.json>]")
+                        print("Use 'tasks' to list available tasks")
+
+                elif cmd.startswith('create_task'):
+                    print("Create a new task for the library")
+                    name = input("Task name: ").strip()
+                    if not name:
+                        print("Cancelled")
+                        continue
+                    print("Enter task prompt (end with empty line):")
+                    lines = []
+                    while True:
+                        line = input()
+                        if not line:
+                            break
+                        lines.append(line)
+                    prompt = "\n".join(lines)
+                    if prompt:
+                        self.create_task(name, prompt)
+                    else:
+                        print("Cancelled - no prompt provided")
+
                 else:
                     print("Unknown command. Type 'help' for available commands.")
             except KeyboardInterrupt:
@@ -1236,9 +1892,32 @@ TOOL MANAGEMENT:
   install_tools            - Install required pentest tools
   check_tools              - Check which tools are installed
 
-AGENT COMMANDS (AI Analysis):
-  run_agent <role> "<input>" - Execute AI agent with input
-  set_agent <agent_name>     - Set default agent for AI analysis
+AUTONOMOUS AI AGENT (Like PentAGI):
+  pentest <url>              - Full auto: Recon -> Analyze -> Test -> Report
+  pentest <url> --task <id>  - Use preset task from library
+  recon_only <url>           - Just reconnaissance, no testing
+  prompt_only <url>          - AI decides everything (HIGH TOKEN USAGE!)
+  analyze_only <url> -c <f>  - Analysis only, no active testing
+
+  The autonomous agent generates:
+    - CVSS scores with vector strings
+    - Detailed descriptions and impact analysis
+    - Working PoC code
+    - Remediation recommendations
+    - Professional HTML reports
+
+TASK LIBRARY:
+  tasks / list_tasks         - List all available tasks
+  run_task <id> <url>        - Run a task from the library
+  create_task                - Create and save a new task
+
+  Preset tasks include: full_bug_bounty, vuln_owasp_top10,
+                       vuln_api_security, recon_full, etc.
+
+LEGACY AGENT:
+  agent <url>                - Simple AI agent (basic testing)
+  run_agent <role> "<input>" - Execute an agent role
+  set_agent <agent_name>     - Set default agent
 
 CONFIGURATION:
   list_roles               - List all available agent roles
@@ -1263,6 +1942,8 @@ EXAMPLES:
   analyze results/context_X.json     - LLM analysis of context file
   scan https://example.com           - Full pentest scan
   quick_scan 192.168.1.1             - Quick vulnerability check
+  agent https://target.com           - AI Agent pentest (uses LLM)
+  agent https://target.com -p bug_bounty.md -c context.json
 =======================================================================
         """)
 
@@ -1323,6 +2004,26 @@ EXAMPLES:
                        help='Run FULL pentest scan on target (executes real tools)')
     parser.add_argument('--quick-scan', metavar='TARGET',
                        help='Run QUICK pentest scan on target')
+
+    # Autonomous AI Agent options
+    parser.add_argument('--pentest', metavar='TARGET',
+                       help='Run full autonomous pentest: Recon -> Analyze -> Test -> Report')
+    parser.add_argument('--recon-only', metavar='TARGET',
+                       help='Run reconnaissance only, no vulnerability testing')
+    parser.add_argument('--prompt-only', metavar='TARGET',
+                       help='AI decides everything based on prompt (WARNING: High token usage!)')
+    parser.add_argument('--analyze-only', metavar='TARGET',
+                       help='Analysis only mode, no active testing')
+    parser.add_argument('--task', metavar='TASK_ID',
+                       help='Task ID from library to execute')
+    parser.add_argument('--prompt-file', '-pf', metavar='FILE',
+                       help='Custom .md prompt file for AI agent')
+    parser.add_argument('--list-tasks', action='store_true',
+                       help='List all available tasks from library')
+
+    # Legacy AI Agent options
+    parser.add_argument('--agent', metavar='TARGET',
+                       help='Run simple AI Agent on target')
 
     # Tool management
     parser.add_argument('--install-tools', action='store_true',
@@ -1392,6 +2093,62 @@ EXAMPLES:
             if context:
                 print(f"[+] Loaded context from: {args.context_file}")
         framework.execute_real_scan(args.quick_scan, scan_type="quick", agent_role=agent_role, recon_context=context)
+
+    # Handle Autonomous Pentest (Full Auto)
+    elif args.pentest:
+        framework.run_autonomous_agent(
+            target=args.pentest,
+            mode="full_auto",
+            task_id=args.task,
+            prompt_file=args.prompt_file,
+            context_file=args.context_file,
+            llm_profile=args.llm_profile
+        )
+
+    # Handle Recon Only
+    elif args.recon_only:
+        framework.run_autonomous_agent(
+            target=args.recon_only,
+            mode="recon_only",
+            llm_profile=args.llm_profile
+        )
+
+    # Handle Prompt Only (High Token Usage Warning)
+    elif args.prompt_only:
+        print("\n" + "!"*70)
+        print("  WARNING: PROMPT-ONLY MODE")
+        print("  This mode uses significantly more tokens than other modes.")
+        print("  The AI will decide what tools to use based on your prompt.")
+        print("!"*70 + "\n")
+        framework.run_autonomous_agent(
+            target=args.prompt_only,
+            mode="prompt_only",
+            prompt_file=args.prompt_file,
+            context_file=args.context_file,
+            llm_profile=args.llm_profile
+        )
+
+    # Handle Analyze Only
+    elif args.analyze_only:
+        framework.run_autonomous_agent(
+            target=args.analyze_only,
+            mode="analyze_only",
+            context_file=args.context_file,
+            llm_profile=args.llm_profile
+        )
+
+    # Handle List Tasks
+    elif args.list_tasks:
+        framework.list_tasks()
+
+    # Handle Legacy AI Agent
+    elif args.agent:
+        framework.run_ai_agent(
+            target=args.agent,
+            prompt_file=args.prompt_file,
+            context_file=args.context_file,
+            llm_profile=args.llm_profile
+        )
 
     # Handle list commands
     elif args.list_agents:
