@@ -1,0 +1,103 @@
+# NeuroSploit v3 - Optimized Multi-Stage Dockerfile
+# Dramatically reduces build time and image size
+# Supports ARM64 (Apple Silicon) and AMD64
+
+# =============================================================================
+# STAGE 1: Go Tools Builder
+# =============================================================================
+FROM golang:1.22-alpine AS go-builder
+
+RUN apk add --no-cache git
+
+WORKDIR /build
+
+# Install Go tools in parallel where possible
+RUN go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest & \
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest & \
+    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest & \
+    go install -v github.com/tomnomnom/waybackurls@latest & \
+    go install -v github.com/ffuf/ffuf/v2@latest & \
+    wait
+
+RUN go install -v github.com/projectdiscovery/katana/cmd/katana@latest & \
+    go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest & \
+    go install -v github.com/lc/gau/v2/cmd/gau@latest & \
+    go install -v github.com/tomnomnom/gf@latest & \
+    go install -v github.com/tomnomnom/qsreplace@latest & \
+    wait
+
+RUN go install -v github.com/hahwul/dalfox/v2@latest & \
+    go install -v github.com/OJ/gobuster/v3@latest & \
+    go install -v github.com/jaeles-project/gospider@latest & \
+    go install -v github.com/tomnomnom/anew@latest & \
+    wait
+
+# Optional tools (less critical)
+RUN go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest 2>/dev/null || true
+RUN go install -v github.com/hakluke/hakrawler@latest 2>/dev/null || true
+
+# =============================================================================
+# STAGE 2: Python Dependencies
+# =============================================================================
+FROM python:3.11-slim AS python-deps
+
+WORKDIR /app
+
+COPY backend/requirements.txt .
+
+RUN pip install --no-cache-dir --user -r requirements.txt && \
+    pip install --no-cache-dir --user arjun wafw00f
+
+# =============================================================================
+# STAGE 3: Final Runtime Image
+# =============================================================================
+FROM python:3.11-slim AS runtime
+
+# Install only essential runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    git \
+    dnsutils \
+    nmap \
+    sqlmap \
+    jq \
+    ca-certificates \
+    libpcap0.8 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+WORKDIR /app
+
+# Copy Go binaries from builder (may be partial if some tools failed)
+COPY --from=go-builder /go/bin/ /usr/local/bin/
+
+# Note: Rust tools (feroxbuster) removed for faster builds
+# Install via: cargo install feroxbuster (if needed)
+
+# Copy Python packages
+COPY --from=python-deps /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy application code
+COPY backend/ ./backend/
+COPY prompts/ ./prompts/
+
+# Create data directories
+RUN mkdir -p data/reports data/scans data/recon /root/.config/nuclei
+
+# Download wordlists (small subset for faster builds)
+RUN mkdir -p /opt/wordlists && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt -O /opt/wordlists/common.txt || true && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt -O /opt/wordlists/subdomains-5000.txt || true
+
+# Update nuclei templates (runs on first startup if needed)
+RUN nuclei -update-templates -silent 2>/dev/null || true
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
+
+EXPOSE 8000
+
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
