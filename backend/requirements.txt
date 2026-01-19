@@ -1,0 +1,29 @@
+# NeuroSploit v3 - Backend Requirements
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.19.0
+
+# HTTP Client
+aiohttp>=3.9.0
+
+# LLM APIs
+anthropic>=0.18.0
+openai>=1.10.0
+
+# Utilities
+python-multipart>=0.0.6
+python-jose[cryptography]>=3.3.0
+
+# Report Generation
+jinja2>=3.1.0
+weasyprint>=60.0; platform_system != "Windows"
+
+# Development
+httpx>=0.26.0
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
