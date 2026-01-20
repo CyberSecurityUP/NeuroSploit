@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroSploit Security Report - a29c170f</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 40px; line-height: 1.6; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid #334155; }
+    .header h1 { color: white; margin: 0 0 8px; font-size: 28px; }
+    .header p { color: #94a3b8; margin: 0; font-size: 14px; }
+    .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 40px; }
+    .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; text-align: center; }
+    .stat-value { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
+    .stat-label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    h2 { color: white; border-bottom: 1px solid #334155; padding-bottom: 12px; font-size: 18px; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 40px; border-top: 1px solid #334155; color: #64748b; font-size: 12px; }
+    @media print {
+      body { background: white; color: black; padding: 20px; }
+      .stat-card, .findings > div { border-color: #ddd; background: #f9f9f9; }
+      .header, .footer { border-color: #ddd; }
+    }
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛡️ NeuroSploit Security Assessment Report</h1>
+      <p>Target: http://testphp.vulnweb.com/ | Agent ID: a29c170f | Mode: AI Prompt Mode</p>
+      <p>Date: Monday, January 19, 2026</p>
+    </div>
+
+    
+    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 40px;">
+      <h2 style="color: white; margin: 0 0 16px; font-size: 20px; border: none; padding: 0;">📊 Executive Summary</h2>
+      <p style="color: #cbd5e1; line-height: 1.8; margin: 0 0 20px;">
+        This security assessment of <strong style="color: white;">http://testphp.vulnweb.com/</strong> was conducted using NeuroSploit AI-powered penetration testing platform.
+        The assessment identified <strong style="color: white;">21 security findings</strong> across various severity levels.
+        <span style="color: #dc2626; font-weight: 600;">4 critical vulnerabilities require immediate attention.</span>
+        <span style="color: #ea580c;">1 high-severity issues should be addressed promptly.</span>
+      </p>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px;">
+        <div>
+          <div style="color: #64748b; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Overall Risk Score</div>
+          <div style="font-size: 32px; font-weight: 700; color: #dc2626;">100/100</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden;">
+            <div style="height: 100%; width: 100%; background: #dc2626; border-radius: 6px;"></div>
+          </div>
+          <div style="color: #dc2626; font-size: 14px; font-weight: 600; margin-top: 8px;">Critical Risk</div>
+        </div>
+      </div>
+    </div>
+    
+
+    <div class="stats">
+      <div class="stat-card"><div class="stat-value" style="color: white;">21</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-value" style="color: #dc2626;">4</div><div class="stat-label">Critical</div></div>
+      <div class="stat-card"><div class="stat-value" style="color: #ea580c;">1</div><div class="stat-label">High</div></div>
+      <div class="stat-card"><div class="stat-value" style="color: #ca8a04;">6</div><div class="stat-label">Medium</div></div>
+      <div class="stat-card"><div class="stat-value" style="color: #2563eb;">10</div><div class="stat-label">Low</div></div>
+      <div class="stat-card"><div class="stat-value" style="color: #6b7280;">0</div><div class="stat-label">Info</div></div>
+    </div>
+
+    <h2>🔍 Detailed Findings</h2>
+    <div class="findings">
+      
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #dc2626; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #dc262610 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #dc2626; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                critical
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #1</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">SQLI in /listproducts.php</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/listproducts.php?cat='</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #dc2626;">9.1</span>
+                <span style="font-size: 12px; color: #94a3b8;">Critical</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</div>
+            </div>
+            
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A03:2021 - Injection</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">sqli</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/listproducts.php?cat='</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">SQL error message: 'sql syntax'</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #dc2626; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #dc262610 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #dc2626; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                critical
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #2</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">SQLI in /artists.php</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/artists.php?artist='</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #dc2626;">9.1</span>
+                <span style="font-size: 12px; color: #94a3b8;">Critical</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</div>
+            </div>
+            
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A03:2021 - Injection</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">sqli</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/artists.php?artist='</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">SQL error message: 'sql syntax'</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #dc2626; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #dc262610 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #dc2626; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                critical
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #3</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">SQLI in /search.php</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/search.php?test='</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #dc2626;">9.1</span>
+                <span style="font-size: 12px; color: #94a3b8;">Critical</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</div>
+            </div>
+            
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A03:2021 - Injection</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">sqli</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/search.php?test='</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">SQL error message: 'sql syntax'</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ca8a04; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ca8a0410 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ca8a04; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                medium
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #4</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Clickjacking Protection</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ca8a04;">4</span>
+                <span style="font-size: 12px; color: #94a3b8;">Medium</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/1021.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-1021</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">clickjacking</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">The page lacks X-Frame-Options header and CSP frame-ancestors directive, making it vulnerable to clickjacking attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Frame-Options: Not set
+CSP: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Frame-Options: DENY' or 'X-Frame-Options: SAMEORIGIN' header, or use 'frame-ancestors' in CSP.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #5</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing X-Content-Type-Options Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_xcto</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Missing nosniff header allows MIME-sniffing attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Content-Type-Options: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Content-Type-Options: nosniff' header.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #6</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Content-Security-Policy Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_csp</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">No Content-Security-Policy header, increasing XSS risk.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">Content-Security-Policy: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement a restrictive Content-Security-Policy.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ca8a04; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ca8a0410 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ca8a04; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                medium
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #7</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Clickjacking Protection</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/Mod_Rewrite_Shop/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ca8a04;">4</span>
+                <span style="font-size: 12px; color: #94a3b8;">Medium</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/1021.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-1021</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">clickjacking</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">The page lacks X-Frame-Options header and CSP frame-ancestors directive, making it vulnerable to clickjacking attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/Mod_Rewrite_Shop/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Frame-Options: Not set
+CSP: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Frame-Options: DENY' or 'X-Frame-Options: SAMEORIGIN' header, or use 'frame-ancestors' in CSP.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #8</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing X-Content-Type-Options Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/Mod_Rewrite_Shop/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_xcto</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Missing nosniff header allows MIME-sniffing attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/Mod_Rewrite_Shop/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Content-Type-Options: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Content-Type-Options: nosniff' header.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #9</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Content-Security-Policy Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/Mod_Rewrite_Shop/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_csp</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">No Content-Security-Policy header, increasing XSS risk.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/Mod_Rewrite_Shop/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">Content-Security-Policy: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement a restrictive Content-Security-Policy.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ca8a04; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ca8a0410 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ca8a04; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                medium
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #10</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Clickjacking Protection</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/hpp/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ca8a04;">4</span>
+                <span style="font-size: 12px; color: #94a3b8;">Medium</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/1021.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-1021</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">clickjacking</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">The page lacks X-Frame-Options header and CSP frame-ancestors directive, making it vulnerable to clickjacking attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/hpp/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Frame-Options: Not set
+CSP: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Frame-Options: DENY' or 'X-Frame-Options: SAMEORIGIN' header, or use 'frame-ancestors' in CSP.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #11</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing X-Content-Type-Options Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/hpp/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_xcto</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Missing nosniff header allows MIME-sniffing attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/hpp/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Content-Type-Options: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Content-Type-Options: nosniff' header.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #12</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Content-Security-Policy Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/hpp/</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_csp</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">No Content-Security-Policy header, increasing XSS risk.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/hpp/</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">Content-Security-Policy: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement a restrictive Content-Security-Policy.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ca8a04; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ca8a0410 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ca8a04; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                medium
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #13</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Clickjacking Protection</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/admin</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ca8a04;">4</span>
+                <span style="font-size: 12px; color: #94a3b8;">Medium</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/1021.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-1021</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">clickjacking</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">The page lacks X-Frame-Options header and CSP frame-ancestors directive, making it vulnerable to clickjacking attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/admin</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Frame-Options: Not set
+CSP: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Frame-Options: DENY' or 'X-Frame-Options: SAMEORIGIN' header, or use 'frame-ancestors' in CSP.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #14</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing X-Content-Type-Options Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/admin</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_xcto</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Missing nosniff header allows MIME-sniffing attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/admin</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Content-Type-Options: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Content-Type-Options: nosniff' header.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #15</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Content-Security-Policy Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/admin</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_csp</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">No Content-Security-Policy header, increasing XSS risk.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/admin</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">Content-Security-Policy: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement a restrictive Content-Security-Policy.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ca8a04; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ca8a0410 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ca8a04; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                medium
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #16</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Clickjacking Protection</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/listproducts.php?cat=1</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ca8a04;">4</span>
+                <span style="font-size: 12px; color: #94a3b8;">Medium</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/1021.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-1021</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">clickjacking</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">The page lacks X-Frame-Options header and CSP frame-ancestors directive, making it vulnerable to clickjacking attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/listproducts.php?cat=1</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Frame-Options: Not set
+CSP: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Frame-Options: DENY' or 'X-Frame-Options: SAMEORIGIN' header, or use 'frame-ancestors' in CSP.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #17</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing X-Content-Type-Options Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/listproducts.php?cat=1</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_xcto</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Missing nosniff header allows MIME-sniffing attacks.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/listproducts.php?cat=1</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">X-Content-Type-Options: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Add 'X-Content-Type-Options: nosniff' header.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #2563eb; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #2563eb10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #2563eb; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                low
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #18</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Missing Content-Security-Policy Header</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/listproducts.php?cat=1</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #2563eb;">3</span>
+                <span style="font-size: 12px; color: #94a3b8;">Low</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:L/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/693.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-693</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A05:2021 - Security Misconfiguration</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">missing_csp</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">No Content-Security-Policy header, increasing XSS risk.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/listproducts.php?cat=1</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">Content-Security-Policy: Not set</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement a restrictive Content-Security-Policy.</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ca8a04; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ca8a0410 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ca8a04; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                medium
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #19</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Cross-Site Request Forgery (CSRF)</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/listproducts.php?cat=1&action=delete&id=1</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ca8a04;">6.8</span>
+                <span style="font-size: 12px; color: #94a3b8;">Medium</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/352.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-352</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A01:2021 - Broken Access Control</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">cross-site_request_forgery_(csrf)</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">CSRF attacks force authenticated users to perform unintended actions on web applications where they're authenticated. Attackers can trick users into executing actions without their knowledge through malicious requests.
+
+AI Explanation: This represents a classic CSRF vulnerability where a destructive action (delete) can be triggered via GET request. State-changing operations should never use GET methods as they can be easily exploited through CSRF attacks via image tags, links, or other GET-based requests.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/listproducts.php?cat=1&action=delete&id=1</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">URL contains state-changing action (delete) via GET method: /listproducts.php?cat=1&action=delete&id=1</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement proper CSRF tokens for all state-changing operations
+Use POST requests exclusively for all destructive or state-changing actions
+Add SameSite cookie attributes to session cookies
+Implement Origin/Referer header validation for sensitive operations
+Review and secure the delete functionality in listproducts.php to require POST with CSRF protection
+Conduct follow-up testing on the admin panel and user registration endpoints after accessing the actual forms</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #ea580c; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #ea580c10 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #ea580c; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                high
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #20</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">Brute Force Attack</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/secured/newuser.php</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #ea580c;">7.5</span>
+                <span style="font-size: 12px; color: #94a3b8;">High</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N</div>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CWE Reference</div>
+              <a href="https://cwe.mitre.org/data/definitions/307.html" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 14px; font-weight: 500;">CWE-307</a>
+            </div>
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">brute_force_attack</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">📋 Description</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Brute force attacks attempt to gain unauthorized access by systematically trying multiple combinations of usernames and passwords, or by exploiting weak authentication mechanisms. This includes testing for weak credentials, lack of account lockout mechanisms, and insufficient rate limiting.
+
+AI Explanation: The 'secured' directory is accessible without authentication, returning a complete HTML page for adding new users. This bypasses intended access controls and allows unauthorized access to administrative functions.</p>
+          </div>
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/secured/newuser.php</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">HTTP 200 status code with full page content (415 bytes) for /secured/newuser.php without authentication. Page title 'add new user' indicates administrative functionality.</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+          <div style="background: linear-gradient(135deg, #16a34a15 0%, #16a34a05 100%); border: 1px solid #16a34a40; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #4ade80; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">✅ Remediation</h4>
+            <p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 14px;">Implement proper authentication controls for the /secured/ directory using .htaccess, server configuration, or application-level authentication
+Review all directories named 'secured', 'admin', or similar to ensure proper access controls are enforced
+Implement session-based authentication for administrative functions like user creation
+Add input validation and authorization checks to administrative endpoints
+Consider implementing rate limiting and account lockout mechanisms for authentication endpoints
+Regularly audit directory permissions and access controls</p>
+          </div>
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+      <div style="background: #1e293b; border: 1px solid #334155; border-left: 4px solid #dc2626; border-radius: 8px; margin-bottom: 24px; overflow: hidden; page-break-inside: avoid;">
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(135deg, #dc262610 0%, transparent 100%);">
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <span style="background: #dc2626; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                critical
+              </span>
+              <span style="color: #64748b; font-size: 12px;">Finding #21</span>
+            </div>
+            <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: 600;">SQLI in /product.php</h3>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px; font-family: monospace;">http://testphp.vulnweb.com/product.php?pic='</p>
+          </div>
+        </div>
+
+        <div style="padding: 20px; border-top: 1px solid #334155;">
+          <!-- Technical Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding: 16px; background: #0f172a; border-radius: 8px; margin-bottom: 20px;">
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">CVSS 3.1 Score</div>
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 28px; font-weight: 700; color: #dc2626;">9.1</span>
+                <span style="font-size: 12px; color: #94a3b8;">Critical</span>
+              </div>
+              <div style="font-size: 10px; color: #475569; font-family: monospace; margin-top: 4px;">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</div>
+            </div>
+            
+            
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">OWASP Top 10</div>
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 500;">A03:2021 - Injection</div>
+            </div>
+            
+            <div>
+              <div style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Vulnerability Type</div>
+              <div style="color: white; font-size: 14px;">sqli</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          
+
+          <!-- Affected Endpoint -->
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Affected Endpoint</h4>
+            <div style="background: #0f172a; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #38bdf8; overflow-x: auto;">http://testphp.vulnweb.com/product.php?pic='</div>
+          </div>
+
+          <!-- Evidence -->
+          
+          <div style="margin-bottom: 20px;">
+            <h4 style="color: #e2e8f0; font-size: 13px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Evidence / Proof of Concept</h4>
+            <pre style="background: #0f172a; padding: 16px; border-radius: 6px; color: #fbbf24; margin: 0; overflow-x: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;">SQL error message: 'sql syntax'</pre>
+          </div>
+          
+
+          <!-- Impact -->
+          
+
+          <!-- Remediation -->
+          
+
+          <!-- References -->
+          
+        </div>
+      </div>
+    
+    </div>
+
+    <div class="footer">
+      <p><strong>Generated by NeuroSploit v3.0 AI Security Scanner</strong></p>
+      <p>Report generated: 2026-01-20T01:59:46.485Z</p>
+      <p style="margin-top: 16px; font-size: 11px;">This report is confidential and intended for authorized personnel only.</p>
+    </div>
+  </div>
+</body>
+</html>
