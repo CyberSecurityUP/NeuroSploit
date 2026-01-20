@@ -45,8 +45,8 @@ NeuroSploit v3 is an advanced security assessment platform that combines AI-driv
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/NeuroSploitv2.git
-cd NeuroSploitv2
+git clone https://github.com/CyberSecurityUP/NeuroSploit.git
+cd NeuroSploit
 
 # Copy environment file and add your API keys
 cp .env.example .env
