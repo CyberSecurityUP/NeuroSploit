@@ -1,15 +1,16 @@
+# NeuroSploit v3 - LITE Docker Compose
+# Fast builds without external security tools
+# Usage: docker compose -f docker-compose.lite.yml up --build
+
 services:
   backend:
     build:
       context: .
-      # Use Dockerfile.backend.lite for faster builds (no security tools)
-      # Use Dockerfile.backend for full version with all tools
-      dockerfile: docker/Dockerfile.backend
+      dockerfile: docker/Dockerfile.backend.lite
     container_name: neurosploit-backend
     env_file:
       - .env
     environment:
-      # These override .env if set
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - DATABASE_URL=sqlite+aiosqlite:///./data/neurosploit.db

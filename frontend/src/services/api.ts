@@ -1,0 +1,347 @@
+import axios from 'axios'
+import type {
+  Scan, Vulnerability, Prompt, PromptPreset, Report, DashboardStats,
+  AgentTask, AgentRequest, AgentResponse, AgentStatus, AgentLog, AgentMode
+} from '../types'
+
+const api = axios.create({
+  baseURL: '/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Scans API
+export const scansApi = {
+  list: async (page = 1, perPage = 10, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
+    if (status) params.append('status', status)
+    const response = await api.get(`/scans?${params}`)
+    return response.data
+  },
+
+  get: async (scanId: string): Promise<Scan> => {
+    const response = await api.get(`/scans/${scanId}`)
+    return response.data
+  },
+
+  create: async (data: {
+    name?: string
+    targets: string[]
+    scan_type?: string
+    recon_enabled?: boolean
+    custom_prompt?: string
+    prompt_id?: string
+  }): Promise<Scan> => {
+    const response = await api.post('/scans', data)
+    return response.data
+  },
+
+  start: async (scanId: string) => {
+    const response = await api.post(`/scans/${scanId}/start`)
+    return response.data
+  },
+
+  stop: async (scanId: string) => {
+    const response = await api.post(`/scans/${scanId}/stop`)
+    return response.data
+  },
+
+  delete: async (scanId: string) => {
+    const response = await api.delete(`/scans/${scanId}`)
+    return response.data
+  },
+
+  getEndpoints: async (scanId: string, page = 1, perPage = 50) => {
+    const response = await api.get(`/scans/${scanId}/endpoints?page=${page}&per_page=${perPage}`)
+    return response.data
+  },
+
+  getVulnerabilities: async (scanId: string, severity?: string, page = 1, perPage = 50) => {
+    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
+    if (severity) params.append('severity', severity)
+    const response = await api.get(`/scans/${scanId}/vulnerabilities?${params}`)
+    return response.data
+  },
+}
+
+// Targets API
+export const targetsApi = {
+  validate: async (url: string) => {
+    const response = await api.post('/targets/validate', { url })
+    return response.data
+  },
+
+  validateBulk: async (urls: string[]) => {
+    const response = await api.post('/targets/validate/bulk', { urls })
+    return response.data
+  },
+
+  upload: async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post('/targets/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+}
+
+// Prompts API
+export const promptsApi = {
+  getPresets: async (): Promise<PromptPreset[]> => {
+    const response = await api.get('/prompts/presets')
+    return response.data
+  },
+
+  getPreset: async (presetId: string) => {
+    const response = await api.get(`/prompts/presets/${presetId}`)
+    return response.data
+  },
+
+  parse: async (content: string) => {
+    const response = await api.post('/prompts/parse', { content })
+    return response.data
+  },
+
+  list: async (category?: string): Promise<Prompt[]> => {
+    const params = category ? `?category=${category}` : ''
+    const response = await api.get(`/prompts${params}`)
+    return response.data
+  },
+
+  create: async (data: { name: string; description?: string; content: string; category?: string }): Promise<Prompt> => {
+    const response = await api.post('/prompts', data)
+    return response.data
+  },
+
+  upload: async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post('/prompts/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+}
+
+// Reports API
+export const reportsApi = {
+  list: async (scanId?: string): Promise<{ reports: Report[]; total: number }> => {
+    const params = scanId ? `?scan_id=${scanId}` : ''
+    const response = await api.get(`/reports${params}`)
+    return response.data
+  },
+
+  get: async (reportId: string): Promise<Report> => {
+    const response = await api.get(`/reports/${reportId}`)
+    return response.data
+  },
+
+  generate: async (data: {
+    scan_id: string
+    format?: string
+    title?: string
+    include_executive_summary?: boolean
+    include_poc?: boolean
+    include_remediation?: boolean
+  }): Promise<Report> => {
+    const response = await api.post('/reports', data)
+    return response.data
+  },
+
+  getViewUrl: (reportId: string) => `/api/v1/reports/${reportId}/view`,
+
+  getDownloadUrl: (reportId: string, format: string) => `/api/v1/reports/${reportId}/download/${format}`,
+
+  delete: async (reportId: string) => {
+    const response = await api.delete(`/reports/${reportId}`)
+    return response.data
+  },
+}
+
+// Dashboard API
+export const dashboardApi = {
+  getStats: async (): Promise<DashboardStats> => {
+    const response = await api.get('/dashboard/stats')
+    return response.data
+  },
+
+  getRecent: async (limit = 10) => {
+    const response = await api.get(`/dashboard/recent?limit=${limit}`)
+    return response.data
+  },
+
+  getFindings: async (limit = 20, severity?: string) => {
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (severity) params.append('severity', severity)
+    const response = await api.get(`/dashboard/findings?${params}`)
+    return response.data
+  },
+
+  getVulnerabilityTypes: async () => {
+    const response = await api.get('/dashboard/vulnerability-types')
+    return response.data
+  },
+}
+
+// Vulnerabilities API
+export const vulnerabilitiesApi = {
+  getTypes: async () => {
+    const response = await api.get('/vulnerabilities/types')
+    return response.data
+  },
+
+  get: async (vulnId: string): Promise<Vulnerability> => {
+    const response = await api.get(`/vulnerabilities/${vulnId}`)
+    return response.data
+  },
+}
+
+// Agent API (Autonomous AI Agent like PentAGI)
+export const agentApi = {
+  // Run the autonomous agent
+  run: async (request: AgentRequest): Promise<AgentResponse> => {
+    const response = await api.post('/agent/run', request)
+    return response.data
+  },
+
+  // Get agent status and results
+  getStatus: async (agentId: string): Promise<AgentStatus> => {
+    const response = await api.get(`/agent/status/${agentId}`)
+    return response.data
+  },
+
+  // Get agent logs
+  getLogs: async (agentId: string, limit = 100): Promise<{ agent_id: string; total_logs: number; logs: AgentLog[] }> => {
+    const response = await api.get(`/agent/logs/${agentId}?limit=${limit}`)
+    return response.data
+  },
+
+  // Get findings with details
+  getFindings: async (agentId: string) => {
+    const response = await api.get(`/agent/findings/${agentId}`)
+    return response.data
+  },
+
+  // Delete agent results
+  delete: async (agentId: string) => {
+    const response = await api.delete(`/agent/${agentId}`)
+    return response.data
+  },
+
+  // Stop a running agent
+  stop: async (agentId: string) => {
+    const response = await api.post(`/agent/stop/${agentId}`)
+    return response.data
+  },
+
+  // Send custom prompt to agent
+  sendPrompt: async (agentId: string, prompt: string) => {
+    const response = await api.post(`/agent/prompt/${agentId}`, { prompt })
+    return response.data
+  },
+
+  // Quick synchronous run (for small targets)
+  quickRun: async (target: string, mode: AgentMode = 'full_auto') => {
+    const response = await api.post(`/agent/quick?target=${encodeURIComponent(target)}&mode=${mode}`)
+    return response.data
+  },
+
+  // Task Library
+  tasks: {
+    list: async (category?: string): Promise<AgentTask[]> => {
+      const params = category ? `?category=${category}` : ''
+      const response = await api.get(`/agent/tasks${params}`)
+      return response.data
+    },
+
+    get: async (taskId: string): Promise<AgentTask> => {
+      const response = await api.get(`/agent/tasks/${taskId}`)
+      return response.data
+    },
+
+    create: async (task: {
+      name: string
+      description: string
+      category?: string
+      prompt: string
+      system_prompt?: string
+      tags?: string[]
+    }): Promise<{ message: string; task_id: string }> => {
+      const response = await api.post('/agent/tasks', task)
+      return response.data
+    },
+
+    delete: async (taskId: string) => {
+      const response = await api.delete(`/agent/tasks/${taskId}`)
+      return response.data
+    },
+  },
+
+  // Real-time Task API
+  realtime: {
+    createSession: async (target: string, name?: string) => {
+      const response = await api.post('/agent/realtime/session', { target, name })
+      return response.data
+    },
+
+    sendMessage: async (sessionId: string, message: string) => {
+      const response = await api.post(`/agent/realtime/${sessionId}/message`, { message })
+      return response.data
+    },
+
+    getSession: async (sessionId: string) => {
+      const response = await api.get(`/agent/realtime/${sessionId}`)
+      return response.data
+    },
+
+    getReport: async (sessionId: string) => {
+      const response = await api.get(`/agent/realtime/${sessionId}/report`)
+      return response.data
+    },
+
+    deleteSession: async (sessionId: string) => {
+      const response = await api.delete(`/agent/realtime/${sessionId}`)
+      return response.data
+    },
+
+    listSessions: async () => {
+      const response = await api.get('/agent/realtime/sessions/list')
+      return response.data
+    },
+
+    getLlmStatus: async () => {
+      const response = await api.get('/agent/realtime/llm-status')
+      return response.data
+    },
+
+    getReportHtml: async (sessionId: string) => {
+      const response = await api.get(`/agent/realtime/${sessionId}/report?format=html`, {
+        responseType: 'text'
+      })
+      return response.data
+    },
+
+    getToolsList: async () => {
+      const response = await api.get('/agent/realtime/tools/list')
+      return response.data
+    },
+
+    getToolsStatus: async () => {
+      const response = await api.get('/agent/realtime/tools/status')
+      return response.data
+    },
+
+    executeTool: async (sessionId: string, tool: string, options?: Record<string, any>, timeout?: number) => {
+      const response = await api.post(`/agent/realtime/${sessionId}/execute-tool`, {
+        tool,
+        options,
+        timeout: timeout || 300
+      })
+      return response.data
+    },
+  },
+}
+
+export default api

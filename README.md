@@ -1,42 +1,80 @@
-# NeuroSploit v2
+# NeuroSploit v3
 
-![NeuroSploitv2](https://img.shields.io/badge/NeuroSploitv2-AI--Powered%20Pentesting-blueviolet)
-![Version](https://img.shields.io/badge/Version-2.0.0-blue)
+![NeuroSploit](https://img.shields.io/badge/NeuroSploit-AI--Powered%20Pentesting-blueviolet)
+![Version](https://img.shields.io/badge/Version-3.0.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Python](https://img.shields.io/badge/Python-3.8+-yellow)
+![Python](https://img.shields.io/badge/Python-3.10+-yellow)
+![React](https://img.shields.io/badge/React-18-61dafb)
 
-**AI-Powered Penetration Testing Framework with Adaptive Intelligence**
+**AI-Powered Penetration Testing Platform with Web GUI**
 
-NeuroSploit v2 is an advanced security assessment framework that combines reconnaissance tools with adaptive AI analysis. It intelligently collects data, analyzes attack surfaces, and performs targeted security testing using LLM-powered decision making.
+NeuroSploit v3 is an advanced security assessment platform that combines AI-driven vulnerability testing with a modern web interface. It uses prompt-driven testing to dynamically determine what vulnerabilities to test based on natural language instructions.
 
 ---
 
-## What's New in v2
+## What's New in v3
 
-- **Adaptive AI Mode** - AI automatically determines if context is sufficient; runs tools only when needed
-- **3 Execution Modes** - CLI, Interactive, and guided Experience/Wizard mode
-- **Consolidated Recon** - All reconnaissance outputs merged into a single context file
-- **Context-Based Analysis** - Analyze pre-collected recon data without re-running tools
-- **Professional Reports** - Auto-generated HTML reports with charts and findings
+- **Web GUI** - Modern React interface for scan management, real-time monitoring, and reports
+- **Dynamic Vulnerability Engine** - Tests 50+ vulnerability types based on prompt analysis
+- **Prompt-Driven Testing** - AI extracts vulnerability types from natural language prompts
+- **Real-time Dashboard** - WebSocket-powered live updates during scans
+- **Multiple Input Modes** - Single URL, comma-separated URLs, or file upload
+- **Preset Prompts** - Ready-to-use security testing profiles
+- **Export Reports** - HTML, PDF, and JSON export formats
+- **Docker Deployment** - One-command deployment with Docker Compose
 
 ---
 
 ## Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
 - [Quick Start](#quick-start)
-- [3 Execution Modes](#3-execution-modes)
-- [Workflow](#workflow)
-- [Adaptive AI Mode](#adaptive-ai-mode)
-- [Configuration](#configuration)
-- [CLI Reference](#cli-reference)
-- [Agent Roles](#agent-roles)
-- [Built-in Tools](#built-in-tools)
-- [Output Files](#output-files)
-- [Examples](#examples)
+- [Features](#features)
 - [Architecture](#architecture)
+- [Web GUI](#web-gui)
+- [API Reference](#api-reference)
+- [Vulnerability Engine](#vulnerability-engine)
+- [Configuration](#configuration)
+- [Development](#development)
 - [Security Notice](#security-notice)
+
+---
+
+## Quick Start
+
+### Option 1: Docker (Recommended)
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/NeuroSploitv2.git
+cd NeuroSploitv2
+
+# Copy environment file and add your API keys
+cp .env.example .env
+nano .env  # Add ANTHROPIC_API_KEY or OPENAI_API_KEY
+
+# Start with Docker Compose
+./start.sh
+# or
+docker-compose up -d
+```
+
+Access the web interface at **http://localhost:3000**
+
+### Option 2: Manual Setup
+
+```bash
+# Backend
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
@@ -46,618 +84,345 @@ NeuroSploit v2 is an advanced security assessment framework that combines reconn
 
 | Feature | Description |
 |---------|-------------|
-| **Adaptive AI** | Automatically runs tools when context is insufficient |
-| **Multi-Mode** | CLI, Interactive, and Wizard execution modes |
-| **Consolidated Recon** | All tool outputs merged into single context file |
-| **Multi-LLM Support** | Claude, OpenAI, Gemini, Ollama, LM Studio |
-| **Professional Reports** | HTML reports with charts and findings |
-| **Extensible** | Custom agents, tools, and prompts |
-
-### Security Testing
-
-| Category | Tests |
-|----------|-------|
-| **Injection** | SQL Injection, XSS, Command Injection, Template Injection |
-| **File Attacks** | LFI, Path Traversal, File Upload, XXE |
-| **Server-Side** | SSRF, RCE, Deserialization |
-| **Authentication** | Auth Bypass, IDOR, Session Issues, JWT |
-| **Reconnaissance** | Subdomain Enum, Port Scan, Tech Detection, URL Collection |
-
-### Reconnaissance Tools
-
-| Tool | Purpose |
-|------|---------|
-| subfinder, amass, assetfinder | Subdomain enumeration |
-| httpx, httprobe | HTTP probing |
-| gau, waybackurls, waymore | URL collection |
-| katana, gospider | Web crawling |
-| naabu, nmap | Port scanning |
-| nuclei | Vulnerability scanning |
-
----
-
-## Installation
-
-### Prerequisites
-
-```bash
-# Python 3.8+
-python3 --version
-
-# Install dependencies
-pip3 install -r requirements.txt
-```
-
-### Setup
-
-```bash
-# Clone repository
-git clone https://github.com/CyberSecurityUP/NeuroSploit
-cd NeuroSploitv2
-
-# Create config from example
-cp config/config-example.json config/config.json
-
-# Edit with your LLM API keys
-nano config/config.json
-
-# Create required directories
-mkdir -p results reports logs
-
-# Install security tools (recommended)
-python3 neurosploit.py --install-tools
-```
-
-### Environment Variables
-
-```bash
-# Set in .bashrc, .zshrc, or .env
-export ANTHROPIC_API_KEY="your_key"
-export OPENAI_API_KEY="your_key"
-export GEMINI_API_KEY="your_key"
-```
-
----
-
-## Quick Start
-
-### Option 1: Wizard Mode (Recommended for beginners)
-
-```bash
-python3 neurosploit.py -e
-```
-
-Follow the guided prompts to configure your scan.
-
-### Option 2: Two-Step Workflow
-
-```bash
-# Step 1: Run reconnaissance
-python3 neurosploit.py --recon example.com
-
-# Step 2: AI analysis
-python3 neurosploit.py --input "Find XSS and SQLi vulnerabilities" \
-  -cf results/context_*.json \
-  --llm-profile claude_opus_default
-```
-
-### Option 3: Interactive Mode
-
-```bash
-python3 neurosploit.py -i
-```
-
----
-
-## 3 Execution Modes
-
-### 1. CLI Mode
-
-Direct command-line execution with all parameters:
-
-```bash
-# Reconnaissance
-python3 neurosploit.py --recon example.com
-
-# AI Analysis with context
-python3 neurosploit.py --input "Analyze for XSS and SQLi" \
-  -cf results/context_X.json \
-  --llm-profile claude_opus_default
-
-# Full pentest scan
-python3 neurosploit.py --scan https://example.com
-
-# Quick scan
-python3 neurosploit.py --quick-scan https://example.com
-```
-
-### 2. Interactive Mode (`-i`)
-
-REPL interface with tab completion:
-
-```bash
-python3 neurosploit.py -i
-```
-
-```
-        ╔═══════════════════════════════════════════════════════════╗
-        ║         NeuroSploitv2 - AI Offensive Security             ║
-        ║                  Interactive Mode                         ║
-        ╚═══════════════════════════════════════════════════════════╝
-
-NeuroSploit> help
-NeuroSploit> recon example.com
-NeuroSploit> analyze results/context_X.json
-NeuroSploit> scan https://example.com
-NeuroSploit> experience
-NeuroSploit> exit
-```
-
-**Available Commands:**
-
-| Command | Description |
-|---------|-------------|
-| `recon <target>` | Run full reconnaissance |
-| `analyze <file.json>` | LLM analysis of context file |
-| `scan <target>` | Full pentest with tools |
-| `quick_scan <target>` | Fast essential checks |
-| `experience` / `wizard` | Start guided setup |
-| `set_agent <name>` | Set default agent role |
-| `set_profile <name>` | Set LLM profile |
-| `list_roles` | Show available agents |
-| `list_profiles` | Show LLM profiles |
-| `check_tools` | Check installed tools |
-| `install_tools` | Install required tools |
-| `discover_ollama` | Find local Ollama models |
-
-### 3. Experience/Wizard Mode (`-e`)
-
-Guided step-by-step configuration:
-
-```bash
-python3 neurosploit.py -e
-```
-
-```
-        ╔═══════════════════════════════════════════════════════════╗
-        ║       NEUROSPLOIT - EXPERIENCE MODE (WIZARD)              ║
-        ║           Step-by-step Configuration                      ║
-        ╚═══════════════════════════════════════════════════════════╝
-
-[STEP 1/6] Choose Operation Mode
---------------------------------------------------
-  1. AI Analysis   - Analyze recon context with LLM (no tools)
-  2. Full Scan     - Run real pentest tools + AI analysis
-  3. Quick Scan    - Fast essential checks + AI analysis
-  4. Recon Only    - Run reconnaissance tools, save context
-
-[STEP 2/6] Set Target
-[STEP 3/6] Context File
-[STEP 4/6] LLM Profile
-[STEP 5/6] Agent Role
-[STEP 6/6] Custom Prompt
-
-============================================================
-  CONFIGURATION SUMMARY
-============================================================
-  Mode:         analysis
-  Target:       example.com
-  Context File: results/context_20240115.json
-  LLM Profile:  claude_opus_default
-  Agent Role:   bug_bounty_hunter
-  Prompt:       Find XSS and SQLi vulnerabilities...
-============================================================
-
-  Execute with this configuration? [Y/n]:
-```
-
----
-
-## Workflow
-
-### Recommended Workflow
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   STEP 1        │     │   STEP 2        │     │   STEP 3        │
-│   RECON         │────▶│   AI ANALYSIS   │────▶│   REPORT        │
-│                 │     │                 │     │                 │
-│ - Subdomains    │     │ - Adaptive AI   │     │ - HTML Report   │
-│ - URLs          │     │ - Auto-test     │     │ - JSON Results  │
-│ - Ports         │     │ - if needed     │     │ - Findings      │
-│ - Technologies  │     │                 │     │                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
-
-### Step 1: Reconnaissance
-
-```bash
-python3 neurosploit.py --recon example.com
-```
-
-Runs all discovery tools and consolidates output:
-
-- **Subdomain Enumeration**: subfinder, amass, assetfinder
-- **HTTP Probing**: httpx, httprobe
-- **URL Collection**: gau, waybackurls, waymore
-- **Web Crawling**: katana, gospider
-- **Port Scanning**: naabu, nmap
-- **Vulnerability Scanning**: nuclei
-
-**Output:** `results/context_YYYYMMDD_HHMMSS.json`
-
-### Step 2: AI Analysis
-
-```bash
-python3 neurosploit.py --input "Test for SQL injection and XSS" \
-  -cf results/context_X.json \
-  --llm-profile claude_opus_default
-```
-
-The Adaptive AI:
-1. Analyzes your request
-2. Checks if context has sufficient data
-3. Runs additional tests if needed
-4. Provides comprehensive analysis
-
----
-
-## Adaptive AI Mode
-
-The AI automatically determines if context data is sufficient:
-
-```
-======================================================================
-  NEUROSPLOIT ADAPTIVE AI - BUG_BOUNTY_HUNTER
-======================================================================
-  Mode: Adaptive (LLM + Tools when needed)
-  Target: testphp.vulnweb.com
-  Context loaded with:
-    - Subdomains: 1
-    - URLs: 12085
-    - URLs with params: 10989
-======================================================================
-
-[PHASE 1] Analyzing Context Sufficiency
---------------------------------------------------
-  [*] User wants: xss, sqli
-  [*] Data sufficient: No
-  [*] Missing: XSS test results, SQL injection evidence
-
-[PHASE 2] Collecting Missing Data
---------------------------------------------------
-  [!] Context insufficient for: XSS test results
-  [*] Running tools to collect data...
-
-  [XSS] Running XSS tests...
-  [>] curl: -s -k "http://target.com/search?q=%3Cscript%3Ealert(1)%3C/script%3E"
-  [!] FOUND: XSS
-
-  [SQLi] Running SQL Injection tests...
-  [>] curl: -s -k "http://target.com/product?id=1'"
-  [!] FOUND: SQL Injection
-
-  [+] Ran 15 tool commands to fill context gaps
-
-[PHASE 3] AI Analysis
---------------------------------------------------
-  [*] Generating final analysis with collected evidence...
-  [+] Analysis complete
-```
-
-### How It Works
-
-| Scenario | AI Action |
-|----------|-----------|
-| Context has XSS evidence | LLM-only analysis (no tools) |
-| Context missing XSS evidence | Run XSS tests, then analyze |
-| User asks for port scan | Check context, run nmap if missing |
-| General analysis request | Use available context data |
-
-### Supported Auto-Tests
-
-When context is insufficient, AI can automatically run:
-
-| Test | Trigger Keywords |
-|------|------------------|
-| XSS | xss, cross-site, reflected, stored |
-| SQLi | sqli, sql, injection, database |
-| LFI | lfi, file, inclusion, traversal |
-| SSRF | ssrf, server-side, request |
-| RCE | rce, command, execution, shell |
-| Crawl | crawl, discover, spider, urls |
-| Port Scan | port, scan, nmap, service |
-
----
-
-## Configuration
-
-### config/config.json
-
-```json
-{
-  "llm": {
-    "default_profile": "claude_opus_default",
-    "profiles": {
-      "claude_opus_default": {
-        "provider": "claude",
-        "model": "claude-sonnet-4-20250514",
-        "api_key": "${ANTHROPIC_API_KEY}",
-        "temperature": 0.7,
-        "max_tokens": 8192,
-        "guardrails_enabled": true,
-        "hallucination_mitigation_strategy": "grounding"
-      },
-      "ollama_local": {
-        "provider": "ollama",
-        "model": "llama3:8b",
-        "api_key": "",
-        "temperature": 0.7
-      },
-      "gpt_4o": {
-        "provider": "gpt",
-        "model": "gpt-4o",
-        "api_key": "${OPENAI_API_KEY}",
-        "temperature": 0.7
-      }
-    }
-  },
-  "agent_roles": {
-    "bug_bounty_hunter": {
-      "enabled": true,
-      "description": "Aggressive bug bounty hunting",
-      "llm_profile": "claude_opus_default",
-      "tools_allowed": ["subfinder", "nuclei", "sqlmap"]
-    },
-    "red_team_agent": {
-      "enabled": true,
-      "description": "Red team operations specialist"
-    }
-  },
-  "tools": {
-    "nmap": "/usr/bin/nmap",
-    "sqlmap": "/usr/bin/sqlmap",
-    "nuclei": "/usr/local/bin/nuclei"
-  }
-}
-```
-
-### LLM Providers
-
-| Provider | Config Value | Notes |
-|----------|--------------|-------|
-| Claude (Anthropic) | `"provider": "claude"` | Best for security analysis |
-| OpenAI | `"provider": "gpt"` | GPT-4, GPT-4o |
-| Google | `"provider": "gemini"` | Gemini Pro |
-| Ollama | `"provider": "ollama"` | Local models |
-| LM Studio | `"provider": "lmstudio"` | Local with OpenAI API |
-
----
-
-## CLI Reference
-
-```
-usage: neurosploit.py [-h] [--recon TARGET] [--context-file FILE]
-                      [--target TARGET] [--scan TARGET] [--quick-scan TARGET]
-                      [--install-tools] [--check-tools] [-r AGENT_ROLE] [-i]
-                      [-e] [--input INPUT] [--llm-profile LLM_PROFILE]
-
-NeuroSploitv2 - AI-Powered Penetration Testing Framework
-
-Arguments:
-  --recon TARGET        Run FULL RECON on target
-  --context-file, -cf   Load recon context from JSON file
-  --target, -t          Specify target URL/domain
-  --scan TARGET         Run FULL pentest scan with tools
-  --quick-scan TARGET   Run QUICK pentest scan
-  --install-tools       Install required security tools
-  --check-tools         Check status of installed tools
-  -r, --agent-role      Agent role to execute (optional)
-  -i, --interactive     Start interactive mode
-  -e, --experience      Start wizard mode (guided setup)
-  --input               Input prompt for the AI agent
-  --llm-profile         LLM profile to use
-  --list-agents         List available agent roles
-  --list-profiles       List LLM profiles
-  -v, --verbose         Enable verbose output
-```
-
----
-
-## Agent Roles
-
-Predefined agents in `config.json` with prompts in `prompts/`:
-
-| Agent | Description |
-|-------|-------------|
-| `bug_bounty_hunter` | Web app vulnerabilities, high-impact findings |
-| `red_team_agent` | Simulated attack campaigns |
-| `blue_team_agent` | Threat detection and response |
-| `exploit_expert` | Exploitation strategies and payloads |
-| `pentest_generalist` | Broad penetration testing |
-| `owasp_expert` | OWASP Top 10 assessment |
-| `malware_analyst` | Malware examination and IOCs |
-
-### Custom Agents
-
-1. Create prompt file: `prompts/my_agent.md`
-2. Add to config:
-
-```json
-"agent_roles": {
-  "my_agent": {
-    "enabled": true,
-    "description": "My custom agent",
-    "llm_profile": "claude_opus_default"
-  }
-}
-```
-
----
-
-## Built-in Tools
-
-### Reconnaissance
-
-| Tool | File | Features |
-|------|------|----------|
-| OSINT Collector | `tools/recon/osint_collector.py` | IP resolution, tech detection, email patterns |
-| Subdomain Finder | `tools/recon/subdomain_finder.py` | CT logs, DNS brute-force |
-| DNS Enumerator | `tools/recon/dns_enumerator.py` | A, AAAA, MX, NS, TXT, CNAME |
-| Full Recon Runner | `tools/recon/recon_tools.py` | Orchestrates all recon tools |
-
-### Post-Exploitation
-
-| Tool | File | Features |
-|------|------|----------|
-| SMB Lateral | `tools/lateral_movement/smb_lateral.py` | Share enum, pass-the-hash |
-| SSH Lateral | `tools/lateral_movement/ssh_lateral.py` | SSH tunnels, key enum |
-| Cron Persistence | `tools/persistence/cron_persistence.py` | Linux persistence |
-| Registry Persistence | `tools/persistence/registry_persistence.py` | Windows persistence |
-
----
-
-## Output Files
-
-| File | Location | Description |
-|------|----------|-------------|
-| Context JSON | `results/context_*.json` | Consolidated recon data |
-| Context TXT | `results/context_*.txt` | Human-readable context |
-| Campaign JSON | `results/campaign_*.json` | Full execution results |
-| HTML Report | `reports/report_*.html` | Professional report with charts |
-
-### HTML Report Features
-
-- Executive summary
-- Severity statistics with charts
-- Risk score calculation
-- Vulnerability details with PoCs
-- Remediation recommendations
-- Modern dark theme UI
-
----
-
-## Examples
-
-### Basic Recon
-
-```bash
-# Domain recon
-python3 neurosploit.py --recon example.com
-
-# URL recon
-python3 neurosploit.py --recon https://example.com
-```
-
-### AI Analysis
-
-```bash
-# Specific vulnerability analysis
-python3 neurosploit.py --input "Find SQL injection and XSS vulnerabilities. Provide PoC with CVSS scores." \
-  -cf results/context_20240115.json \
-  --llm-profile claude_opus_default
-
-# Comprehensive assessment
-python3 neurosploit.py --input "Perform comprehensive security assessment. Analyze attack surface, test for OWASP Top 10, prioritize critical findings." \
-  -cf results/context_X.json
-```
-
-### Pentest Scan
-
-```bash
-# Full scan with context
-python3 neurosploit.py --scan https://example.com -cf results/context_X.json
-
-# Quick scan
-python3 neurosploit.py --quick-scan https://example.com -r bug_bounty_hunter
-```
-
-### Wizard Mode
-
-```bash
-python3 neurosploit.py -e
-# Follow interactive prompts...
-```
+| **Dynamic Testing** | 50+ vulnerability types across 10 categories |
+| **Prompt-Driven** | AI extracts test types from natural language |
+| **Web Interface** | Modern React dashboard with real-time updates |
+| **Multiple Inputs** | Single URL, bulk URLs, or file upload |
+| **Preset Prompts** | Bug Bounty, OWASP Top 10, API Security, and more |
+| **Export Reports** | HTML, PDF, JSON with professional styling |
+| **WebSocket Updates** | Real-time scan progress and findings |
+| **Docker Ready** | One-command deployment |
+
+### Vulnerability Categories
+
+| Category | Vulnerability Types |
+|----------|---------------------|
+| **Injection** | XSS (Reflected/Stored/DOM), SQLi, NoSQLi, Command Injection, SSTI, LDAP, XPath |
+| **File Access** | LFI, RFI, Path Traversal, File Upload, XXE |
+| **Request Forgery** | SSRF, CSRF, Cloud Metadata Access |
+| **Authentication** | Auth Bypass, JWT Manipulation, Session Fixation, OAuth Flaws |
+| **Authorization** | IDOR, BOLA, BFLA, Privilege Escalation |
+| **API Security** | Rate Limiting, Mass Assignment, GraphQL Injection |
+| **Logic Flaws** | Race Conditions, Business Logic, Workflow Bypass |
+| **Client-Side** | CORS Misconfiguration, Clickjacking, Open Redirect, WebSocket |
+| **Info Disclosure** | Error Disclosure, Source Code Exposure, Debug Endpoints |
+| **Infrastructure** | Security Headers, SSL/TLS Issues, HTTP Methods |
 
 ---
 
 ## Architecture
 
 ```
-NeuroSploitv2/
-├── neurosploit.py              # Main entry point
-├── config/
-│   ├── config.json             # Configuration
-│   └── config-example.json     # Example config
-├── agents/
-│   └── base_agent.py           # Adaptive AI agent
-├── core/
-│   ├── llm_manager.py          # LLM provider abstraction
-│   ├── context_builder.py      # Recon consolidation
-│   ├── pentest_executor.py     # Tool execution
-│   ├── report_generator.py     # Report generation
-│   └── tool_installer.py       # Tool installation
-├── tools/
-│   ├── recon/
-│   │   ├── recon_tools.py      # Advanced recon
-│   │   ├── osint_collector.py  # OSINT gathering
-│   │   ├── subdomain_finder.py # Subdomain enum
-│   │   └── dns_enumerator.py   # DNS enumeration
-│   ├── lateral_movement/
-│   │   ├── smb_lateral.py      # SMB techniques
-│   │   └── ssh_lateral.py      # SSH techniques
-│   └── persistence/
-│       ├── cron_persistence.py # Linux persistence
-│       └── registry_persistence.py # Windows persistence
-├── prompts/
-│   ├── library.json            # Prompt library
-│   └── *.md                    # Agent prompts
-├── results/                    # Output directory
-├── reports/                    # Generated reports
-└── logs/                       # Log files
+NeuroSploitv3/
+├── backend/                    # FastAPI Backend
+│   ├── api/v1/                 # REST API endpoints
+│   │   ├── scans.py            # Scan CRUD operations
+│   │   ├── targets.py          # Target validation
+│   │   ├── prompts.py          # Preset prompts
+│   │   ├── reports.py          # Report generation
+│   │   ├── dashboard.py        # Dashboard stats
+│   │   └── vulnerabilities.py  # Vulnerability management
+│   ├── core/
+│   │   ├── vuln_engine/        # Dynamic vulnerability testing
+│   │   │   ├── engine.py       # Main testing engine
+│   │   │   ├── registry.py     # Vulnerability registry
+│   │   │   ├── payload_generator.py
+│   │   │   └── testers/        # Category-specific testers
+│   │   ├── prompt_engine/      # Prompt parsing
+│   │   │   └── parser.py       # Extract vuln types from prompts
+│   │   └── report_engine/      # Report generation
+│   │       └── generator.py    # HTML/PDF/JSON export
+│   ├── models/                 # SQLAlchemy ORM models
+│   ├── schemas/                # Pydantic validation schemas
+│   ├── services/               # Business logic
+│   └── main.py                 # FastAPI app entry
+│
+├── frontend/                   # React Frontend
+│   ├── src/
+│   │   ├── pages/              # Page components
+│   │   │   ├── HomePage.tsx    # Dashboard
+│   │   │   ├── NewScanPage.tsx # Create scan
+│   │   │   ├── ScanDetailsPage.tsx
+│   │   │   ├── ReportsPage.tsx
+│   │   │   └── ReportViewPage.tsx
+│   │   ├── components/         # Reusable components
+│   │   ├── services/           # API client
+│   │   └── store/              # Zustand state
+│   └── package.json
+│
+├── docker/                     # Docker configuration
+│   ├── Dockerfile.backend
+│   ├── Dockerfile.frontend
+│   └── nginx.conf
+│
+├── docker-compose.yml
+├── start.sh
+└── .env.example
 ```
 
 ---
 
-## Security Features
+## Web GUI
 
-- **Secure Tool Execution**: `shlex` parsing, no shell injection
-- **Input Validation**: Tool paths and arguments validated
-- **Timeout Protection**: 60-second default timeout
-- **Permission System**: Agent-based tool access control
-- **Error Handling**: Comprehensive logging
+### Dashboard (Home Page)
+
+- **Stats Overview** - Total scans, vulnerabilities by severity, success rate
+- **Severity Distribution** - Visual chart of critical/high/medium/low findings
+- **Recent Scans** - Quick access to latest scan results
+- **Recent Findings** - Latest discovered vulnerabilities
+
+### New Scan Page
+
+**Target Input Modes:**
+- **Single URL** - Enter one target URL
+- **Multiple URLs** - Comma-separated list
+- **File Upload** - Upload .txt file with URLs (one per line)
+
+**Prompt Options:**
+- **Preset Prompts** - Select from ready-to-use profiles:
+  - Full Penetration Test
+  - OWASP Top 10
+  - API Security Assessment
+  - Bug Bounty Hunter
+  - Quick Security Scan
+  - Authentication Testing
+- **Custom Prompt** - Write your own testing instructions
+- **No Prompt** - Run all available tests
+
+### Scan Details Page
+
+- **Progress Bar** - Real-time scan progress
+- **Discovered Endpoints** - List of found paths and URLs
+- **Vulnerabilities** - Real-time findings with severity badges
+- **Activity Log** - Live scan events via WebSocket
+
+### Reports Page
+
+- **Report List** - All generated reports with metadata
+- **View Report** - In-browser HTML viewer
+- **Export Options** - Download as HTML, PDF, or JSON
+- **Delete Reports** - Remove old reports
 
 ---
 
-## Troubleshooting
+## API Reference
 
-### LLM Connection Issues
+### Base URL
 
-```bash
-# Check API key
-echo $ANTHROPIC_API_KEY
-
-# Test with local Ollama
-python3 neurosploit.py -i
-NeuroSploit> discover_ollama
+```
+http://localhost:8000/api/v1
 ```
 
-### Missing Tools
+### Endpoints
 
-```bash
-# Check status
-python3 neurosploit.py --check-tools
+#### Scans
 
-# Install
-python3 neurosploit.py --install-tools
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/scans` | Create new scan |
+| `GET` | `/scans` | List all scans |
+| `GET` | `/scans/{id}` | Get scan details |
+| `POST` | `/scans/{id}/start` | Start scan execution |
+| `POST` | `/scans/{id}/stop` | Stop running scan |
+| `DELETE` | `/scans/{id}` | Delete scan |
+| `GET` | `/scans/{id}/endpoints` | Get discovered endpoints |
+| `GET` | `/scans/{id}/vulnerabilities` | Get found vulnerabilities |
+
+#### Targets
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/targets/validate` | Validate URL(s) |
+| `POST` | `/targets/upload` | Upload URL file |
+
+#### Prompts
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/prompts/presets` | List preset prompts |
+| `GET` | `/prompts/presets/{id}` | Get preset details |
+| `POST` | `/prompts/parse` | Parse custom prompt |
+
+#### Reports
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/reports` | List all reports |
+| `GET` | `/reports/{id}` | Get report details |
+| `GET` | `/reports/{id}/download` | Download report |
+| `DELETE` | `/reports/{id}` | Delete report |
+
+#### Dashboard
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/dashboard/stats` | Get dashboard statistics |
+| `GET` | `/dashboard/recent-scans` | Get recent scans |
+| `GET` | `/dashboard/recent-findings` | Get recent vulnerabilities |
+
+### WebSocket
+
+```
+ws://localhost:8000/ws/{scan_id}
 ```
 
-### Permission Issues
+**Events:**
+- `scan_started` - Scan has begun
+- `scan_progress` - Progress update (percentage)
+- `endpoint_found` - New endpoint discovered
+- `vulnerability_found` - New vulnerability found
+- `scan_completed` - Scan finished
+- `scan_error` - Error occurred
+
+---
+
+## Vulnerability Engine
+
+### How It Works
+
+1. **Prompt Parsing** - User prompt analyzed for vulnerability keywords
+2. **Type Extraction** - Relevant vulnerability types identified
+3. **Tester Selection** - Appropriate testers loaded from registry
+4. **Payload Generation** - Context-aware payloads generated
+5. **Testing Execution** - Tests run against target endpoints
+6. **Finding Reporting** - Results sent via WebSocket in real-time
+
+### Prompt Examples
+
+```
+"Test for SQL injection and XSS vulnerabilities"
+→ Extracts: sql_injection, xss_reflected, xss_stored
+
+"Check for OWASP Top 10 issues"
+→ Extracts: All major vulnerability types
+
+"Look for authentication bypass and IDOR"
+→ Extracts: auth_bypass, idor, bola
+
+"Find server-side request forgery and file inclusion"
+→ Extracts: ssrf, lfi, rfi, path_traversal
+```
+
+### Adding Custom Testers
+
+Create a new tester in `backend/core/vuln_engine/testers/`:
+
+```python
+from .base_tester import BaseTester, TestResult
+
+class MyCustomTester(BaseTester):
+    """Custom vulnerability tester"""
+
+    async def test(self, url: str, endpoint: str, params: dict) -> list[TestResult]:
+        results = []
+        # Your testing logic here
+        return results
+```
+
+Register in `backend/core/vuln_engine/registry.py`:
+
+```python
+VULNERABILITY_REGISTRY["my_custom_vuln"] = {
+    "name": "My Custom Vulnerability",
+    "category": "custom",
+    "severity": "high",
+    "tester": "MyCustomTester",
+    # ...
+}
+```
+
+---
+
+## Configuration
+
+### Environment Variables
 
 ```bash
-mkdir -p results reports logs
-chmod 755 results reports logs
+# .env file
+
+# LLM API Keys (at least one required for AI-powered testing)
+ANTHROPIC_API_KEY=your-anthropic-api-key
+OPENAI_API_KEY=your-openai-api-key
+
+# Database (default is SQLite)
+DATABASE_URL=sqlite+aiosqlite:///./data/neurosploit.db
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000
+DEBUG=false
 ```
+
+### Preset Prompts
+
+Available presets in `/api/v1/prompts/presets`:
+
+| ID | Name | Description |
+|----|------|-------------|
+| `full_pentest` | Full Penetration Test | Comprehensive testing across all categories |
+| `owasp_top10` | OWASP Top 10 | Focus on OWASP Top 10 vulnerabilities |
+| `api_security` | API Security | API-specific security testing |
+| `bug_bounty` | Bug Bounty Hunter | High-impact findings for bounty programs |
+| `quick_scan` | Quick Security Scan | Fast essential security checks |
+| `auth_testing` | Authentication Testing | Auth and session security |
+
+---
+
+## Development
+
+### Backend Development
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Run with hot reload
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+# API docs available at http://localhost:8000/docs
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+npm install
+npm run dev
+
+# Build for production
+npm run build
+```
+
+### Running Tests
+
+```bash
+# Backend tests
+cd backend
+pytest
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+---
+
+## Upgrading from v2
+
+v3 is a complete rewrite with a new architecture. Key differences:
+
+| Feature | v2 | v3 |
+|---------|----|----|
+| Interface | CLI only | Web GUI + API |
+| Vulnerability Testing | Hardcoded (XSS, SQLi, LFI) | Dynamic 50+ types |
+| Test Selection | Manual | Prompt-driven |
+| Progress Updates | Terminal output | WebSocket real-time |
+| Reports | HTML file | Web viewer + export |
+| Deployment | Python script | Docker Compose |
+
+**Migration:** v3 is a separate installation. Your v2 configurations and results are not compatible.
 
 ---
 
@@ -688,18 +453,15 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Acknowledgements
 
+### Technologies
+- FastAPI, SQLAlchemy, Pydantic
+- React, TypeScript, TailwindCSS, Zustand
+- Docker, Nginx
+
 ### LLM Providers
 - Anthropic Claude
 - OpenAI GPT
-- Google Gemini
-- Ollama
-- LM Studio
-
-### Security Tools
-- Nmap, Nuclei, SQLMap
-- Subfinder, Amass, httpx
-- Katana, Gospider, gau
 
 ---
 
-**NeuroSploit v2** - *Intelligent Adaptive Security Testing*
+**NeuroSploit v3** - *AI-Powered Penetration Testing Platform*

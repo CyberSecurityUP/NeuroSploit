@@ -1,0 +1,90 @@
+# NeuroSploit v3 - Security Tools Runner Container
+# Ephemeral container for running security tools in isolation
+
+FROM golang:1.22-alpine AS go-builder
+
+RUN apk add --no-cache git build-base
+
+WORKDIR /build
+
+# Install essential Go security tools
+RUN go install -v github.com/ffuf/ffuf/v2@latest && \
+    go install -v github.com/OJ/gobuster/v3@latest && \
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
+    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest && \
+    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
+    go install -v github.com/projectdiscovery/katana/cmd/katana@latest && \
+    go install -v github.com/hahwul/dalfox/v2@latest && \
+    go install -v github.com/tomnomnom/waybackurls@latest
+
+# Rust tools builder
+FROM rust:1.75-alpine AS rust-builder
+
+RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconf
+
+# Install feroxbuster
+RUN cargo install feroxbuster --locked
+
+# Final runtime image
+FROM alpine:3.19
+
+# Install runtime dependencies and tools
+RUN apk add --no-cache \
+    bash \
+    curl \
+    wget \
+    nmap \
+    nmap-scripts \
+    python3 \
+    py3-pip \
+    git \
+    jq \
+    bind-tools \
+    openssl \
+    libpcap \
+    ca-certificates \
+    nikto \
+    && rm -rf /var/cache/apk/*
+
+# Install Python security tools
+RUN pip3 install --no-cache-dir --break-system-packages \
+    sqlmap \
+    wfuzz \
+    dirsearch \
+    arjun \
+    wafw00f \
+    whatweb 2>/dev/null || pip3 install --no-cache-dir --break-system-packages sqlmap wfuzz
+
+# Copy Go binaries
+COPY --from=go-builder /go/bin/* /usr/local/bin/
+
+# Copy Rust binaries
+COPY --from=rust-builder /usr/local/cargo/bin/feroxbuster /usr/local/bin/
+
+# Install dirb
+RUN apk add --no-cache dirb 2>/dev/null || \
+    (wget -q https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz && \
+    tar -xzf dirb222.tar.gz && cd dirb222 && ./configure && make && make install && \
+    cd .. && rm -rf dirb222*) || true
+
+# Create wordlists directory
+RUN mkdir -p /opt/wordlists /opt/output
+
+# Download common wordlists
+RUN wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt \
+    -O /opt/wordlists/common.txt && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-medium.txt \
+    -O /opt/wordlists/directory-list-medium.txt && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-large-files.txt \
+    -O /opt/wordlists/raft-files.txt && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt \
+    -O /opt/wordlists/subdomains-5000.txt
+
+# Update nuclei templates
+RUN nuclei -update-templates -silent 2>/dev/null || true
+
+# Set working directory
+WORKDIR /opt/output
+
+# Default command
+ENTRYPOINT ["/bin/bash", "-c"]
