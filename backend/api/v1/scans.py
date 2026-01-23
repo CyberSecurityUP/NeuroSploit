@@ -175,7 +175,9 @@ async def start_scan(
 
 @router.post("/{scan_id}/stop")
 async def stop_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
-    """Stop a running scan"""
+    """Stop a running scan and save partial results"""
+    from backend.api.websocket import manager as ws_manager
+
     result = await db.execute(select(Scan).where(Scan.id == scan_id))
     scan = result.scalar_one_or_none()
 
@@ -185,11 +187,76 @@ async def stop_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
     if scan.status != "running":
         raise HTTPException(status_code=400, detail="Scan is not running")
 
+    # Update scan status
     scan.status = "stopped"
     scan.completed_at = datetime.utcnow()
+    scan.current_phase = "stopped"
+
+    # Calculate duration
+    if scan.started_at:
+        duration = (scan.completed_at - scan.started_at).total_seconds()
+        scan.duration = int(duration)
+
+    # Compute final vulnerability statistics from database
+    for severity in ["critical", "high", "medium", "low", "info"]:
+        count_result = await db.execute(
+            select(func.count()).select_from(Vulnerability)
+            .where(Vulnerability.scan_id == scan_id)
+            .where(Vulnerability.severity == severity)
+        )
+        setattr(scan, f"{severity}_count", count_result.scalar() or 0)
+
+    # Get total vulnerability count
+    total_vuln_result = await db.execute(
+        select(func.count()).select_from(Vulnerability)
+        .where(Vulnerability.scan_id == scan_id)
+    )
+    scan.total_vulnerabilities = total_vuln_result.scalar() or 0
+
+    # Get total endpoint count
+    total_endpoint_result = await db.execute(
+        select(func.count()).select_from(Endpoint)
+        .where(Endpoint.scan_id == scan_id)
+    )
+    scan.total_endpoints = total_endpoint_result.scalar() or 0
+
     await db.commit()
 
-    return {"message": "Scan stopped", "scan_id": scan_id}
+    # Build summary for WebSocket broadcast
+    summary = {
+        "total_endpoints": scan.total_endpoints,
+        "total_vulnerabilities": scan.total_vulnerabilities,
+        "critical": scan.critical_count,
+        "high": scan.high_count,
+        "medium": scan.medium_count,
+        "low": scan.low_count,
+        "info": scan.info_count,
+        "duration": scan.duration,
+        "progress": scan.progress
+    }
+
+    # Broadcast stop event via WebSocket
+    await ws_manager.broadcast_scan_stopped(scan_id, summary)
+    await ws_manager.broadcast_log(scan_id, "warning", "Scan stopped by user")
+    await ws_manager.broadcast_log(scan_id, "info", f"Partial results: {scan.total_vulnerabilities} vulnerabilities found")
+
+    # Auto-generate partial report
+    report_data = None
+    try:
+        from backend.services.report_service import auto_generate_report
+        await ws_manager.broadcast_log(scan_id, "info", "Generating partial report...")
+        report = await auto_generate_report(db, scan_id, is_partial=True)
+        report_data = report.to_dict()
+        await ws_manager.broadcast_log(scan_id, "info", f"Partial report generated: {report.title}")
+    except Exception as report_error:
+        await ws_manager.broadcast_log(scan_id, "warning", f"Failed to generate partial report: {str(report_error)}")
+
+    return {
+        "message": "Scan stopped",
+        "scan_id": scan_id,
+        "summary": summary,
+        "report": report_data
+    }
 
 
 @router.get("/{scan_id}/status", response_model=ScanProgress)

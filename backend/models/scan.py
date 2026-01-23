@@ -39,6 +39,7 @@ class Scan(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    duration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # Duration in seconds
 
     # Error handling
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -57,6 +58,7 @@ class Scan(Base):
     endpoints: Mapped[List["Endpoint"]] = relationship("Endpoint", back_populates="scan", cascade="all, delete-orphan")
     vulnerabilities: Mapped[List["Vulnerability"]] = relationship("Vulnerability", back_populates="scan", cascade="all, delete-orphan")
     reports: Mapped[List["Report"]] = relationship("Report", back_populates="scan", cascade="all, delete-orphan")
+    agent_tasks: Mapped[List["AgentTask"]] = relationship("AgentTask", back_populates="scan", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict:
         """Convert to dictionary"""
@@ -77,6 +79,7 @@ class Scan(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "duration": self.duration,
             "error_message": self.error_message,
             "total_endpoints": self.total_endpoints,
             "total_vulnerabilities": self.total_vulnerabilities,

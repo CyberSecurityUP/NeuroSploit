@@ -27,11 +27,19 @@ from backend.schemas.report import (
     ReportResponse,
     ReportGenerate
 )
+from backend.schemas.agent_task import (
+    AgentTaskCreate,
+    AgentTaskUpdate,
+    AgentTaskResponse,
+    AgentTaskListResponse,
+    AgentTaskSummary
+)
 
 __all__ = [
     "ScanCreate", "ScanUpdate", "ScanResponse", "ScanListResponse", "ScanProgress",
     "TargetCreate", "TargetResponse", "TargetBulkCreate", "TargetValidation",
     "PromptCreate", "PromptUpdate", "PromptResponse", "PromptParse", "PromptParseResult",
     "VulnerabilityResponse", "VulnerabilityTestResponse", "VulnerabilityTypeInfo",
-    "ReportResponse", "ReportGenerate"
+    "ReportResponse", "ReportGenerate",
+    "AgentTaskCreate", "AgentTaskUpdate", "AgentTaskResponse", "AgentTaskListResponse", "AgentTaskSummary"
 ]
