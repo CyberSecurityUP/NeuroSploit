@@ -142,6 +142,65 @@ class ConnectionManager:
             "summary": summary
         })
 
+    async def broadcast_scan_stopped(self, scan_id: str, summary: dict):
+        """Notify that a scan was stopped by user"""
+        await self.send_to_scan(scan_id, {
+            "type": "scan_stopped",
+            "scan_id": scan_id,
+            "status": "stopped",
+            "summary": summary
+        })
+
+    async def broadcast_scan_failed(self, scan_id: str, error: str, summary: dict = None):
+        """Notify that a scan has failed"""
+        await self.send_to_scan(scan_id, {
+            "type": "scan_failed",
+            "scan_id": scan_id,
+            "status": "failed",
+            "error": error,
+            "summary": summary or {}
+        })
+
+    async def broadcast_stats_update(self, scan_id: str, stats: dict):
+        """Broadcast updated scan statistics"""
+        await self.send_to_scan(scan_id, {
+            "type": "stats_update",
+            "scan_id": scan_id,
+            "stats": stats
+        })
+
+    async def broadcast_agent_task(self, scan_id: str, task: dict):
+        """Broadcast agent task update (created, started, completed, failed)"""
+        await self.send_to_scan(scan_id, {
+            "type": "agent_task",
+            "scan_id": scan_id,
+            "task": task
+        })
+
+    async def broadcast_agent_task_started(self, scan_id: str, task: dict):
+        """Broadcast when an agent task starts"""
+        await self.send_to_scan(scan_id, {
+            "type": "agent_task_started",
+            "scan_id": scan_id,
+            "task": task
+        })
+
+    async def broadcast_agent_task_completed(self, scan_id: str, task: dict):
+        """Broadcast when an agent task completes"""
+        await self.send_to_scan(scan_id, {
+            "type": "agent_task_completed",
+            "scan_id": scan_id,
+            "task": task
+        })
+
+    async def broadcast_report_generated(self, scan_id: str, report: dict):
+        """Broadcast when a report is generated"""
+        await self.send_to_scan(scan_id, {
+            "type": "report_generated",
+            "scan_id": scan_id,
+            "report": report
+        })
+
     async def broadcast_error(self, scan_id: str, error: str):
         """Notify an error occurred"""
         await self.send_to_scan(scan_id, {

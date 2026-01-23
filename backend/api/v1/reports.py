@@ -20,13 +20,21 @@ router = APIRouter()
 @router.get("", response_model=ReportListResponse)
 async def list_reports(
     scan_id: Optional[str] = None,
+    auto_generated: Optional[bool] = None,
+    is_partial: Optional[bool] = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """List all reports"""
+    """List all reports with optional filtering"""
     query = select(Report).order_by(Report.generated_at.desc())
 
     if scan_id:
         query = query.where(Report.scan_id == scan_id)
+
+    if auto_generated is not None:
+        query = query.where(Report.auto_generated == auto_generated)
+
+    if is_partial is not None:
+        query = query.where(Report.is_partial == is_partial)
 
     result = await db.execute(query)
     reports = result.scalars().all()

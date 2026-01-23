@@ -4,6 +4,7 @@ from backend.models.prompt import Prompt
 from backend.models.endpoint import Endpoint
 from backend.models.vulnerability import Vulnerability, VulnerabilityTest
 from backend.models.report import Report
+from backend.models.agent_task import AgentTask
 
 __all__ = [
     "Scan",
@@ -12,5 +13,6 @@ __all__ = [
     "Endpoint",
     "Vulnerability",
     "VulnerabilityTest",
-    "Report"
+    "Report",
+    "AgentTask"
 ]

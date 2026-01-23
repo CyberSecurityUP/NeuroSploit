@@ -8,7 +8,7 @@ from sqlalchemy import select, func
 from datetime import datetime, timedelta
 
 from backend.db.database import get_db
-from backend.models import Scan, Vulnerability, Endpoint
+from backend.models import Scan, Vulnerability, Endpoint, AgentTask, Report
 
 router = APIRouter()
 
@@ -20,17 +20,31 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     total_scans_result = await db.execute(select(func.count()).select_from(Scan))
     total_scans = total_scans_result.scalar() or 0
 
-    # Running scans
+    # Scans by status
     running_result = await db.execute(
         select(func.count()).select_from(Scan).where(Scan.status == "running")
     )
     running_scans = running_result.scalar() or 0
 
-    # Completed scans
     completed_result = await db.execute(
         select(func.count()).select_from(Scan).where(Scan.status == "completed")
     )
     completed_scans = completed_result.scalar() or 0
+
+    stopped_result = await db.execute(
+        select(func.count()).select_from(Scan).where(Scan.status == "stopped")
+    )
+    stopped_scans = stopped_result.scalar() or 0
+
+    failed_result = await db.execute(
+        select(func.count()).select_from(Scan).where(Scan.status == "failed")
+    )
+    failed_scans = failed_result.scalar() or 0
+
+    pending_result = await db.execute(
+        select(func.count()).select_from(Scan).where(Scan.status == "pending")
+    )
+    pending_scans = pending_result.scalar() or 0
 
     # Total vulnerabilities by severity
     vuln_counts = {}
@@ -63,6 +77,9 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
             "total": total_scans,
             "running": running_scans,
             "completed": completed_scans,
+            "stopped": stopped_scans,
+            "failed": failed_scans,
+            "pending": pending_scans,
             "recent": recent_scans
         },
         "vulnerabilities": {
@@ -175,3 +192,108 @@ async def get_scan_history(
         history[date_str]["high"] += scan.high_count
 
     return {"history": list(history.values())}
+
+
+@router.get("/agent-tasks")
+async def get_recent_agent_tasks(
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get recent agent tasks across all scans"""
+    query = (
+        select(AgentTask)
+        .order_by(AgentTask.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    tasks = result.scalars().all()
+
+    return {
+        "agent_tasks": [t.to_dict() for t in tasks],
+        "total": len(tasks)
+    }
+
+
+@router.get("/activity-feed")
+async def get_activity_feed(
+    limit: int = 30,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get unified activity feed with all recent events"""
+    activities = []
+
+    # Get recent scans
+    scans_result = await db.execute(
+        select(Scan).order_by(Scan.created_at.desc()).limit(limit // 3)
+    )
+    for scan in scans_result.scalars().all():
+        activities.append({
+            "type": "scan",
+            "action": f"Scan {scan.status}",
+            "title": scan.name or "Unnamed Scan",
+            "description": f"{scan.total_vulnerabilities} vulnerabilities found",
+            "status": scan.status,
+            "severity": None,
+            "timestamp": scan.created_at.isoformat(),
+            "scan_id": scan.id,
+            "link": f"/scan/{scan.id}"
+        })
+
+    # Get recent vulnerabilities
+    vulns_result = await db.execute(
+        select(Vulnerability).order_by(Vulnerability.created_at.desc()).limit(limit // 3)
+    )
+    for vuln in vulns_result.scalars().all():
+        activities.append({
+            "type": "vulnerability",
+            "action": "Vulnerability found",
+            "title": vuln.title,
+            "description": vuln.affected_endpoint or "",
+            "status": None,
+            "severity": vuln.severity,
+            "timestamp": vuln.created_at.isoformat(),
+            "scan_id": vuln.scan_id,
+            "link": f"/scan/{vuln.scan_id}"
+        })
+
+    # Get recent agent tasks
+    tasks_result = await db.execute(
+        select(AgentTask).order_by(AgentTask.created_at.desc()).limit(limit // 3)
+    )
+    for task in tasks_result.scalars().all():
+        activities.append({
+            "type": "agent_task",
+            "action": f"Task {task.status}",
+            "title": task.task_name,
+            "description": task.result_summary or task.description or "",
+            "status": task.status,
+            "severity": None,
+            "timestamp": task.created_at.isoformat(),
+            "scan_id": task.scan_id,
+            "link": f"/scan/{task.scan_id}"
+        })
+
+    # Get recent reports
+    reports_result = await db.execute(
+        select(Report).order_by(Report.generated_at.desc()).limit(limit // 4)
+    )
+    for report in reports_result.scalars().all():
+        activities.append({
+            "type": "report",
+            "action": "Report generated" if report.auto_generated else "Report created",
+            "title": report.title or "Report",
+            "description": f"{report.format.upper()} format",
+            "status": "auto" if report.auto_generated else "manual",
+            "severity": None,
+            "timestamp": report.generated_at.isoformat(),
+            "scan_id": report.scan_id,
+            "link": f"/reports"
+        })
+
+    # Sort all activities by timestamp (newest first)
+    activities.sort(key=lambda x: x["timestamp"], reverse=True)
+
+    return {
+        "activities": activities[:limit],
+        "total": len(activities)
+    }

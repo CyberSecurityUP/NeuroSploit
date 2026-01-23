@@ -24,6 +24,8 @@ class ReportResponse(BaseModel):
     format: str
     file_path: Optional[str]
     executive_summary: Optional[str]
+    auto_generated: bool = False
+    is_partial: bool = False
     generated_at: datetime
 
     class Config:

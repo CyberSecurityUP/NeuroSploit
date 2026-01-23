@@ -11,7 +11,7 @@ from pathlib import Path
 
 from backend.config import settings
 from backend.db.database import init_db, close_db
-from backend.api.v1 import scans, targets, prompts, reports, dashboard, vulnerabilities, settings as settings_router, agent
+from backend.api.v1 import scans, targets, prompts, reports, dashboard, vulnerabilities, settings as settings_router, agent, agent_tasks
 from backend.api.websocket import manager as ws_manager
 
 
@@ -59,6 +59,7 @@ app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboar
 app.include_router(vulnerabilities.router, prefix="/api/v1/vulnerabilities", tags=["Vulnerabilities"])
 app.include_router(settings_router.router, prefix="/api/v1/settings", tags=["Settings"])
 app.include_router(agent.router, prefix="/api/v1/agent", tags=["AI Agent"])
+app.include_router(agent_tasks.router, prefix="/api/v1/agent-tasks", tags=["Agent Tasks"])
 
 
 @app.get("/api/health")

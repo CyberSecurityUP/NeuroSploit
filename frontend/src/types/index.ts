@@ -13,6 +13,7 @@ export interface Scan {
   created_at: string
   started_at: string | null
   completed_at: string | null
+  duration: number | null  // Duration in seconds
   error_message: string | null
   total_endpoints: number
   total_vulnerabilities: number
@@ -101,6 +102,8 @@ export interface Report {
   format: 'html' | 'pdf' | 'json'
   file_path: string | null
   executive_summary: string | null
+  auto_generated: boolean
+  is_partial: boolean
   generated_at: string
 }
 
@@ -110,6 +113,9 @@ export interface DashboardStats {
     total: number
     running: number
     completed: number
+    stopped: number
+    failed: number
+    pending: number
     recent: number
   }
   vulnerabilities: {
@@ -131,6 +137,26 @@ export interface WSMessage {
   type: string
   scan_id: string
   [key: string]: unknown
+}
+
+// Scan Agent Task (different from AgentTask which is for the task library)
+export interface ScanAgentTask {
+  id: string
+  scan_id: string
+  task_type: 'recon' | 'analysis' | 'testing' | 'reporting'
+  task_name: string
+  description: string | null
+  tool_name: string | null
+  tool_category: string | null
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+  started_at: string | null
+  completed_at: string | null
+  duration_ms: number | null
+  items_processed: number
+  items_found: number
+  result_summary: string | null
+  error_message: string | null
+  created_at: string
 }
 
 // Agent types
@@ -288,4 +314,17 @@ export interface RealtimeSessionSummary {
   created_at: string
   findings_count: number
   messages_count: number
+}
+
+// Activity Feed types
+export interface ActivityFeedItem {
+  type: 'scan' | 'vulnerability' | 'agent_task' | 'report'
+  action: string
+  title: string
+  description: string
+  status: string | null
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info' | null
+  timestamp: string
+  scan_id: string
+  link: string
 }

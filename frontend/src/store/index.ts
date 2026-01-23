@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Scan, Vulnerability, Endpoint, DashboardStats } from '../types'
+import type { Scan, Vulnerability, Endpoint, DashboardStats, ScanAgentTask } from '../types'
 
 interface LogEntry {
   level: string
@@ -12,6 +12,7 @@ interface ScanDataCache {
   endpoints: Endpoint[]
   vulnerabilities: Vulnerability[]
   logs: LogEntry[]
+  agentTasks: ScanAgentTask[]
 }
 
 interface ScanState {
@@ -20,6 +21,7 @@ interface ScanState {
   endpoints: Endpoint[]
   vulnerabilities: Vulnerability[]
   logs: LogEntry[]
+  agentTasks: ScanAgentTask[]
   scanDataCache: Record<string, ScanDataCache>
   isLoading: boolean
   error: string | null
@@ -33,6 +35,9 @@ interface ScanState {
   setVulnerabilities: (vulnerabilities: Vulnerability[]) => void
   addLog: (level: string, message: string) => void
   setLogs: (logs: LogEntry[]) => void
+  addAgentTask: (task: ScanAgentTask) => void
+  updateAgentTask: (taskId: string, updates: Partial<ScanAgentTask>) => void
+  setAgentTasks: (tasks: ScanAgentTask[]) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   loadScanData: (scanId: string) => void
@@ -51,6 +56,7 @@ export const useScanStore = create<ScanState>()(
       endpoints: [],
       vulnerabilities: [],
       logs: [],
+      agentTasks: [],
       scanDataCache: {},
       isLoading: false,
       error: null,
@@ -84,6 +90,27 @@ export const useScanStore = create<ScanState>()(
           logs: [...state.logs, { level, message, time: new Date().toISOString() }].slice(-200)
         })),
       setLogs: (logs) => set({ logs }),
+
+      // Agent Tasks
+      addAgentTask: (task) =>
+        set((state) => {
+          const exists = state.agentTasks.some(t => t.id === task.id)
+          if (exists) {
+            // Update existing task
+            return {
+              agentTasks: state.agentTasks.map(t => t.id === task.id ? task : t)
+            }
+          }
+          return { agentTasks: [...state.agentTasks, task] }
+        }),
+      updateAgentTask: (taskId, updates) =>
+        set((state) => ({
+          agentTasks: state.agentTasks.map(t =>
+            t.id === taskId ? { ...t, ...updates } : t
+          )
+        })),
+      setAgentTasks: (agentTasks) => set({ agentTasks }),
+
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
 
@@ -94,7 +121,8 @@ export const useScanStore = create<ScanState>()(
           set({
             endpoints: cached.endpoints,
             vulnerabilities: cached.vulnerabilities,
-            logs: cached.logs
+            logs: cached.logs,
+            agentTasks: cached.agentTasks || []
           })
         }
       },
@@ -107,7 +135,8 @@ export const useScanStore = create<ScanState>()(
             [scanId]: {
               endpoints: state.endpoints,
               vulnerabilities: state.vulnerabilities,
-              logs: state.logs
+              logs: state.logs,
+              agentTasks: state.agentTasks
             }
           }
         })
@@ -120,6 +149,7 @@ export const useScanStore = create<ScanState>()(
           endpoints: [],
           vulnerabilities: [],
           logs: [],
+          agentTasks: [],
           scanDataCache: {},
           isLoading: false,
           error: null,
@@ -130,6 +160,7 @@ export const useScanStore = create<ScanState>()(
           endpoints: [],
           vulnerabilities: [],
           logs: [],
+          agentTasks: [],
         }),
 
       getVulnCounts: () => {
