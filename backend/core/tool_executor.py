@@ -135,6 +135,20 @@ class SecurityTool:
             "command": "dalfox url {target} -o /opt/output/dalfox.txt --silence",
             "output_file": "/opt/output/dalfox.txt",
             "parser": "parse_dalfox_output"
+        },
+        "naabu": {
+            "name": "Naabu",
+            "description": "Fast port scanner",
+            "command": "naabu -host {host} -json -top-ports 1000 -silent -o /opt/output/naabu.json",
+            "output_file": "/opt/output/naabu.json",
+            "parser": "parse_naabu_output"
+        },
+        "dnsx": {
+            "name": "DNSX",
+            "description": "DNS toolkit",
+            "command": "echo {domain} | dnsx -silent -a -aaaa -cname -mx -ns -txt -o /opt/output/dnsx.txt",
+            "output_file": "/opt/output/dnsx.txt",
+            "parser": "parse_dnsx_output"
         }
     }
 
@@ -746,6 +760,56 @@ class DockerToolExecutor:
                 "affected_endpoint": target,
                 "evidence": poc,
                 "remediation": "Implement proper output encoding and CSP"
+            })
+
+        return findings
+
+    def parse_naabu_output(self, output: str, target: str) -> List[Dict]:
+        """Parse naabu JSON output"""
+        findings = []
+        ports = []
+
+        for line in output.split('\n'):
+            if not line.strip():
+                continue
+            try:
+                data = json.loads(line)
+                host = data.get('host', data.get('ip', ''))
+                port = data.get('port', 0)
+                ports.append(str(port))
+            except json.JSONDecodeError:
+                # Text mode: host:port
+                match = re.match(r'^(.+?):(\d+)$', line.strip())
+                if match:
+                    ports.append(match.group(2))
+
+        if ports:
+            findings.append({
+                "title": f"Open Ports Found: {len(ports)}",
+                "severity": "info",
+                "vulnerability_type": "Port Discovery",
+                "description": f"Found {len(ports)} open ports: {', '.join(ports[:20])}",
+                "affected_endpoint": target,
+                "evidence": f"Ports: {', '.join(ports)}",
+                "remediation": "Review exposed services and close unnecessary ports"
+            })
+
+        return findings
+
+    def parse_dnsx_output(self, output: str, target: str) -> List[Dict]:
+        """Parse dnsx output"""
+        findings = []
+        records = [line.strip() for line in output.split('\n') if line.strip()]
+
+        if records:
+            findings.append({
+                "title": f"DNS Records: {len(records)}",
+                "severity": "info",
+                "vulnerability_type": "DNS Enumeration",
+                "description": f"DNS records found: {', '.join(records[:10])}",
+                "affected_endpoint": target,
+                "evidence": "\n".join(records[:20]),
+                "remediation": "Review DNS records for security issues"
             })
 
         return findings

@@ -249,13 +249,27 @@ export default function HomePage() {
               recentVulnerabilities.slice(0, 5).map((vuln) => (
                 <div
                   key={vuln.id}
-                  className="flex items-center justify-between p-3 bg-dark-900/50 rounded-lg"
+                  className={`flex items-center justify-between p-3 bg-dark-900/50 rounded-lg ${
+                    (vuln as any).validation_status === 'ai_rejected' ? 'opacity-60 border-l-2 border-orange-500/40' :
+                    (vuln as any).validation_status === 'false_positive' ? 'opacity-40' : ''
+                  }`}
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-white truncate">{vuln.title}</p>
                     <p className="text-xs text-dark-400 truncate">{vuln.affected_endpoint}</p>
                   </div>
-                  <SeverityBadge severity={vuln.severity} />
+                  <div className="flex items-center gap-1.5">
+                    {(vuln as any).validation_status === 'ai_rejected' && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400">Rejected</span>
+                    )}
+                    {(vuln as any).validation_status === 'validated' && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400">Validated</span>
+                    )}
+                    {(vuln as any).validation_status === 'false_positive' && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-dark-600 text-dark-400">FP</span>
+                    )}
+                    <SeverityBadge severity={vuln.severity} />
+                  </div>
                 </div>
               ))
             )}

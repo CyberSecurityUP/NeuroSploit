@@ -87,6 +87,30 @@ async def _run_migrations(conn):
                 logger.info("Adding 'poc_evidence' column to vulnerabilities table...")
                 await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN poc_evidence TEXT"))
 
+            if "screenshots" not in columns:
+                logger.info("Adding 'screenshots' column to vulnerabilities table...")
+                await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN screenshots JSON DEFAULT '[]'"))
+
+            if "url" not in columns:
+                logger.info("Adding 'url' column to vulnerabilities table...")
+                await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN url TEXT"))
+
+            if "parameter" not in columns:
+                logger.info("Adding 'parameter' column to vulnerabilities table...")
+                await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN parameter VARCHAR(500)"))
+
+            if "validation_status" not in columns:
+                logger.info("Adding 'validation_status' column to vulnerabilities table...")
+                await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN validation_status VARCHAR(20) DEFAULT 'ai_confirmed'"))
+
+            if "ai_rejection_reason" not in columns:
+                logger.info("Adding 'ai_rejection_reason' column to vulnerabilities table...")
+                await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN ai_rejection_reason TEXT"))
+
+            if "poc_code" not in columns:
+                logger.info("Adding 'poc_code' column to vulnerabilities table...")
+                await conn.execute(text("ALTER TABLE vulnerabilities ADD COLUMN poc_code TEXT"))
+
         # Check if agent_tasks table exists
         result = await conn.execute(
             text("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_tasks'")
@@ -141,6 +165,52 @@ async def _run_migrations(conn):
                 )
             """))
             await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_vulnerability_tests_scan_id ON vulnerability_tests(scan_id)"))
+
+        # Check if vuln_lab_challenges table exists
+        result = await conn.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='vuln_lab_challenges'")
+        )
+        if not result.fetchone():
+            logger.info("Creating 'vuln_lab_challenges' table...")
+            await conn.execute(text("""
+                CREATE TABLE vuln_lab_challenges (
+                    id VARCHAR(36) PRIMARY KEY,
+                    target_url TEXT NOT NULL,
+                    challenge_name VARCHAR(255),
+                    vuln_type VARCHAR(100) NOT NULL,
+                    vuln_category VARCHAR(50),
+                    auth_type VARCHAR(20),
+                    auth_value TEXT,
+                    status VARCHAR(20) DEFAULT 'pending',
+                    result VARCHAR(20),
+                    agent_id VARCHAR(36),
+                    scan_id VARCHAR(36),
+                    findings_count INTEGER DEFAULT 0,
+                    critical_count INTEGER DEFAULT 0,
+                    high_count INTEGER DEFAULT 0,
+                    medium_count INTEGER DEFAULT 0,
+                    low_count INTEGER DEFAULT 0,
+                    info_count INTEGER DEFAULT 0,
+                    findings_detail JSON DEFAULT '[]',
+                    started_at DATETIME,
+                    completed_at DATETIME,
+                    duration INTEGER,
+                    notes TEXT,
+                    logs JSON DEFAULT '[]',
+                    endpoints_count INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_vuln_lab_status ON vuln_lab_challenges(status)"))
+            await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_vuln_lab_vuln_type ON vuln_lab_challenges(vuln_type)"))
+        else:
+            # Migrate existing table - add new columns if missing
+            result = await conn.execute(text("PRAGMA table_info(vuln_lab_challenges)"))
+            columns = [row[1] for row in result.fetchall()]
+            if "logs" not in columns:
+                await conn.execute(text("ALTER TABLE vuln_lab_challenges ADD COLUMN logs JSON DEFAULT '[]'"))
+            if "endpoints_count" not in columns:
+                await conn.execute(text("ALTER TABLE vuln_lab_challenges ADD COLUMN endpoints_count INTEGER DEFAULT 0"))
 
         logger.info("Database migrations completed")
     except Exception as e:

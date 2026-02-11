@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, Shield, Trash2, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Save, Shield, Trash2, RefreshCw, AlertTriangle, Brain, Router, Eye } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
@@ -8,10 +8,15 @@ interface Settings {
   llm_provider: string
   has_anthropic_key: boolean
   has_openai_key: boolean
+  has_openrouter_key: boolean
   max_concurrent_scans: number
   aggressive_mode: boolean
   default_scan_type: string
   recon_enabled_by_default: boolean
+  enable_model_routing: boolean
+  enable_knowledge_augmentation: boolean
+  enable_browser_validation: boolean
+  max_output_tokens: number | null
 }
 
 interface DbStats {
@@ -26,9 +31,14 @@ export default function SettingsPage() {
   const [dbStats, setDbStats] = useState<DbStats | null>(null)
   const [apiKey, setApiKey] = useState('')
   const [openaiKey, setOpenaiKey] = useState('')
+  const [openrouterKey, setOpenrouterKey] = useState('')
   const [llmProvider, setLlmProvider] = useState('claude')
   const [maxConcurrentScans, setMaxConcurrentScans] = useState('3')
+  const [maxOutputTokens, setMaxOutputTokens] = useState('')
   const [aggressiveMode, setAggressiveMode] = useState(false)
+  const [enableModelRouting, setEnableModelRouting] = useState(false)
+  const [enableKnowledgeAugmentation, setEnableKnowledgeAugmentation] = useState(false)
+  const [enableBrowserValidation, setEnableBrowserValidation] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
@@ -48,6 +58,10 @@ export default function SettingsPage() {
         setLlmProvider(data.llm_provider)
         setMaxConcurrentScans(String(data.max_concurrent_scans))
         setAggressiveMode(data.aggressive_mode)
+        setEnableModelRouting(data.enable_model_routing ?? false)
+        setEnableKnowledgeAugmentation(data.enable_knowledge_augmentation ?? false)
+        setEnableBrowserValidation(data.enable_browser_validation ?? false)
+        setMaxOutputTokens(data.max_output_tokens ? String(data.max_output_tokens) : '')
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error)
@@ -78,8 +92,13 @@ export default function SettingsPage() {
           llm_provider: llmProvider,
           anthropic_api_key: apiKey || undefined,
           openai_api_key: openaiKey || undefined,
+          openrouter_api_key: openrouterKey || undefined,
           max_concurrent_scans: parseInt(maxConcurrentScans),
-          aggressive_mode: aggressiveMode
+          aggressive_mode: aggressiveMode,
+          enable_model_routing: enableModelRouting,
+          enable_knowledge_augmentation: enableKnowledgeAugmentation,
+          enable_browser_validation: enableBrowserValidation,
+          max_output_tokens: maxOutputTokens ? parseInt(maxOutputTokens) : null
         })
       })
 
@@ -88,6 +107,7 @@ export default function SettingsPage() {
         setSettings(data)
         setApiKey('')
         setOpenaiKey('')
+        setOpenrouterKey('')
         setMessage({ type: 'success', text: 'Settings saved successfully!' })
       } else {
         setMessage({ type: 'error', text: 'Failed to save settings' })
@@ -123,6 +143,15 @@ export default function SettingsPage() {
     }
   }
 
+  const ToggleSwitch = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
+    <button
+      onClick={onToggle}
+      className={`w-12 h-6 rounded-full transition-colors ${enabled ? 'bg-primary-500' : 'bg-dark-700'}`}
+    >
+      <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${enabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+    </button>
+  )
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn">
       {/* Status Message */}
@@ -139,14 +168,14 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-dark-200 mb-2">
               LLM Provider
             </label>
-            <div className="flex gap-2">
-              {['claude', 'openai', 'ollama'].map((provider) => (
+            <div className="flex gap-2 flex-wrap">
+              {['claude', 'openai', 'openrouter', 'ollama'].map((provider) => (
                 <Button
                   key={provider}
                   variant={llmProvider === provider ? 'primary' : 'secondary'}
                   onClick={() => setLlmProvider(provider)}
                 >
-                  {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                  {provider === 'openrouter' ? 'OpenRouter' : provider.charAt(0).toUpperCase() + provider.slice(1)}
                 </Button>
               ))}
             </div>
@@ -173,6 +202,72 @@ export default function SettingsPage() {
               helperText={settings?.has_openai_key ? 'API key is configured. Enter a new key to update.' : 'Required for OpenAI-powered analysis'}
             />
           )}
+
+          {llmProvider === 'openrouter' && (
+            <Input
+              label="OpenRouter API Key"
+              type="password"
+              placeholder={settings?.has_openrouter_key ? '••••••••••••••••' : 'sk-or-...'}
+              value={openrouterKey}
+              onChange={(e) => setOpenrouterKey(e.target.value)}
+              helperText={settings?.has_openrouter_key ? 'API key is configured. Enter a new key to update.' : 'Required for OpenRouter model access'}
+            />
+          )}
+
+          <Input
+            label="Max Output Tokens"
+            type="number"
+            min="1024"
+            max="64000"
+            placeholder="Default (profile-based)"
+            value={maxOutputTokens}
+            onChange={(e) => setMaxOutputTokens(e.target.value)}
+            helperText="Override max output tokens (up to 64000 for Claude). Leave empty for profile defaults."
+          />
+        </div>
+      </Card>
+
+      {/* Advanced Features */}
+      <Card title="Advanced Features" subtitle="Optional AI enhancement modules">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Router className="w-5 h-5 text-blue-400" />
+              <div>
+                <p className="font-medium text-white">Model Routing</p>
+                <p className="text-sm text-dark-400">
+                  Route tasks to specialized LLM profiles by type (reasoning, analysis, generation)
+                </p>
+              </div>
+            </div>
+            <ToggleSwitch enabled={enableModelRouting} onToggle={() => setEnableModelRouting(!enableModelRouting)} />
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Brain className="w-5 h-5 text-purple-400" />
+              <div>
+                <p className="font-medium text-white">Knowledge Augmentation</p>
+                <p className="text-sm text-dark-400">
+                  Enrich AI context with bug bounty pattern datasets (19 vuln types)
+                </p>
+              </div>
+            </div>
+            <ToggleSwitch enabled={enableKnowledgeAugmentation} onToggle={() => setEnableKnowledgeAugmentation(!enableKnowledgeAugmentation)} />
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-dark-900/50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Eye className="w-5 h-5 text-green-400" />
+              <div>
+                <p className="font-medium text-white">Browser Validation</p>
+                <p className="text-sm text-dark-400">
+                  Playwright-based browser validation with screenshot capture
+                </p>
+              </div>
+            </div>
+            <ToggleSwitch enabled={enableBrowserValidation} onToggle={() => setEnableBrowserValidation(!enableBrowserValidation)} />
+          </div>
         </div>
       </Card>
 
@@ -196,12 +291,7 @@ export default function SettingsPage() {
                 Use more payloads and bypass techniques (may be slower)
               </p>
             </div>
-            <button
-              onClick={() => setAggressiveMode(!aggressiveMode)}
-              className={`w-12 h-6 rounded-full transition-colors ${aggressiveMode ? 'bg-primary-500' : 'bg-dark-700'}`}
-            >
-              <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${aggressiveMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
-            </button>
+            <ToggleSwitch enabled={aggressiveMode} onToggle={() => setAggressiveMode(!aggressiveMode)} />
           </div>
         </div>
       </Card>
@@ -290,8 +380,11 @@ export default function SettingsPage() {
           <div className="text-sm text-dark-400 space-y-1">
             <p>Dynamic vulnerability testing driven by AI prompts</p>
             <p>50+ vulnerability types across 10 categories</p>
-            <p>Real-time dashboard with WebSocket updates</p>
-            <p>Professional HTML/PDF/JSON reports</p>
+            <p>Multi-provider LLM support (Claude, GPT, OpenRouter, Ollama)</p>
+            <p>Task-type model routing and knowledge augmentation</p>
+            <p>Playwright browser validation with screenshot capture</p>
+            <p>OHVR-structured PoC reporting</p>
+            <p>Scheduled recurring scans with cron/interval triggers</p>
           </div>
         </div>
       </Card>

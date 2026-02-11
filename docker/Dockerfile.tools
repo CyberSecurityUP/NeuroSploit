@@ -12,8 +12,10 @@ RUN go install -v github.com/ffuf/ffuf/v2@latest && \
     go install -v github.com/OJ/gobuster/v3@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
     go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest && \
+    go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest && \
     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
     go install -v github.com/projectdiscovery/katana/cmd/katana@latest && \
+    go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest && \
     go install -v github.com/hahwul/dalfox/v2@latest && \
     go install -v github.com/tomnomnom/waybackurls@latest
 

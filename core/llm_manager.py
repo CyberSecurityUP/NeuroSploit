@@ -48,6 +48,20 @@ class LLMManager:
         self.pdf_support_enabled = self.active_profile.get('pdf_support_enabled', False)
         self.guardrails_enabled = self.active_profile.get('guardrails_enabled', False)
         self.hallucination_mitigation_strategy = self.active_profile.get('hallucination_mitigation_strategy', None)
+
+        # MAX_OUTPUT_TOKENS override from environment (up to 64000 for Claude)
+        env_max_tokens = os.getenv('MAX_OUTPUT_TOKENS', '').strip()
+        if env_max_tokens:
+            try:
+                override = int(env_max_tokens)
+                self.max_tokens = override
+                self.output_token_limit = override
+                logger.info(f"MAX_OUTPUT_TOKENS override applied: {override}")
+            except ValueError:
+                logger.warning(f"Invalid MAX_OUTPUT_TOKENS value: {env_max_tokens}")
+
+        # Model router (lazy init, set externally or via config)
+        self._model_router = None
         
         # New prompt loading
         self.json_prompts_file_path = Path("prompts/library.json")
@@ -147,6 +161,8 @@ class LLMManager:
                 raw_response = self._generate_gemini_cli(prompt, system_prompt)
             elif self.provider == 'lmstudio':
                 raw_response = self._generate_lmstudio(prompt, system_prompt)
+            elif self.provider == 'openrouter':
+                raw_response = self._generate_openrouter(prompt, system_prompt)
             else:
                 raise ValueError(f"Unsupported provider: {self.provider}")
         except Exception as e:
@@ -161,6 +177,21 @@ class LLMManager:
             return self._mitigate_hallucination(raw_response, prompt, system_prompt)
         
         return raw_response
+
+    def routed_generate(self, prompt: str, system_prompt: Optional[str] = None, task_type: str = "default") -> str:
+        """Generate with optional model routing based on task type.
+
+        If model routing is enabled and a route exists for the task_type,
+        a dedicated LLMManager for that profile handles the request.
+        Otherwise falls back to the default generate().
+
+        Task types: reasoning, analysis, generation, validation, default
+        """
+        if self._model_router:
+            result = self._model_router.generate(prompt, system_prompt, task_type)
+            if result is not None:
+                return result
+        return self.generate(prompt, system_prompt)
 
     def _apply_guardrails(self, response: str) -> str:
         """Applies basic guardrails to the LLM response."""
@@ -613,6 +644,77 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
         except Exception as e:
             logger.error(f"LM Studio error: {e}")
             return f"Error: {str(e)}"
+
+    def _generate_openrouter(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        """Generate using OpenRouter API (OpenAI-compatible).
+
+        OpenRouter supports hundreds of models through a unified API.
+        Models are specified as provider/model (e.g., 'anthropic/claude-sonnet-4-20250514').
+        API key comes from OPENROUTER_API_KEY env var or config profile.
+        """
+        if not self.api_key:
+            raise ValueError("OPENROUTER_API_KEY not set. Please set the environment variable or configure in config.json")
+
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/neurosploit",
+            "X-Title": "NeuroSploit"
+        }
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens
+        }
+
+        last_error = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                logger.debug(f"OpenRouter API request attempt {attempt + 1}/{MAX_RETRIES} (model: {self.model})")
+                response = requests.post(url, headers=headers, json=data, timeout=180)
+
+                if response.status_code == 200:
+                    result = response.json()
+                    return result["choices"][0]["message"]["content"]
+
+                elif response.status_code == 401:
+                    raise ValueError(f"Invalid OpenRouter API key: {response.text}")
+
+                elif response.status_code == 429:
+                    last_error = f"Rate limit: {response.text}"
+                    logger.warning(f"OpenRouter rate limit (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** (attempt + 1))
+                        time.sleep(sleep_time)
+
+                elif response.status_code >= 500:
+                    last_error = f"Server error {response.status_code}: {response.text}"
+                    logger.warning(f"OpenRouter server error (attempt {attempt + 1}/{MAX_RETRIES})")
+                    if attempt < MAX_RETRIES - 1:
+                        sleep_time = RETRY_DELAY * (RETRY_MULTIPLIER ** attempt)
+                        time.sleep(sleep_time)
+
+                else:
+                    raise ValueError(f"OpenRouter API error {response.status_code}: {response.text}")
+
+            except requests.exceptions.Timeout:
+                last_error = "Timeout"
+                logger.warning(f"OpenRouter timeout (attempt {attempt + 1}/{MAX_RETRIES})")
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY * (RETRY_MULTIPLIER ** attempt))
+
+            except requests.exceptions.ConnectionError as e:
+                raise ValueError(f"Cannot connect to OpenRouter API: {e}")
+
+        raise ValueError(f"OpenRouter API failed after {MAX_RETRIES} retries: {last_error}")
 
     def analyze_vulnerability(self, vulnerability_data: Dict) -> Dict:
         """Analyze vulnerability and suggest exploits"""

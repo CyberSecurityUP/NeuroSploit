@@ -1,52 +1,25 @@
 {
-    "network_recon": {
+    "recon": {
         "network_scan": "Analyze network scan results and identify attack vectors",
-        "osint": "Perform OSINT analysis on target organization",
-        "ai_analysis_user": "Analyze the following network reconnaissance data and provide insights:\n\n{recon_data_json}\n\nProvide:\n1. Attack surface summary\n2. Prioritized network target list\n3. Identified network vulnerabilities or misconfigurations\n4. Recommended next steps for network exploitation\n5. Network risk assessment\n6. Stealth considerations for network activities\n\nResponse in JSON format with actionable recommendations.",
-        "ai_analysis_system": "You are an expert network penetration tester analyzing reconnaissance data.\nIdentify network security weaknesses, network attack vectors, and provide strategic recommendations.\nConsider both technical and operational security aspects."
-    },
-    "web_recon": {
         "web_enum": "Enumerate web application for vulnerabilities",
-        "ai_analysis_user": "Analyze the following potential web vulnerabilities identified on {target} and provide insights:\n\nVulnerabilities: {vulnerabilities_json}\n\nProvide:\n1. Prioritized list of vulnerabilities\n2. Recommended exploitation steps for each (if applicable)\n3. Potential impact\n4. Remediation suggestions\n\nResponse in JSON format with actionable recommendations.",
-        "ai_analysis_system": "You are an expert web penetration tester and security analyst.\nProvide precise analysis of web vulnerabilities and practical advice for exploitation and remediation."
+        "osint": "Perform OSINT analysis on target organization"
     },
     "exploitation": {
-        "ai_exploit_planning_user": "Plan an exploitation strategy based on the following data:\n\nVulnerabilities Identified:\n{vulnerabilities_json}\n\nReconnaissance Data:\n{recon_data_json}\n\nProvide:\n1. Prioritized exploitation order\n2. Recommended exploits for each vulnerability\n3. Step-by-step exploitation guide\n4. Payload suggestions\n5. Evasion techniques\n6. Fallback strategies\n7. Success probability estimates\n\nResponse in JSON format with detailed exploitation roadmap.",
-        "ai_exploit_planning_system": "You are an expert exploit developer and penetration tester.\nCreate sophisticated exploitation plans considering detection, success rates, and impact.\nPrioritize stealthy, reliable exploits over noisy attempts.",
-        "analyze_vulnerability_user": "Analyze the following vulnerability data and provide exploitation recommendations:\n\nVulnerability: {vulnerability_data_json}\n\nProvide:\n1. Severity assessment (Critical/High/Medium/Low)\n2. Exploitation difficulty\n3. Potential impact\n4. Step-by-step exploitation guide\n5. Recommended exploit techniques\n6. Detection evasion strategies\n7. Post-exploitation actions\n\nResponse in JSON format.",
-        "analyze_vulnerability_system": "You are an expert penetration tester and security researcher.\nAnalyze vulnerabilities and provide detailed, actionable exploitation strategies.\nConsider OWASP, CWE, and MITRE ATT&CK frameworks.\nAlways include ethical considerations and legal boundaries.",
-        "generate_payload_user": "Generate an exploit payload for the following scenario:\n\nTarget Information:\n{target_info_json}\n\nVulnerability Type: {vulnerability_type}\n\nRequirements:\n1. Generate a working payload\n2. Include obfuscation techniques\n3. Add error handling\n4. Ensure minimal detection footprint\n5. Include cleanup procedures\n\nProvide the payload code with detailed comments.",
-        "generate_payload_system": "You are an expert exploit developer.\nGenerate sophisticated, tested payloads that are effective yet responsible.\nAlways include safety mechanisms and ethical guidelines."
+        "web_vuln": "Generate exploit for identified web vulnerability",
+        "network_exploit": "Create network service exploitation strategy",
+        "payload_generation": "Generate obfuscated payload for target system"
     },
     "privesc": {
-        "suggest_privilege_escalation_user": "Based on the following system information, suggest privilege escalation techniques:\n\nSystem Info:\n{system_info_json}\n\nProvide:\n1. Top 5 privilege escalation vectors\n2. Step-by-step exploitation guide\n3. Required tools and commands\n4. Detection likelihood\n5. Success probability\n6. Alternative approaches\n\nResponse in JSON format with prioritized list.",
-        "suggest_privilege_escalation_system": "You are a privilege escalation specialist.\nAnalyze system configurations and suggest effective escalation paths.\nConsider Windows, Linux, and Active Directory environments."
+        "linux": "Analyze Linux system for privilege escalation paths",
+        "windows": "Identify Windows privilege escalation opportunities",
+        "kernel": "Recommend kernel exploits for target version"
     },
     "persistence": {
-        "ai_persistence_strategy_user": "Plan a comprehensive persistence strategy based on the following context:\n\n{context_json}\n\nProvide:\n1. Recommended persistence techniques (prioritized)\n2. Step-by-step implementation guide\n3. Stealth considerations\n4. Resilience against system reboots\n5. Evasion of detection mechanisms\n6. Multiple fallback mechanisms\n7. Cleanup and removal procedures\n\nResponse in JSON format with detailed implementation plan.",
-        "ai_persistence_strategy_system": "You are an expert in persistence techniques and advanced persistent threats.\nDesign robust, stealthy persistence mechanisms that survive reboots and detection attempts.\nConsider both Windows and Linux environments.\nPrioritize operational security and longevity."
+        "backdoor": "Design stealthy persistence mechanism",
+        "scheduled_task": "Create covert scheduled task for persistence"
     },
     "lateral_movement": {
-        "ai_movement_strategy_user": "Plan a lateral movement strategy based on the following:\n\nCurrent Context:\n{context_json}\n\nDiscovered Hosts:\n{hosts_json}\n\nProvide:\n1. Target prioritization (high-value targets first)\n2. Movement techniques for each target\n3. Step-by-step exploitation guide\n4. Credential strategies\n5. Evasion techniques\n6. Attack path optimization\n7. Fallback options\n\nResponse in JSON format with detailed attack paths.",
-        "ai_movement_strategy_system": "You are an expert in lateral movement and Active Directory attacks.\nPlan sophisticated movement strategies that minimize detection and maximize impact.\nConsider Pass-the-Hash, Pass-the-Ticket, RDP, WMI, PSExec, and other techniques.\nPrioritize domain controllers and critical infrastructure."
-    },
-    "vulnerability_testing": {
-        "ssrf_user": "Analyze the following HTTP request/response data for potential Server-Side Request Forgery (SSRF) vulnerabilities:\n\n{http_data_json}\n\nProvide:\n1. Confirmation of SSRF vulnerability\n2. Potential impact\n3. Step-by-step exploitation guide (if confirmed)\n4. Remediation suggestions\n\nResponse in JSON format.",
-        "ssrf_system": "You are an expert web vulnerability tester, specializing in SSRF.\nAnalyze provided HTTP data to confirm and detail SSRF vulnerabilities, their impact, and exploitation.",
-
-        "sql_injection_user": "Analyze the following input field data and database responses for potential SQL Injection vulnerabilities:\n\n{input_data_json}\n\nProvide:\n1. Confirmation of SQL Injection vulnerability (including type: boolean-based, error-based, time-based, UNION-based)\n2. Potential impact (data exfiltration, authentication bypass)\n3. Step-by-step exploitation guide (if confirmed)\n4. Remediation suggestions\n\nResponse in JSON format.",
-        "sql_injection_system": "You are an expert web vulnerability tester, specializing in SQL Injection (all types).\nAnalyze provided data to confirm and detail SQL Injection vulnerabilities, their impact, and exploitation.",
-
-        "xss_user": "Analyze the following input fields, reflected outputs, and DOM for potential Cross-Site Scripting (XSS) vulnerabilities:\n\n{xss_data_json}\n\nProvide:\n1. Confirmation of XSS vulnerability (including type: Reflected, Stored, DOM-based)\n2. Potential impact (session hijacking, defacement, malware delivery)\n3. Step-by-step exploitation guide (if confirmed)\n4. Remediation suggestions\n\nResponse in JSON format.",
-        "xss_system": "You are an expert web vulnerability tester, specializing in XSS (Reflected, Stored, DOM-based).\nAnalyze provided data to confirm and detail XSS vulnerabilities, their impact, and exploitation.",
-
-        "lfi_user": "Analyze the following file path inputs and server responses for potential Local File Inclusion (LFI) vulnerabilities:\n\n{lfi_data_json}\n\nProvide:\n1. Confirmation of LFI vulnerability\n2. Potential impact (information disclosure, remote code execution via log poisoning)\n3. Step-by-step exploitation guide (if confirmed)\n4. Remediation suggestions\n\nResponse in JSON format.",
-        "lfi_system": "You are an expert web vulnerability tester, specializing in Local File Inclusion (LFI).\nAnalyze provided data to confirm and detail LFI vulnerabilities, their impact, and exploitation.",
-
-        "broken_object_user": "Analyze the following API endpoint behavior and object IDs for potential Broken Object Level Authorization (BOLA) vulnerabilities:\n\n{api_data_json}\n\nProvide:\n1. Confirmation of BOLA vulnerability\n2. Potential impact (unauthorized access to sensitive data/actions)\n3. Step-by-step exploitation guide (if confirmed)\n4. Remediation suggestions\n\nResponse in JSON format.",
-        "broken_object_system": "You are an expert API security tester, specializing in Broken Object Level Authorization (BOLA).\nAnalyze provided API data to confirm and detail BOLA vulnerabilities, their impact, and exploitation.",
-
-        "broken_auth_user": "Analyze the following authentication mechanisms (login, session management, password reset) for potential Broken Authentication vulnerabilities:\n\n{auth_data_json}\n\nProvide:\n1. Confirmation of Broken Authentication vulnerability (e.g., weak password policy, session fixation, credential stuffing, improper logout)\n2. Potential impact (account takeover, unauthorized access)\n3. Step-by-step exploitation guide (if confirmed)\n4. Remediation suggestions\n\nResponse in JSON format.",
-        "broken_auth_system": "You are an expert web security tester, specializing in Broken Authentication vulnerabilities (e.g., session management, password policies, credential handling).\nAnalyze provided data to confirm and detail Broken Authentication vulnerabilities, their impact, and exploitation."
+        "ad_attack": "Plan Active Directory attack path",
+        "credential_reuse": "Strategy for credential reuse across network"
     }
 }

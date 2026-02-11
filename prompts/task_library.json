@@ -1,0 +1,249 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-02-11T13:17:02.797476",
+  "tasks": [
+    {
+      "id": "recon_full",
+      "name": "Full Reconnaissance",
+      "description": "Complete reconnaissance: subdomains, ports, technologies, endpoints",
+      "category": "recon",
+      "prompt": "Perform comprehensive reconnaissance on the target:\n\n1. **Subdomain Enumeration**: Find all subdomains\n2. **Port Scanning**: Identify open ports and services\n3. **Technology Detection**: Fingerprint web technologies, frameworks, servers\n4. **Endpoint Discovery**: Crawl and find all accessible endpoints\n5. **Parameter Discovery**: Find URL parameters and form inputs\n6. **JavaScript Analysis**: Extract endpoints from JS files\n7. **API Discovery**: Find API endpoints and documentation\n\nConsolidate all findings into a structured report.",
+      "system_prompt": "You are a reconnaissance expert. Gather information systematically and thoroughly.",
+      "tools_required": [
+        "subfinder",
+        "httpx",
+        "nmap",
+        "katana",
+        "gau"
+      ],
+      "estimated_tokens": 2000,
+      "created_at": "2026-02-08T18:02:15.119727",
+      "updated_at": "2026-02-08T18:02:15.119727",
+      "author": "user",
+      "tags": [
+        "recon",
+        "discovery",
+        "enumeration"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "recon_passive",
+      "name": "Passive Reconnaissance",
+      "description": "Non-intrusive reconnaissance using public data only",
+      "category": "recon",
+      "prompt": "Perform PASSIVE reconnaissance only (no direct interaction with target):\n\n1. **OSINT**: Search for public information\n2. **DNS Records**: Enumerate DNS records\n3. **Historical Data**: Check Wayback Machine, archive.org\n4. **Certificate Transparency**: Find subdomains from CT logs\n5. **Google Dorking**: Search for exposed files/information\n6. **Social Media**: Find related accounts and information\n\nDo NOT send any requests directly to the target.",
+      "system_prompt": "You are an OSINT expert. Only use passive techniques.",
+      "tools_required": [
+        "subfinder",
+        "gau",
+        "waybackurls"
+      ],
+      "estimated_tokens": 1500,
+      "created_at": "2026-02-08T18:02:15.119744",
+      "updated_at": "2026-02-08T18:02:15.119744",
+      "author": "user",
+      "tags": [
+        "recon",
+        "passive",
+        "osint"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "vuln_owasp_top10",
+      "name": "OWASP Top 10 Assessment",
+      "description": "Test for OWASP Top 10 vulnerabilities",
+      "category": "vulnerability",
+      "prompt": "Test the target for OWASP Top 10 vulnerabilities:\n\n1. **A01 - Broken Access Control**: Test for IDOR, privilege escalation\n2. **A02 - Cryptographic Failures**: Check for weak crypto, exposed secrets\n3. **A03 - Injection**: Test SQL, NoSQL, OS, LDAP injection\n4. **A04 - Insecure Design**: Analyze business logic flaws\n5. **A05 - Security Misconfiguration**: Check headers, default configs\n6. **A06 - Vulnerable Components**: Identify outdated libraries\n7. **A07 - Authentication Failures**: Test auth bypass, weak passwords\n8. **A08 - Data Integrity Failures**: Check for insecure deserialization\n9. **A09 - Security Logging Failures**: Test for logging gaps\n10. **A10 - SSRF**: Test for server-side request forgery\n\nFor each finding:\n- Provide CVSS score and calculation\n- Detailed description\n- Proof of Concept\n- Remediation recommendation",
+      "system_prompt": "You are a web security expert specializing in OWASP vulnerabilities.",
+      "tools_required": [
+        "nuclei",
+        "sqlmap",
+        "xsstrike"
+      ],
+      "estimated_tokens": 5000,
+      "created_at": "2026-02-08T18:02:15.119754",
+      "updated_at": "2026-02-08T18:02:15.119754",
+      "author": "user",
+      "tags": [
+        "vulnerability",
+        "owasp",
+        "web"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "vuln_api_security",
+      "name": "API Security Testing",
+      "description": "Test API endpoints for security issues",
+      "category": "vulnerability",
+      "prompt": "Test the API for security vulnerabilities:\n\n1. **Authentication**: Test JWT, OAuth, API keys\n2. **Authorization**: Check for BOLA, BFLA, broken object level auth\n3. **Rate Limiting**: Test for missing rate limits\n4. **Input Validation**: Injection attacks on API params\n5. **Data Exposure**: Check for excessive data exposure\n6. **Mass Assignment**: Test for mass assignment vulnerabilities\n7. **Security Misconfiguration**: CORS, headers, error handling\n8. **Injection**: GraphQL, SQL, NoSQL injection\n\nFor each finding provide CVSS, PoC, and remediation.",
+      "system_prompt": "You are an API security expert.",
+      "tools_required": [
+        "nuclei",
+        "ffuf"
+      ],
+      "estimated_tokens": 4000,
+      "created_at": "2026-02-08T18:02:15.119761",
+      "updated_at": "2026-02-08T18:02:15.119761",
+      "author": "user",
+      "tags": [
+        "vulnerability",
+        "api",
+        "rest",
+        "graphql"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "vuln_injection",
+      "name": "Injection Testing",
+      "description": "Comprehensive injection vulnerability testing",
+      "category": "vulnerability",
+      "prompt": "Test all input points for injection vulnerabilities:\n\n1. **SQL Injection**: Error-based, union, blind, time-based\n2. **NoSQL Injection**: MongoDB, CouchDB injections\n3. **Command Injection**: OS command execution\n4. **LDAP Injection**: Directory service injection\n5. **XPath Injection**: XML path injection\n6. **Template Injection (SSTI)**: Jinja2, Twig, Freemarker\n7. **Header Injection**: Host header, CRLF injection\n8. **Email Header Injection**: SMTP injection\n\nTest ALL parameters: URL, POST body, headers, cookies.\nProvide working PoC for each finding.",
+      "system_prompt": "You are an injection attack specialist. Test thoroughly but safely.",
+      "tools_required": [
+        "sqlmap",
+        "commix"
+      ],
+      "estimated_tokens": 4000,
+      "created_at": "2026-02-08T18:02:15.119768",
+      "updated_at": "2026-02-08T18:02:15.119768",
+      "author": "user",
+      "tags": [
+        "vulnerability",
+        "injection",
+        "sqli",
+        "rce"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "full_bug_bounty",
+      "name": "Bug Bounty Hunter Mode",
+      "description": "Full automated bug bounty workflow: recon -> analyze -> test -> report",
+      "category": "full_auto",
+      "prompt": "Execute complete bug bounty workflow:\n\n## PHASE 1: RECONNAISSANCE\n- Enumerate all subdomains and assets\n- Probe for live hosts\n- Discover all endpoints\n- Identify technologies and frameworks\n\n## PHASE 2: ANALYSIS\n- Analyze attack surface\n- Identify high-value targets\n- Map authentication flows\n- Document API endpoints\n\n## PHASE 3: VULNERABILITY TESTING\n- Test for critical vulnerabilities first (RCE, SQLi, Auth Bypass)\n- Test for high severity (XSS, SSRF, IDOR)\n- Test for medium/low (Info disclosure, misconfigs)\n\n## PHASE 4: EXPLOITATION\n- Develop PoC for confirmed vulnerabilities\n- Calculate CVSS scores\n- Document impact and risk\n\n## PHASE 5: REPORTING\n- Generate professional report\n- Include all findings with evidence\n- Provide remediation steps\n\nFocus on impact. Prioritize critical findings.",
+      "system_prompt": "You are an elite bug bounty hunter. Your goal is to find real, impactful vulnerabilities.\nBe thorough but efficient. Focus on high-severity issues first.\nEvery finding must have: Evidence, CVSS, Impact, PoC, Remediation.",
+      "tools_required": [
+        "subfinder",
+        "httpx",
+        "nuclei",
+        "katana",
+        "sqlmap"
+      ],
+      "estimated_tokens": 10000,
+      "created_at": "2026-02-08T18:02:15.119779",
+      "updated_at": "2026-02-08T18:02:15.119779",
+      "author": "user",
+      "tags": [
+        "full",
+        "bug_bounty",
+        "automated"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "full_pentest",
+      "name": "Full Penetration Test",
+      "description": "Complete penetration test workflow",
+      "category": "full_auto",
+      "prompt": "Execute comprehensive penetration test:\n\n## PHASE 1: INFORMATION GATHERING\n- Passive reconnaissance\n- Active reconnaissance\n- Network mapping\n- Service enumeration\n\n## PHASE 2: VULNERABILITY ANALYSIS\n- Automated scanning\n- Manual testing\n- Business logic analysis\n- Configuration review\n\n## PHASE 3: EXPLOITATION\n- Exploit confirmed vulnerabilities\n- Post-exploitation (if authorized)\n- Privilege escalation attempts\n- Lateral movement (if authorized)\n\n## PHASE 4: DOCUMENTATION\n- Document all findings\n- Calculate CVSS 3.1 scores\n- Create proof of concepts\n- Write remediation recommendations\n\n## PHASE 5: REPORTING\n- Executive summary\n- Technical findings\n- Risk assessment\n- Remediation roadmap\n\nThis is a full penetration test. Be thorough and professional.",
+      "system_prompt": "You are a professional penetration tester conducting an authorized security assessment.\nDocument everything. Be thorough. Follow methodology.\nAll findings must include: Title, CVSS, Description, Evidence, Impact, Remediation.",
+      "tools_required": [
+        "nmap",
+        "nuclei",
+        "sqlmap",
+        "nikto",
+        "ffuf"
+      ],
+      "estimated_tokens": 15000,
+      "created_at": "2026-02-08T18:02:15.119785",
+      "updated_at": "2026-02-08T18:02:15.119785",
+      "author": "user",
+      "tags": [
+        "full",
+        "pentest",
+        "professional"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "custom_prompt",
+      "name": "Custom Prompt (Full AI Mode)",
+      "description": "Execute any custom prompt - AI decides what tools to use",
+      "category": "custom",
+      "prompt": "[USER_PROMPT_HERE]\n\nAnalyze this request and:\n1. Determine what information/tools are needed\n2. Plan the approach\n3. Execute the necessary tests\n4. Analyze results\n5. Report findings\n\nYou have full autonomy to use any tools and techniques needed.",
+      "system_prompt": "You are an autonomous AI security agent.\nAnalyze the user's request and execute it completely.\nYou can use any tools available. Be creative and thorough.\nIf the task requires testing, test. If it requires analysis, analyze.\nAlways provide detailed results with evidence.",
+      "tools_required": [],
+      "estimated_tokens": 5000,
+      "created_at": "2026-02-08T18:02:15.119794",
+      "updated_at": "2026-02-08T18:02:15.119794",
+      "author": "user",
+      "tags": [
+        "custom",
+        "flexible",
+        "ai"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "analyze_only",
+      "name": "Analysis Only (No Testing)",
+      "description": "AI analysis without active testing - uses provided data",
+      "category": "custom",
+      "prompt": "Analyze the provided data/context WITHOUT performing active tests:\n\n1. Review all provided information\n2. Identify potential security issues\n3. Assess risk levels\n4. Provide recommendations\n\nDo NOT send any requests to the target.\nBase your analysis only on provided data.",
+      "system_prompt": "You are a security analyst. Analyze provided data without active testing.",
+      "tools_required": [],
+      "estimated_tokens": 2000,
+      "created_at": "2026-02-08T18:02:15.119799",
+      "updated_at": "2026-02-08T18:02:15.119799",
+      "author": "user",
+      "tags": [
+        "analysis",
+        "passive",
+        "review"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "report_executive",
+      "name": "Executive Summary Report",
+      "description": "Generate executive-level security report",
+      "category": "reporting",
+      "prompt": "Generate an executive summary report from the findings:\n\n1. **Executive Summary**: High-level overview for management\n2. **Risk Assessment**: Overall security posture rating\n3. **Key Findings**: Top critical/high findings only\n4. **Business Impact**: How vulnerabilities affect the business\n5. **Recommendations**: Prioritized remediation roadmap\n6. **Metrics**: Charts and statistics\n\nKeep it concise and business-focused. Avoid technical jargon.",
+      "system_prompt": "You are a security consultant writing for executives.",
+      "tools_required": [],
+      "estimated_tokens": 2000,
+      "created_at": "2026-02-08T18:02:15.119804",
+      "updated_at": "2026-02-08T18:02:15.119804",
+      "author": "user",
+      "tags": [
+        "reporting",
+        "executive",
+        "summary"
+      ],
+      "is_preset": true
+    },
+    {
+      "id": "report_technical",
+      "name": "Technical Security Report",
+      "description": "Generate detailed technical security report",
+      "category": "reporting",
+      "prompt": "Generate a detailed technical security report:\n\nFor each vulnerability include:\n1. **Title**: Clear, descriptive title\n2. **Severity**: Critical/High/Medium/Low/Info\n3. **CVSS Score**: Calculate CVSS 3.1 score with vector\n4. **CWE ID**: Relevant CWE classification\n5. **Description**: Detailed technical explanation\n6. **Affected Component**: Endpoint, parameter, function\n7. **Proof of Concept**: Working PoC code/steps\n8. **Evidence**: Screenshots, requests, responses\n9. **Impact**: What an attacker could achieve\n10. **Remediation**: Specific fix recommendations\n11. **References**: OWASP, CWE, vendor docs\n\nBe thorough and technical.",
+      "system_prompt": "You are a senior security engineer writing a technical report.",
+      "tools_required": [],
+      "estimated_tokens": 3000,
+      "created_at": "2026-02-08T18:02:15.119809",
+      "updated_at": "2026-02-08T18:02:15.119809",
+      "author": "user",
+      "tags": [
+        "reporting",
+        "technical",
+        "detailed"
+      ],
+      "is_preset": true
+    }
+  ]
+}

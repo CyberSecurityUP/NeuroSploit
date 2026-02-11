@@ -4,6 +4,7 @@ NeuroSploit v3 - Scans API Endpoints
 from typing import List, Optional
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from urllib.parse import urlparse
@@ -11,7 +12,7 @@ from urllib.parse import urlparse
 from backend.db.database import get_db
 from backend.models import Scan, Target, Endpoint, Vulnerability
 from backend.schemas.scan import ScanCreate, ScanUpdate, ScanResponse, ScanListResponse, ScanProgress
-from backend.services.scan_service import run_scan_task
+from backend.services.scan_service import run_scan_task, skip_to_phase as _skip_to_phase, PHASE_ORDER
 
 router = APIRouter()
 
@@ -177,6 +178,7 @@ async def start_scan(
 async def stop_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
     """Stop a running scan and save partial results"""
     from backend.api.websocket import manager as ws_manager
+    from backend.api.v1.agent import scan_to_agent, agent_instances, agent_results
 
     result = await db.execute(select(Scan).where(Scan.id == scan_id))
     scan = result.scalar_one_or_none()
@@ -184,8 +186,16 @@ async def stop_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
 
-    if scan.status != "running":
-        raise HTTPException(status_code=400, detail="Scan is not running")
+    if scan.status not in ("running", "paused"):
+        raise HTTPException(status_code=400, detail="Scan is not running or paused")
+
+    # Signal the running agent to stop
+    agent_id = scan_to_agent.get(scan_id)
+    if agent_id and agent_id in agent_instances:
+        agent_instances[agent_id].cancel()
+        if agent_id in agent_results:
+            agent_results[agent_id]["status"] = "stopped"
+            agent_results[agent_id]["phase"] = "stopped"
 
     # Update scan status
     scan.status = "stopped"
@@ -256,6 +266,132 @@ async def stop_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
         "scan_id": scan_id,
         "summary": summary,
         "report": report_data
+    }
+
+
+@router.post("/{scan_id}/pause")
+async def pause_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
+    """Pause a running scan"""
+    from backend.api.websocket import manager as ws_manager
+    from backend.api.v1.agent import scan_to_agent, agent_instances, agent_results
+
+    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    scan = result.scalar_one_or_none()
+
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    if scan.status != "running":
+        raise HTTPException(status_code=400, detail="Scan is not running")
+
+    # Signal the agent to pause
+    agent_id = scan_to_agent.get(scan_id)
+    if agent_id and agent_id in agent_instances:
+        agent_instances[agent_id].pause()
+        if agent_id in agent_results:
+            agent_results[agent_id]["status"] = "paused"
+            agent_results[agent_id]["phase"] = "paused"
+
+    scan.status = "paused"
+    scan.current_phase = "paused"
+    await db.commit()
+
+    await ws_manager.broadcast_log(scan_id, "warning", "Scan paused by user")
+
+    return {"message": "Scan paused", "scan_id": scan_id}
+
+
+@router.post("/{scan_id}/resume")
+async def resume_scan(scan_id: str, db: AsyncSession = Depends(get_db)):
+    """Resume a paused scan"""
+    from backend.api.websocket import manager as ws_manager
+    from backend.api.v1.agent import scan_to_agent, agent_instances, agent_results
+
+    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    scan = result.scalar_one_or_none()
+
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    if scan.status != "paused":
+        raise HTTPException(status_code=400, detail="Scan is not paused")
+
+    # Signal the agent to resume
+    agent_id = scan_to_agent.get(scan_id)
+    if agent_id and agent_id in agent_instances:
+        agent_instances[agent_id].resume()
+        if agent_id in agent_results:
+            agent_results[agent_id]["status"] = "running"
+            agent_results[agent_id]["phase"] = "testing"
+
+    scan.status = "running"
+    scan.current_phase = "testing"
+    await db.commit()
+
+    await ws_manager.broadcast_log(scan_id, "info", "Scan resumed by user")
+
+    return {"message": "Scan resumed", "scan_id": scan_id}
+
+
+@router.post("/{scan_id}/skip-to/{target_phase}")
+async def skip_to_phase_endpoint(scan_id: str, target_phase: str, db: AsyncSession = Depends(get_db)):
+    """Skip the current scan phase and jump to a target phase.
+
+    Valid phases: recon, analyzing, testing, completed
+    Can only skip forward (to a phase ahead of current).
+    """
+    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    scan = result.scalar_one_or_none()
+
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    if scan.status not in ("running", "paused"):
+        raise HTTPException(status_code=400, detail="Scan is not running or paused")
+
+    # If paused, resume first so the skip can be processed
+    if scan.status == "paused":
+        from backend.api.v1.agent import scan_to_agent, agent_instances, agent_results
+        agent_id = scan_to_agent.get(scan_id)
+        if agent_id and agent_id in agent_instances:
+            agent_instances[agent_id].resume()
+            if agent_id in agent_results:
+                agent_results[agent_id]["status"] = "running"
+                agent_results[agent_id]["phase"] = agent_results[agent_id].get("last_phase", "testing")
+        scan.status = "running"
+        await db.commit()
+
+    if target_phase not in PHASE_ORDER:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid phase '{target_phase}'. Valid: {', '.join(PHASE_ORDER[1:])}"
+        )
+
+    # Validate forward skip
+    current_idx = PHASE_ORDER.index(scan.current_phase) if scan.current_phase in PHASE_ORDER else 0
+    target_idx = PHASE_ORDER.index(target_phase)
+
+    if target_idx <= current_idx:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot skip backward. Current: {scan.current_phase}, target: {target_phase}"
+        )
+
+    # Signal the running scan to skip
+    success = _skip_to_phase(scan_id, target_phase)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to signal phase skip")
+
+    # Broadcast via WebSocket
+    from backend.api.websocket import manager as ws_manager
+    await ws_manager.broadcast_log(scan_id, "warning", f">> User requested skip to phase: {target_phase}")
+    await ws_manager.broadcast_phase_change(scan_id, f"skipping_to_{target_phase}")
+
+    return {
+        "message": f"Skipping to phase: {target_phase}",
+        "scan_id": scan_id,
+        "from_phase": scan.current_phase,
+        "target_phase": target_phase
     }
 
 
@@ -369,3 +505,68 @@ async def get_scan_vulnerabilities(
         "page": page,
         "per_page": per_page
     }
+
+
+class ValidationRequest(BaseModel):
+    validation_status: str  # "validated" | "false_positive" | "ai_confirmed" | "ai_rejected" | "pending_review"
+    notes: Optional[str] = None
+
+
+@router.patch("/vulnerabilities/{vuln_id}/validate")
+async def validate_vulnerability(
+    vuln_id: str,
+    body: ValidationRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Manually validate or reject a vulnerability finding"""
+    valid_statuses = {"validated", "false_positive", "ai_confirmed", "ai_rejected", "pending_review"}
+    if body.validation_status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+
+    result = await db.execute(select(Vulnerability).where(Vulnerability.id == vuln_id))
+    vuln = result.scalar_one_or_none()
+
+    if not vuln:
+        raise HTTPException(status_code=404, detail="Vulnerability not found")
+
+    old_status = vuln.validation_status or "ai_confirmed"
+    vuln.validation_status = body.validation_status
+    if body.notes:
+        vuln.ai_rejection_reason = body.notes
+
+    # Update scan severity counts when validation status changes
+    scan_result = await db.execute(select(Scan).where(Scan.id == vuln.scan_id))
+    scan = scan_result.scalar_one_or_none()
+
+    if scan:
+        sev = vuln.severity
+        # If changing from rejected to validated: add to counts
+        if old_status == "ai_rejected" and body.validation_status == "validated":
+            scan.total_vulnerabilities = (scan.total_vulnerabilities or 0) + 1
+            if sev == "critical":
+                scan.critical_count = (scan.critical_count or 0) + 1
+            elif sev == "high":
+                scan.high_count = (scan.high_count or 0) + 1
+            elif sev == "medium":
+                scan.medium_count = (scan.medium_count or 0) + 1
+            elif sev == "low":
+                scan.low_count = (scan.low_count or 0) + 1
+            elif sev == "info":
+                scan.info_count = (scan.info_count or 0) + 1
+        # If changing from confirmed to false_positive: subtract from counts
+        elif old_status in ("ai_confirmed", "validated") and body.validation_status == "false_positive":
+            scan.total_vulnerabilities = max(0, (scan.total_vulnerabilities or 0) - 1)
+            if sev == "critical":
+                scan.critical_count = max(0, (scan.critical_count or 0) - 1)
+            elif sev == "high":
+                scan.high_count = max(0, (scan.high_count or 0) - 1)
+            elif sev == "medium":
+                scan.medium_count = max(0, (scan.medium_count or 0) - 1)
+            elif sev == "low":
+                scan.low_count = max(0, (scan.low_count or 0) - 1)
+            elif sev == "info":
+                scan.info_count = max(0, (scan.info_count or 0) - 1)
+
+    await db.commit()
+
+    return {"message": "Vulnerability validation updated", "vulnerability": vuln.to_dict()}

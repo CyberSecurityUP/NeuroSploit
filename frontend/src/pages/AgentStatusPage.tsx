@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   Bot, RefreshCw, FileText, CheckCircle,
   XCircle, Clock, Target, Shield, ChevronDown, ChevronRight, ExternalLink,
-  Copy, Download, StopCircle, Terminal, Brain, Send, Code, Globe, AlertTriangle
+  Copy, Download, StopCircle, Terminal, Brain, Send, Code, Globe, AlertTriangle,
+  SkipForward, MinusCircle, Pause, Play
 } from 'lucide-react'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
@@ -77,6 +78,11 @@ export default function AgentStatusPage() {
   const [isSubmittingPrompt, setIsSubmittingPrompt] = useState(false)
   const [promptSentMessage, setPromptSentMessage] = useState<string | null>(null)
 
+  // Phase skip state
+  const [skipConfirm, setSkipConfirm] = useState<string | null>(null)
+  const [isSkipping, setIsSkipping] = useState(false)
+  const [skippedPhases, setSkippedPhases] = useState<Set<string>>(new Set())
+
   // Separate logs by source
   const scriptLogs = logs.filter(l => l.source === 'script' || (!l.source && !l.message.includes('[LLM]') && !l.message.includes('[AI]')))
   const llmLogs = logs.filter(l => l.source === 'llm' || l.message.includes('[LLM]') || l.message.includes('[AI]'))
@@ -107,12 +113,12 @@ export default function AgentStatusPage() {
 
     fetchStatus()
 
-    // Poll every 2 seconds while running
+    // Poll every 5 seconds while running or paused
     const interval = setInterval(() => {
-      if (status?.status === 'running') {
+      if (status?.status === 'running' || status?.status === 'paused') {
         fetchStatus()
       }
-    }, 2000)
+    }, 5000)
 
     return () => clearInterval(interval)
   }, [agentId, status?.status])
@@ -466,6 +472,28 @@ export default function AgentStatusPage() {
     }
   }
 
+  const handlePauseScan = async () => {
+    if (!agentId) return
+    try {
+      await agentApi.pause(agentId)
+      const statusData = await agentApi.getStatus(agentId)
+      setStatus(statusData)
+    } catch (err: any) {
+      console.error('Failed to pause agent:', err)
+    }
+  }
+
+  const handleResumeScan = async () => {
+    if (!agentId) return
+    try {
+      await agentApi.resume(agentId)
+      const statusData = await agentApi.getStatus(agentId)
+      setStatus(statusData)
+    } catch (err: any) {
+      console.error('Failed to resume agent:', err)
+    }
+  }
+
   const handleSubmitPrompt = async () => {
     if (!customPrompt.trim() || !agentId) return
     setIsSubmittingPrompt(true)
@@ -495,6 +523,37 @@ export default function AgentStatusPage() {
       setIsSubmittingPrompt(false)
     }
   }
+
+  const handleSkipToPhase = async (targetPhase: string) => {
+    if (!agentId) return
+    setIsSkipping(true)
+    try {
+      await agentApi.skipToPhase(agentId, targetPhase)
+      // Mark intermediate phases as skipped
+      const currentIndex = status ? getPhaseIndex(status.phase) : 0
+      const targetIndex = SCAN_PHASES.findIndex(p => p.key === targetPhase)
+      const newSkipped = new Set(skippedPhases)
+      for (let i = currentIndex; i < targetIndex; i++) {
+        newSkipped.add(SCAN_PHASES[i].key)
+      }
+      setSkippedPhases(newSkipped)
+      setSkipConfirm(null)
+    } catch (err: any) {
+      console.error('Failed to skip phase:', err)
+    } finally {
+      setIsSkipping(false)
+    }
+  }
+
+  // Track skipped phases from status updates
+  useEffect(() => {
+    if (!status) return
+    const phase = status.phase.toLowerCase()
+    if (phase.includes('_skipped')) {
+      const skippedKey = phase.replace('_skipped', '')
+      setSkippedPhases(prev => new Set(prev).add(skippedKey))
+    }
+  }, [status?.phase])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -790,7 +849,8 @@ export default function AgentStatusPage() {
             <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${
               status.status === 'running' ? 'bg-blue-500/20 text-blue-400' :
               status.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-              status.status === 'stopped' ? 'bg-yellow-500/20 text-yellow-400' :
+              status.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
+              status.status === 'stopped' ? 'bg-orange-500/20 text-orange-400' :
               'bg-red-500/20 text-red-400'
             }`}>
               {PHASE_ICONS[status.status]}
@@ -802,10 +862,28 @@ export default function AgentStatusPage() {
         </div>
         <div className="flex gap-2">
           {status.status === 'running' && (
-            <Button variant="danger" onClick={handleStopScan} isLoading={isStopping}>
-              <StopCircle className="w-4 h-4 mr-2" />
-              Stop Scan
-            </Button>
+            <>
+              <Button variant="secondary" onClick={handlePauseScan}>
+                <Pause className="w-4 h-4 mr-2" />
+                Pause
+              </Button>
+              <Button variant="danger" onClick={handleStopScan} isLoading={isStopping}>
+                <StopCircle className="w-4 h-4 mr-2" />
+                Stop
+              </Button>
+            </>
+          )}
+          {status.status === 'paused' && (
+            <>
+              <Button variant="primary" onClick={handleResumeScan}>
+                <Play className="w-4 h-4 mr-2" />
+                Resume
+              </Button>
+              <Button variant="danger" onClick={handleStopScan} isLoading={isStopping}>
+                <StopCircle className="w-4 h-4 mr-2" />
+                Stop
+              </Button>
+            </>
           )}
           {status.scan_id && (
             <Button variant="secondary" onClick={() => navigate(`/scan/${status.scan_id}`)}>
@@ -833,31 +911,84 @@ export default function AgentStatusPage() {
       {(status.status === 'running' || status.status === 'completed' || status.status === 'stopped') && (
         <Card>
           <div className="space-y-4">
-            {/* Phase Steps */}
+            {/* Phase Steps with Skip */}
             <div className="flex items-center justify-between px-2">
               {SCAN_PHASES.map((phase, index) => {
                 const currentIndex = status.status === 'completed' ? 4 : status.status === 'stopped' ? getPhaseIndex(status.phase) : getPhaseIndex(status.phase)
                 const isActive = index === currentIndex
                 const isCompleted = index < currentIndex || status.status === 'completed'
                 const isStopped = status.status === 'stopped' && index > currentIndex
+                const isSkipped = skippedPhases.has(phase.key)
+                const canSkipTo = (status.status === 'running' || status.status === 'paused') && index > currentIndex && phase.key !== 'completed'
 
                 return (
-                  <div key={phase.key} className="flex flex-col items-center flex-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${
-                      isCompleted ? 'bg-green-500 text-white' :
-                      isActive ? 'bg-primary-500 text-white animate-pulse' :
-                      isStopped ? 'bg-yellow-500/20 text-yellow-500' :
-                      'bg-dark-700 text-dark-400'
-                    }`}>
-                      {isCompleted ? <CheckCircle className="w-4 h-4" /> :
+                  <div key={phase.key} className="flex flex-col items-center flex-1 relative group">
+                    {/* Connector line */}
+                    {index > 0 && (
+                      <div className={`absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 z-0 ${
+                        isCompleted || isActive ? 'bg-green-500/50' :
+                        isSkipped ? 'bg-yellow-500/30' :
+                        'bg-dark-700'
+                      }`} />
+                    )}
+
+                    {/* Phase node */}
+                    <div
+                      className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-all ${
+                        isSkipped ? 'bg-yellow-500/20 text-yellow-500 ring-2 ring-yellow-500/30' :
+                        isCompleted ? 'bg-green-500 text-white' :
+                        isActive ? 'bg-primary-500 text-white animate-pulse ring-2 ring-primary-500/30' :
+                        isStopped ? 'bg-yellow-500/20 text-yellow-500' :
+                        canSkipTo ? 'bg-dark-700 text-dark-400 cursor-pointer hover:bg-primary-500/20 hover:text-primary-400 hover:ring-2 hover:ring-primary-500/30' :
+                        'bg-dark-700 text-dark-400'
+                      }`}
+                      onClick={() => canSkipTo && setSkipConfirm(phase.key)}
+                    >
+                      {isSkipped ? <MinusCircle className="w-4 h-4" /> :
+                       isCompleted ? <CheckCircle className="w-4 h-4" /> :
+                       isActive ? (PHASE_ICONS[phase.key === 'recon' ? 'reconnaissance' : phase.key] || <span className="text-xs font-bold">{index + 1}</span>) :
                        isStopped ? <StopCircle className="w-4 h-4" /> :
+                       canSkipTo ? <SkipForward className="w-3.5 h-3.5" /> :
                        <span className="text-xs font-bold">{index + 1}</span>}
                     </div>
+
                     <span className={`text-xs text-center ${
-                      isCompleted || isActive ? 'text-white' : 'text-dark-500'
+                      isSkipped ? 'text-yellow-500' :
+                      isCompleted || isActive ? 'text-white' :
+                      canSkipTo ? 'text-dark-400 group-hover:text-primary-400' :
+                      'text-dark-500'
                     }`}>
-                      {phase.label}
+                      {isSkipped ? `${phase.label} (skipped)` : phase.label}
                     </span>
+
+                    {/* Skip tooltip on hover */}
+                    {canSkipTo && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-dark-800 text-primary-400 text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-dark-600">
+                        Skip to {phase.label}
+                      </div>
+                    )}
+
+                    {/* Inline skip confirmation */}
+                    {skipConfirm === phase.key && (
+                      <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 bg-dark-800 border border-dark-600 rounded-lg p-3 shadow-xl whitespace-nowrap">
+                        <p className="text-xs text-dark-300 mb-2">Skip to <span className="text-white font-medium">{phase.label}</span>?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSkipToPhase(phase.key)}
+                            disabled={isSkipping}
+                            className="px-3 py-1 bg-primary-500 text-white text-xs rounded hover:bg-primary-600 disabled:opacity-50"
+                          >
+                            {isSkipping ? 'Skipping...' : 'Confirm'}
+                          </button>
+                          <button
+                            onClick={() => setSkipConfirm(null)}
+                            className="px-3 py-1 bg-dark-700 text-dark-300 text-xs rounded hover:bg-dark-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}

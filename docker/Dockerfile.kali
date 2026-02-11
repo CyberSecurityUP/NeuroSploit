@@ -1,0 +1,123 @@
+# NeuroSploit v3 - Kali Linux Security Sandbox
+# Per-scan container with essential tools pre-installed + on-demand install support.
+#
+# Build:
+#   docker build -f docker/Dockerfile.kali -t neurosploit-kali:latest docker/
+#
+# Rebuild (no cache):
+#   docker build --no-cache -f docker/Dockerfile.kali -t neurosploit-kali:latest docker/
+#
+# Or via compose:
+#   docker compose -f docker/docker-compose.kali.yml build
+#
+# Design:
+#   - Pre-compile Go tools (nuclei, naabu, httpx, subfinder, katana, dnsx, ffuf,
+#     gobuster, dalfox, waybackurls, uncover) to avoid 60s+ go install per scan
+#   - Pre-install common apt tools (nikto, sqlmap, masscan, whatweb) for instant use
+#   - Include Go, Python, pip, git so on-demand tools can be compiled/installed
+#   - Full Kali apt repos available for on-demand apt-get install of any security tool
+
+# ---- Stage 1: Pre-compile Go security tools ----
+FROM golang:1.24-bookworm AS go-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git build-essential libpcap-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Pre-compile ProjectDiscovery suite + common Go tools
+# Split into separate RUN layers for better Docker cache (if one fails, others cached)
+RUN go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+RUN go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest
+RUN go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+RUN go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+RUN go install -v github.com/projectdiscovery/katana/cmd/katana@latest
+RUN go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest
+RUN go install -v github.com/projectdiscovery/uncover/cmd/uncover@latest
+RUN go install -v github.com/ffuf/ffuf/v2@latest
+RUN go install -v github.com/OJ/gobuster/v3@v3.7.0
+RUN go install -v github.com/hahwul/dalfox/v2@latest
+RUN go install -v github.com/tomnomnom/waybackurls@latest
+
+# ---- Stage 2: Kali Linux runtime ----
+FROM kalilinux/kali-rolling
+
+LABEL maintainer="NeuroSploit Team"
+LABEL description="NeuroSploit Kali Sandbox - Per-scan isolated tool execution"
+LABEL neurosploit.version="3.0"
+LABEL neurosploit.type="kali-sandbox"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Layer 1: Core system + build tools (rarely changes, cached)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    curl \
+    wget \
+    git \
+    jq \
+    ca-certificates \
+    openssl \
+    dnsutils \
+    whois \
+    netcat-openbsd \
+    libpcap-dev \
+    python3 \
+    python3-pip \
+    golang-go \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 2: Pre-install common security tools from Kali repos (saves ~30s on-demand each)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nmap \
+    nikto \
+    sqlmap \
+    masscan \
+    whatweb \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy ALL pre-compiled Go binaries from builder
+COPY --from=go-builder /go/bin/nuclei /usr/local/bin/
+COPY --from=go-builder /go/bin/naabu /usr/local/bin/
+COPY --from=go-builder /go/bin/httpx /usr/local/bin/
+COPY --from=go-builder /go/bin/subfinder /usr/local/bin/
+COPY --from=go-builder /go/bin/katana /usr/local/bin/
+COPY --from=go-builder /go/bin/dnsx /usr/local/bin/
+COPY --from=go-builder /go/bin/uncover /usr/local/bin/
+COPY --from=go-builder /go/bin/ffuf /usr/local/bin/
+COPY --from=go-builder /go/bin/gobuster /usr/local/bin/
+COPY --from=go-builder /go/bin/dalfox /usr/local/bin/
+COPY --from=go-builder /go/bin/waybackurls /usr/local/bin/
+
+# Go environment for on-demand tool compilation
+ENV GOPATH=/root/go
+ENV PATH="${PATH}:/root/go/bin"
+
+# Create directories
+RUN mkdir -p /opt/wordlists /opt/output /opt/templates /opt/nuclei-templates
+
+# Download commonly used wordlists (|| true so build doesn't fail on network issues)
+RUN wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt \
+    -O /opt/wordlists/common.txt 2>/dev/null || true && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-medium.txt \
+    -O /opt/wordlists/directory-list-medium.txt 2>/dev/null || true && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt \
+    -O /opt/wordlists/subdomains-5000.txt 2>/dev/null || true && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/10-million-password-list-top-1000.txt \
+    -O /opt/wordlists/passwords-top1000.txt 2>/dev/null || true
+
+# Update Nuclei templates
+RUN nuclei -update-templates -silent 2>/dev/null || true
+
+# Health check script
+RUN printf '#!/bin/bash\nnuclei -version > /dev/null 2>&1 && naabu -version > /dev/null 2>&1 && echo "OK"\n' \
+    > /opt/healthcheck.sh && chmod +x /opt/healthcheck.sh
+
+HEALTHCHECK --interval=60s --timeout=10s --retries=3 \
+    CMD /opt/healthcheck.sh
+
+WORKDIR /opt/output
+
+ENTRYPOINT ["/bin/bash", "-c"]

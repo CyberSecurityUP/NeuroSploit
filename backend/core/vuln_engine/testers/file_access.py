@@ -201,3 +201,156 @@ class FileUploadTester(BaseTester):
             return True, 0.8, "Executable file path returned - possible RCE"
 
         return False, 0.0, None
+
+
+class ArbitraryFileReadTester(BaseTester):
+    """Tester for Arbitrary File Read vulnerabilities"""
+
+    def __init__(self):
+        super().__init__()
+        self.name = "arbitrary_file_read"
+        self.sensitive_file_patterns = {
+            # /etc/passwd format
+            r"root:.*:0:0:": "/etc/passwd",
+            r"daemon:.*:\d+:\d+:": "/etc/passwd",
+            r"nobody:.*:\d+:\d+:": "/etc/passwd",
+            # .env file patterns
+            r"(?:DB_PASSWORD|DATABASE_URL|SECRET_KEY|API_KEY|APP_SECRET)\s*=": ".env file",
+            r"(?:AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)\s*=": ".env file (AWS credentials)",
+            # SSH key headers
+            r"-----BEGIN (?:RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----": "SSH/TLS private key",
+            r"-----BEGIN CERTIFICATE-----": "TLS certificate",
+            # Shadow file
+            r"root:\$[0-9a-z]+\$": "/etc/shadow",
+            # Config files
+            r"<\?php.*\$db": "PHP config with DB credentials",
+        }
+
+    def analyze_response(
+        self,
+        payload: str,
+        response_status: int,
+        response_headers: Dict,
+        response_body: str,
+        context: Dict
+    ) -> Tuple[bool, float, Optional[str]]:
+        """Check for sensitive file contents in response"""
+        for pattern, file_desc in self.sensitive_file_patterns.items():
+            if re.search(pattern, response_body, re.IGNORECASE):
+                return True, 0.95, f"Arbitrary file read confirmed: {file_desc} content detected"
+
+        # Check for base64-encoded sensitive content
+        base64_pattern = re.findall(r'[A-Za-z0-9+/]{40,}={0,2}', response_body)
+        for b64_match in base64_pattern[:5]:  # Check first 5 matches
+            try:
+                import base64
+                decoded = base64.b64decode(b64_match).decode('utf-8', errors='ignore')
+                if re.search(r"root:.*:0:0:", decoded) or re.search(r"-----BEGIN.*PRIVATE KEY-----", decoded):
+                    return True, 0.9, "Arbitrary file read: Base64-encoded sensitive file content"
+            except Exception:
+                pass
+
+        return False, 0.0, None
+
+
+class ArbitraryFileDeleteTester(BaseTester):
+    """Tester for Arbitrary File Delete vulnerabilities"""
+
+    def __init__(self):
+        super().__init__()
+        self.name = "arbitrary_file_delete"
+
+    def analyze_response(
+        self,
+        payload: str,
+        response_status: int,
+        response_headers: Dict,
+        response_body: str,
+        context: Dict
+    ) -> Tuple[bool, float, Optional[str]]:
+        """Check for successful file deletion indicators"""
+        body_lower = response_body.lower()
+
+        # Check for explicit deletion success messages
+        delete_success_patterns = [
+            r"file\s+(?:has been\s+)?(?:deleted|removed)\s+successfully",
+            r"(?:deleted|removed)\s+successfully",
+            r'"success"\s*:\s*true.*(?:delet|remov)',
+            r'"status"\s*:\s*"(?:deleted|removed)"',
+            r'"message"\s*:\s*".*(?:deleted|removed).*"',
+        ]
+        for pattern in delete_success_patterns:
+            if re.search(pattern, response_body, re.IGNORECASE):
+                return True, 0.85, "Arbitrary file delete: Deletion success confirmed in response"
+
+        # Check for 200/204 on DELETE request with traversal path
+        traversal_indicators = ["../", "..\\", "%2e%2e", "..%2f", "..%5c"]
+        has_traversal = any(t in payload.lower() for t in traversal_indicators)
+
+        if has_traversal:
+            if response_status == 204:
+                return True, 0.8, "Arbitrary file delete: 204 No Content after path traversal delete"
+            if response_status == 200:
+                return True, 0.7, "Arbitrary file delete: 200 OK after path traversal delete request"
+
+        # Check for file-not-found on subsequent access (context-based)
+        if context.get("follow_up_status") == 404:
+            return True, 0.85, "Arbitrary file delete: File not found after deletion request"
+
+        return False, 0.0, None
+
+
+class ZipSlipTester(BaseTester):
+    """Tester for Zip Slip (path traversal in archive extraction)"""
+
+    def __init__(self):
+        super().__init__()
+        self.name = "zip_slip"
+
+    def analyze_response(
+        self,
+        payload: str,
+        response_status: int,
+        response_headers: Dict,
+        response_body: str,
+        context: Dict
+    ) -> Tuple[bool, float, Optional[str]]:
+        """Check for path traversal in archive extraction"""
+        body_lower = response_body.lower()
+
+        # Check for traversal path acceptance in response
+        traversal_patterns = [
+            r"\.\./\.\./\.\./",
+            r"\.\.\\\.\.\\\.\.\\",
+            r"%2e%2e%2f",
+            r"%2e%2e/",
+        ]
+        for pattern in traversal_patterns:
+            if re.search(pattern, response_body, re.IGNORECASE):
+                # Traversal path echoed in response
+                if response_status in [200, 201]:
+                    return True, 0.8, "Zip Slip: Path traversal sequence accepted in archive extraction"
+
+        # Check for successful extraction with traversal payload
+        if response_status in [200, 201]:
+            extraction_success = [
+                r"extract(?:ed|ion)\s+(?:successful|complete)",
+                r"(?:file|archive)\s+(?:uploaded|processed)\s+successfully",
+                r'"extracted"\s*:\s*true',
+                r'"files"\s*:\s*\[.*\.\./.*\]',
+            ]
+            for pattern in extraction_success:
+                if re.search(pattern, response_body, re.IGNORECASE):
+                    if any(t in payload for t in ["../", "..\\", "%2e%2e"]):
+                        return True, 0.85, "Zip Slip: Archive with traversal paths extracted successfully"
+
+        # Check for file written outside expected directory
+        overwrite_indicators = [
+            r"(?:overwr(?:ote|itten)|replaced)\s+.*(?:/etc/|/var/|/tmp/|C:\\)",
+            r"(?:created|wrote)\s+.*\.\./",
+        ]
+        for pattern in overwrite_indicators:
+            if re.search(pattern, response_body, re.IGNORECASE):
+                return True, 0.9, "Zip Slip: File written outside extraction directory"
+
+        return False, 0.0, None

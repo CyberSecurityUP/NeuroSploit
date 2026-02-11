@@ -4,11 +4,12 @@ Generates beautiful, comprehensive security assessment reports
 """
 
 import json
+import base64
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import html
-import base64
 
 
 @dataclass
@@ -455,6 +456,70 @@ class HTMLReportGenerator:
         .card {{
             animation: fadeIn 0.3s ease;
         }}
+
+        /* Screenshot grid */
+        .screenshot-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 12px;
+        }}
+
+        .screenshot-card {{
+            border: 1px solid {border_color};
+            border-radius: 8px;
+            overflow: hidden;
+            background: {'#0f172a' if is_dark else '#f1f5f9'};
+            transition: transform 0.2s, box-shadow 0.2s;
+        }}
+
+        .screenshot-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }}
+
+        .screenshot-card img {{
+            width: 100%;
+            height: auto;
+            display: block;
+            cursor: pointer;
+        }}
+
+        .screenshot-caption {{
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            color: {text_muted};
+            text-align: center;
+            border-top: 1px solid {border_color};
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }}
+
+        /* Screenshot modal (fullscreen view) */
+        .screenshot-modal {{
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }}
+
+        .screenshot-modal.active {{
+            display: flex;
+        }}
+
+        .screenshot-modal img {{
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }}
     </style>"""
 
     def _get_scripts(self) -> str:
@@ -495,6 +560,29 @@ class HTMLReportGenerator:
         function printReport() {
             window.print();
         }
+
+        // Screenshot zoom modal
+        (function() {
+            var modal = document.createElement('div');
+            modal.className = 'screenshot-modal';
+            modal.innerHTML = '<img />';
+            document.body.appendChild(modal);
+
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.screenshot-card img')) {
+                    var src = e.target.src;
+                    modal.querySelector('img').src = src;
+                    modal.classList.add('active');
+                }
+                if (e.target.closest('.screenshot-modal')) {
+                    modal.classList.remove('active');
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') modal.classList.remove('active');
+            });
+        })();
     </script>"""
 
     def _generate_header(self, session_data: Dict) -> str:
@@ -770,6 +858,7 @@ class HTMLReportGenerator:
                         <h4>Evidence / Proof of Concept</h4>
                         <div class="evidence-box">{html.escape(finding.get('evidence', ''))}</div>
                     </div>''' if finding.get('evidence') else ''}
+                    {self._generate_screenshots_html(finding)}
                     {f'''<div class="finding-section">
                         <h4>Impact</h4>
                         <p>{html.escape(finding.get('impact', ''))}</p>
@@ -850,6 +939,51 @@ class HTMLReportGenerator:
                 <ul style="margin-left: 16px; color: #94a3b8; font-size: 0.875rem;">
                     {refs_html}
                 </ul>
+            </div>'''
+
+    def _generate_screenshots_html(self, finding: Dict) -> str:
+        """Generate screenshot grid HTML for a finding.
+
+        Supports two sources:
+        1. finding['screenshots'] list with base64 data URIs (from agent capture)
+        2. Filesystem lookup in reports/screenshots/{finding_id}/ (from BrowserValidator)
+        """
+        screenshots = finding.get('screenshots', [])
+
+        # Also check filesystem for screenshots stored by BrowserValidator
+        finding_id = finding.get('id', '')
+        if finding_id and not screenshots:
+            ss_dir = Path('reports/screenshots') / finding_id
+            if ss_dir.exists():
+                for ss_file in sorted(ss_dir.glob('*.png'))[:5]:
+                    try:
+                        with open(ss_file, 'rb') as f:
+                            data = base64.b64encode(f.read()).decode('ascii')
+                        screenshots.append(f"data:image/png;base64,{data}")
+                    except Exception:
+                        pass
+
+        if not screenshots:
+            return ''
+
+        cards = ''
+        for i, ss in enumerate(screenshots[:5]):  # Cap at 5 screenshots
+            label = f"Screenshot {i + 1}"
+            if i == 0:
+                label = "Evidence Capture"
+            elif i == 1:
+                label = "Exploitation Proof"
+
+            cards += f'''
+                <div class="screenshot-card">
+                    <img src="{ss}" alt="{label}" loading="lazy" />
+                    <div class="screenshot-caption">{label}</div>
+                </div>'''
+
+        return f'''
+            <div class="finding-section">
+                <h4>Screenshots</h4>
+                <div class="screenshot-grid">{cards}</div>
             </div>'''
 
     def _generate_scan_results(self, scan_results: List[Dict]) -> str:
