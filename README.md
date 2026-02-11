@@ -5,34 +5,40 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Python](https://img.shields.io/badge/Python-3.10+-yellow)
 ![React](https://img.shields.io/badge/React-18-61dafb)
+![Vuln Types](https://img.shields.io/badge/Vuln%20Types-100-red)
+![Docker](https://img.shields.io/badge/Docker-Kali%20Sandbox-informational)
 
-**AI-Powered Penetration Testing Platform with Web GUI**
+**AI-Powered Autonomous Penetration Testing Platform**
 
-NeuroSploit v3 is an advanced security assessment platform that combines AI-driven vulnerability testing with a modern web interface. It uses prompt-driven testing to dynamically determine what vulnerabilities to test based on natural language instructions.
+NeuroSploit v3 is an advanced security assessment platform that combines AI-driven autonomous agents with 100 vulnerability types, per-scan isolated Kali Linux containers, false-positive hardening, exploit chaining, and a modern React web interface with real-time monitoring.
 
 ---
 
-## What's New in v3
+## Highlights
 
-- **Web GUI** - Modern React interface for scan management, real-time monitoring, and reports
-- **Dynamic Vulnerability Engine** - Tests 50+ vulnerability types based on prompt analysis
-- **Prompt-Driven Testing** - AI extracts vulnerability types from natural language prompts
-- **Real-time Dashboard** - WebSocket-powered live updates during scans
-- **Multiple Input Modes** - Single URL, comma-separated URLs, or file upload
-- **Preset Prompts** - Ready-to-use security testing profiles
-- **Export Reports** - HTML, PDF, and JSON export formats
-- **Docker Deployment** - One-command deployment with Docker Compose
+- **100 Vulnerability Types** across 10 categories with AI-driven testing prompts
+- **Autonomous Agent** - 3-stream parallel pentest (recon + junior tester + tool runner)
+- **Per-Scan Kali Containers** - Each scan runs in its own isolated Docker container
+- **Anti-Hallucination Pipeline** - Negative controls, proof-of-execution, confidence scoring
+- **Exploit Chain Engine** - Automatically chains findings (SSRF->internal, SQLi->DB-specific, etc.)
+- **WAF Detection & Bypass** - 16 WAF signatures, 12 bypass techniques
+- **Smart Strategy Adaptation** - Dead endpoint detection, diminishing returns, priority recomputation
+- **Multi-Provider LLM** - Claude, GPT, Gemini, Ollama, LMStudio, OpenRouter
+- **Real-Time Dashboard** - WebSocket-powered live scan progress, findings, and reports
+- **Sandbox Dashboard** - Monitor running Kali containers, tools, health checks in real-time
 
 ---
 
 ## Table of Contents
 
 - [Quick Start](#quick-start)
-- [Features](#features)
 - [Architecture](#architecture)
+- [Autonomous Agent](#autonomous-agent)
+- [100 Vulnerability Types](#100-vulnerability-types)
+- [Kali Sandbox System](#kali-sandbox-system)
+- [Anti-Hallucination & Validation](#anti-hallucination--validation)
 - [Web GUI](#web-gui)
 - [API Reference](#api-reference)
-- [Vulnerability Engine](#vulnerability-engine)
 - [Configuration](#configuration)
 - [Development](#development)
 - [Security Notice](#security-notice)
@@ -45,30 +51,26 @@ NeuroSploit v3 is an advanced security assessment platform that combines AI-driv
 
 ```bash
 # Clone repository
-git clone https://github.com/CyberSecurityUP/NeuroSploit.git
-cd NeuroSploit
+git clone https://github.com/your-org/NeuroSploitv2.git
+cd NeuroSploitv2
 
 # Copy environment file and add your API keys
 cp .env.example .env
-nano .env  # Add ANTHROPIC_API_KEY or OPENAI_API_KEY
+nano .env  # Add ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY
 
-# Start with Docker Compose
-./start.sh
-# or
-docker-compose up -d
+# Build the Kali sandbox image (first time only, ~5 min)
+./scripts/build-kali.sh
+
+# Start backend
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
-
-Access the web interface at **http://localhost:3000**
 
 ### Option 2: Manual Setup
 
 ```bash
 # Backend
-cd backend
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Frontend (new terminal)
 cd frontend
@@ -76,37 +78,23 @@ npm install
 npm run dev
 ```
 
----
+### Build Kali Sandbox Image
 
-## Features
+```bash
+# Normal build (uses Docker cache)
+./scripts/build-kali.sh
 
-### Core Capabilities
+# Full rebuild (no cache)
+./scripts/build-kali.sh --fresh
 
-| Feature | Description |
-|---------|-------------|
-| **Dynamic Testing** | 50+ vulnerability types across 10 categories |
-| **Prompt-Driven** | AI extracts test types from natural language |
-| **Web Interface** | Modern React dashboard with real-time updates |
-| **Multiple Inputs** | Single URL, bulk URLs, or file upload |
-| **Preset Prompts** | Bug Bounty, OWASP Top 10, API Security, and more |
-| **Export Reports** | HTML, PDF, JSON with professional styling |
-| **WebSocket Updates** | Real-time scan progress and findings |
-| **Docker Ready** | One-command deployment |
+# Build + run health check
+./scripts/build-kali.sh --test
 
-### Vulnerability Categories
+# Or via docker-compose
+docker compose -f docker/docker-compose.kali.yml build
+```
 
-| Category | Vulnerability Types |
-|----------|---------------------|
-| **Injection** | XSS (Reflected/Stored/DOM), SQLi, NoSQLi, Command Injection, SSTI, LDAP, XPath |
-| **File Access** | LFI, RFI, Path Traversal, File Upload, XXE |
-| **Request Forgery** | SSRF, CSRF, Cloud Metadata Access |
-| **Authentication** | Auth Bypass, JWT Manipulation, Session Fixation, OAuth Flaws |
-| **Authorization** | IDOR, BOLA, BFLA, Privilege Escalation |
-| **API Security** | Rate Limiting, Mass Assignment, GraphQL Injection |
-| **Logic Flaws** | Race Conditions, Business Logic, Workflow Bypass |
-| **Client-Side** | CORS Misconfiguration, Clickjacking, Open Redirect, WebSocket |
-| **Info Disclosure** | Error Disclosure, Source Code Exposure, Debug Endpoints |
-| **Infrastructure** | Security Headers, SSL/TLS Issues, HTTP Methods |
+Access the web interface at **http://localhost:8000** (production build) or **http://localhost:5173** (dev mode).
 
 ---
 
@@ -114,94 +102,311 @@ npm run dev
 
 ```
 NeuroSploitv3/
-├── backend/                    # FastAPI Backend
-│   ├── api/v1/                 # REST API endpoints
-│   │   ├── scans.py            # Scan CRUD operations
-│   │   ├── targets.py          # Target validation
-│   │   ├── prompts.py          # Preset prompts
-│   │   ├── reports.py          # Report generation
-│   │   ├── dashboard.py        # Dashboard stats
-│   │   └── vulnerabilities.py  # Vulnerability management
+├── backend/                         # FastAPI Backend
+│   ├── api/v1/                      # REST API (13 routers)
+│   │   ├── scans.py                 # Scan CRUD + pause/resume/stop
+│   │   ├── agent.py                 # AI Agent control
+│   │   ├── agent_tasks.py           # Scan task tracking
+│   │   ├── dashboard.py             # Stats + activity feed
+│   │   ├── reports.py               # Report generation (HTML/PDF/JSON)
+│   │   ├── scheduler.py             # Cron/interval scheduling
+│   │   ├── vuln_lab.py              # Per-type vulnerability lab
+│   │   ├── terminal.py              # Terminal agent (10 endpoints)
+│   │   ├── sandbox.py               # Sandbox container monitoring
+│   │   ├── targets.py               # Target validation
+│   │   ├── prompts.py               # Preset prompts
+│   │   ├── vulnerabilities.py       # Vulnerability management
+│   │   └── settings.py              # Runtime settings
 │   ├── core/
-│   │   ├── vuln_engine/        # Dynamic vulnerability testing
-│   │   │   ├── engine.py       # Main testing engine
-│   │   │   ├── registry.py     # Vulnerability registry
-│   │   │   ├── payload_generator.py
-│   │   │   └── testers/        # Category-specific testers
-│   │   ├── prompt_engine/      # Prompt parsing
-│   │   │   └── parser.py       # Extract vuln types from prompts
-│   │   └── report_engine/      # Report generation
-│   │       └── generator.py    # HTML/PDF/JSON export
-│   ├── models/                 # SQLAlchemy ORM models
-│   ├── schemas/                # Pydantic validation schemas
-│   ├── services/               # Business logic
-│   └── main.py                 # FastAPI app entry
+│   │   ├── autonomous_agent.py      # Main AI agent (~7000 lines)
+│   │   ├── vuln_engine/             # 100-type vulnerability engine
+│   │   │   ├── registry.py          # 100 VULNERABILITY_INFO entries
+│   │   │   ├── payload_generator.py # 526 payloads across 95 libraries
+│   │   │   ├── ai_prompts.py        # Per-vuln AI decision prompts
+│   │   │   ├── system_prompts.py    # 12 anti-hallucination prompts
+│   │   │   └── testers/             # 10 category tester modules
+│   │   ├── validation/              # False-positive hardening
+│   │   │   ├── negative_control.py  # Benign request control engine
+│   │   │   ├── proof_of_execution.py # Per-type proof checks (25+ methods)
+│   │   │   ├── confidence_scorer.py # Numeric 0-100 scoring
+│   │   │   └── validation_judge.py  # Sole authority for finding approval
+│   │   ├── request_engine.py        # Retry, rate limit, circuit breaker
+│   │   ├── waf_detector.py          # 16 WAF signatures + bypass
+│   │   ├── strategy_adapter.py      # Mid-scan strategy adaptation
+│   │   ├── chain_engine.py          # 10 exploit chain rules
+│   │   ├── auth_manager.py          # Multi-user auth management
+│   │   ├── xss_context_analyzer.py  # 8-context XSS analysis
+│   │   ├── poc_generator.py         # 20+ per-type PoC generators
+│   │   ├── execution_history.py     # Cross-scan learning
+│   │   ├── access_control_learner.py # Adaptive BOLA/BFLA/IDOR learning
+│   │   ├── response_verifier.py     # 4-signal response verification
+│   │   ├── agent_memory.py          # Bounded dedup agent memory
+│   │   └── report_engine/           # OHVR report generator
+│   ├── models/                      # SQLAlchemy ORM models
+│   ├── db/                          # Database layer
+│   ├── config.py                    # Pydantic settings
+│   └── main.py                      # FastAPI app entry
 │
-├── frontend/                   # React Frontend
+├── core/                            # Shared core modules
+│   ├── llm_manager.py               # Multi-provider LLM routing
+│   ├── sandbox_manager.py           # BaseSandbox ABC + legacy shared sandbox
+│   ├── kali_sandbox.py              # Per-scan Kali container manager
+│   ├── container_pool.py            # Global container pool coordinator
+│   ├── tool_registry.py             # 56 tool install recipes for Kali
+│   ├── mcp_server.py                # MCP server (12 tools, stdio)
+│   ├── scheduler.py                 # APScheduler scan scheduling
+│   └── browser_validator.py         # Playwright browser validation
+│
+├── frontend/                        # React + TypeScript Frontend
 │   ├── src/
-│   │   ├── pages/              # Page components
-│   │   │   ├── HomePage.tsx    # Dashboard
-│   │   │   ├── NewScanPage.tsx # Create scan
-│   │   │   ├── ScanDetailsPage.tsx
-│   │   │   ├── ReportsPage.tsx
-│   │   │   └── ReportViewPage.tsx
-│   │   ├── components/         # Reusable components
-│   │   ├── services/           # API client
-│   │   └── store/              # Zustand state
+│   │   ├── pages/
+│   │   │   ├── HomePage.tsx             # Dashboard with stats
+│   │   │   ├── AutoPentestPage.tsx      # 3-stream auto pentest
+│   │   │   ├── VulnLabPage.tsx          # Per-type vulnerability lab
+│   │   │   ├── TerminalAgentPage.tsx    # AI terminal chat
+│   │   │   ├── SandboxDashboardPage.tsx # Container monitoring
+│   │   │   ├── ScanDetailsPage.tsx      # Findings + validation
+│   │   │   ├── SchedulerPage.tsx        # Cron/interval scheduling
+│   │   │   ├── SettingsPage.tsx         # Configuration
+│   │   │   └── ReportsPage.tsx          # Report management
+│   │   ├── components/              # Reusable UI components
+│   │   ├── services/api.ts          # API client layer
+│   │   └── types/index.ts           # TypeScript interfaces
 │   └── package.json
 │
-├── docker/                     # Docker configuration
-│   ├── Dockerfile.backend
-│   ├── Dockerfile.frontend
-│   └── nginx.conf
+├── docker/
+│   ├── Dockerfile.kali              # Multi-stage Kali sandbox (11 Go tools)
+│   ├── Dockerfile.sandbox           # Legacy Debian sandbox
+│   ├── Dockerfile.backend           # Backend container
+│   ├── Dockerfile.frontend          # Frontend container
+│   ├── docker-compose.kali.yml      # Kali sandbox build
+│   └── docker-compose.sandbox.yml   # Legacy sandbox
 │
-├── docker-compose.yml
-├── start.sh
-└── .env.example
+├── config/config.json               # Profiles, tools, sandbox, MCP
+├── data/
+│   ├── vuln_knowledge_base.json     # 100 vuln type definitions
+│   ├── execution_history.json       # Cross-scan learning data
+│   └── access_control_learning.json # BOLA/BFLA adaptive data
+│
+├── scripts/
+│   └── build-kali.sh               # Build/rebuild Kali image
+├── tools/
+│   └── benchmark_runner.py          # 104 CTF challenges
+├── agents/base_agent.py             # BaseAgent class
+├── neurosploit.py                   # CLI entry point
+└── requirements.txt
 ```
+
+---
+
+## Autonomous Agent
+
+The AI agent (`autonomous_agent.py`) orchestrates the entire penetration test autonomously.
+
+### 3-Stream Parallel Architecture
+
+```
+                    ┌─────────────────────┐
+                    │   Auto Pentest      │
+                    │   Target URL(s)     │
+                    └────────┬────────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+   │  Stream 1    │ │  Stream 2    │ │  Stream 3    │
+   │  Recon       │ │  Junior Test │ │  Tool Runner │
+   │  ─────────── │ │  ─────────── │ │  ─────────── │
+   │  Crawl pages │ │  Test target │ │  Nuclei scan │
+   │  Find params │ │  AI-priority │ │  Naabu ports │
+   │  Tech detect │ │  3 payloads  │ │  AI decides  │
+   │  WAF detect  │ │  per endpoint│ │  extra tools │
+   └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+          │                │                │
+          └────────────────┼────────────────┘
+                           ▼
+              ┌─────────────────────┐
+              │  Deep Analysis      │
+              │  100 vuln types     │
+              │  Full payload sets  │
+              │  Chain exploitation │
+              └─────────┬───────────┘
+                        ▼
+              ┌─────────────────────┐
+              │  Report Generation  │
+              │  AI executive brief │
+              │  PoC code per find  │
+              └─────────────────────┘
+```
+
+### Agent Autonomy Modules
+
+| Module | Description |
+|--------|-------------|
+| **Request Engine** | Retry with backoff, per-host rate limiting, circuit breaker, adaptive timeouts |
+| **WAF Detector** | 16 WAF signatures (Cloudflare, AWS, Akamai, Imperva, etc.), 12 bypass techniques |
+| **Strategy Adapter** | Dead endpoint detection, diminishing returns, 403 bypass, priority recomputation |
+| **Chain Engine** | 10 chain rules (SSRF->internal, SQLi->DB-specific, LFI->config, IDOR pattern transfer) |
+| **Auth Manager** | Multi-user contexts (user_a, user_b, admin), login form detection, session management |
+
+### Scan Features
+
+- **Pause / Resume / Stop** with checkpoints
+- **Manual Validation** - Confirm or reject AI findings
+- **Screenshot Capture** on confirmed findings (Playwright)
+- **Cross-Scan Learning** - Historical success rates influence future priorities
+- **CVE Testing** - Regex detection + AI-generated payloads
+
+---
+
+## 100 Vulnerability Types
+
+### Categories
+
+| Category | Types | Examples |
+|----------|-------|---------|
+| **Injection** | 38 | XSS (reflected/stored/DOM), SQLi, NoSQLi, Command Injection, SSTI, LDAP, XPath, CRLF, Header Injection, Log Injection, GraphQL Injection |
+| **Inspection** | 21 | Security Headers, CORS, Clickjacking, Info Disclosure, Debug Endpoints, Error Disclosure, Source Code Exposure |
+| **AI-Driven** | 41 | BOLA, BFLA, IDOR, Race Condition, Business Logic, JWT Manipulation, OAuth Flaws, Prototype Pollution, WebSocket Hijacking, Cache Poisoning, HTTP Request Smuggling |
+| **Authentication** | 8 | Auth Bypass, Session Fixation, Credential Stuffing, Password Reset Flaws, MFA Bypass, Default Credentials |
+| **Authorization** | 6 | BOLA, BFLA, IDOR, Privilege Escalation, Forced Browsing, Function-Level Access Control |
+| **File Access** | 5 | LFI, RFI, Path Traversal, File Upload, XXE |
+| **Request Forgery** | 4 | SSRF, CSRF, Cloud Metadata, DNS Rebinding |
+| **Client-Side** | 8 | CORS, Clickjacking, Open Redirect, DOM Clobbering, Prototype Pollution, PostMessage, CSS Injection |
+| **Infrastructure** | 6 | SSL/TLS, HTTP Methods, Subdomain Takeover, Host Header, CNAME Hijacking |
+| **Cloud/Supply** | 4 | Cloud Metadata, S3 Bucket Misconfiguration, Dependency Confusion, Third-Party Script |
+
+### Payload Engine
+
+- **526 payloads** across 95 libraries
+- **73 XSS stored payloads** + 5 context-specific sets
+- Per-type AI decision prompts with anti-hallucination directives
+- WAF-adaptive payload transformation (12 techniques)
+
+---
+
+## Kali Sandbox System
+
+Each scan runs in its own **isolated Kali Linux Docker container**, providing:
+
+- **Complete Isolation** - No interference between concurrent scans
+- **On-Demand Tools** - 56 tools installed only when needed
+- **Auto Cleanup** - Containers destroyed when scan completes
+- **Resource Limits** - Per-container memory (2GB) and CPU (2 cores) limits
+
+### Pre-Installed Tools (28)
+
+| Category | Tools |
+|----------|-------|
+| **Scanners** | nuclei, naabu, httpx, nmap, nikto, masscan, whatweb |
+| **Discovery** | subfinder, katana, dnsx, uncover, ffuf, gobuster, waybackurls |
+| **Exploitation** | dalfox, sqlmap |
+| **System** | curl, wget, git, python3, pip3, go, jq, dig, whois, openssl, netcat, bash |
+
+### On-Demand Tools (28 more)
+
+Installed automatically inside the container when first requested:
+
+- **APT**: wpscan, dirb, hydra, john, hashcat, testssl, sslscan, enum4linux, dnsrecon, amass, medusa, crackmapexec, etc.
+- **Go**: gau, gitleaks, anew, httprobe
+- **Pip**: dirsearch, wfuzz, arjun, wafw00f, sslyze, commix, trufflehog, retire
+
+### Container Pool
+
+```
+ContainerPool (global coordinator, max 5 concurrent)
+  ├── KaliSandbox(scan_id="abc") → docker: neurosploit-abc
+  ├── KaliSandbox(scan_id="def") → docker: neurosploit-def
+  └── KaliSandbox(scan_id="ghi") → docker: neurosploit-ghi
+```
+
+- **TTL enforcement** - Containers auto-destroyed after 60 min
+- **Orphan cleanup** - Stale containers removed on server startup
+- **Graceful fallback** - Falls back to shared container if Docker unavailable
+
+---
+
+## Anti-Hallucination & Validation
+
+NeuroSploit uses a multi-layered validation pipeline to eliminate false positives:
+
+### Validation Pipeline
+
+```
+Finding Candidate
+    │
+    ▼
+┌─────────────────────┐
+│ Negative Controls    │  Send benign/empty requests as controls
+│ Same behavior = FP   │  -60 confidence if same response
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│ Proof of Execution   │  25+ per-vuln-type proof methods
+│ XSS: context check   │  SSRF: metadata markers
+│ SQLi: DB errors       │  BOLA: data comparison
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│ AI Interpretation    │  LLM with anti-hallucination prompts
+│ Per-type system msgs │  12 composable prompt templates
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│ Confidence Scorer    │  0-100 numeric score
+│ ≥90 = confirmed      │  +proof, +impact, +controls
+│ ≥60 = likely          │  -baseline_only, -same_behavior
+│ <60 = rejected        │  Breakdown visible in UI
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│ Validation Judge     │  Final verdict authority
+│ approve / reject     │  Records for adaptive learning
+└─────────────────────┘
+```
+
+### Anti-Hallucination System Prompts
+
+12 composable prompts applied across 7 task contexts:
+- `anti_hallucination` - Core truthfulness directives
+- `proof_of_execution` - Require concrete evidence
+- `negative_controls` - Compare with benign requests
+- `anti_severity_inflation` - Accurate severity ratings
+- `access_control_intelligence` - BOLA/BFLA data comparison methodology
+
+### Access Control Adaptive Learning
+
+- Records TP/FP outcomes per domain for BOLA/BFLA/IDOR
+- 9 default response patterns, 6 known FP patterns (WSO2, Keycloak, etc.)
+- Historical FP rate influences future confidence scoring
 
 ---
 
 ## Web GUI
 
-### Dashboard (Home Page)
+### Pages
 
-- **Stats Overview** - Total scans, vulnerabilities by severity, success rate
-- **Severity Distribution** - Visual chart of critical/high/medium/low findings
-- **Recent Scans** - Quick access to latest scan results
-- **Recent Findings** - Latest discovered vulnerabilities
+| Page | Route | Description |
+|------|-------|-------------|
+| **Dashboard** | `/` | Stats overview, severity distribution, recent activity feed |
+| **Auto Pentest** | `/auto` | One-click autonomous pentest with 3-stream live display |
+| **Vuln Lab** | `/vuln-lab` | Per-type vulnerability testing (100 types, 11 categories) |
+| **Terminal Agent** | `/terminal` | AI-powered interactive security chat + tool execution |
+| **Sandboxes** | `/sandboxes` | Real-time Docker container monitoring + management |
+| **AI Agent** | `/scan/new` | Manual scan creation with prompt selection |
+| **Scan Details** | `/scan/:id` | Findings with confidence badges, pause/resume/stop |
+| **Scheduler** | `/scheduler` | Cron/interval automated scan scheduling |
+| **Reports** | `/reports` | HTML/PDF/JSON report generation and viewing |
+| **Settings** | `/settings` | LLM providers, model routing, feature toggles |
 
-### New Scan Page
+### Sandbox Dashboard
 
-**Target Input Modes:**
-- **Single URL** - Enter one target URL
-- **Multiple URLs** - Comma-separated list
-- **File Upload** - Upload .txt file with URLs (one per line)
-
-**Prompt Options:**
-- **Preset Prompts** - Select from ready-to-use profiles:
-  - Full Penetration Test
-  - OWASP Top 10
-  - API Security Assessment
-  - Bug Bounty Hunter
-  - Quick Security Scan
-  - Authentication Testing
-- **Custom Prompt** - Write your own testing instructions
-- **No Prompt** - Run all available tests
-
-### Scan Details Page
-
-- **Progress Bar** - Real-time scan progress
-- **Discovered Endpoints** - List of found paths and URLs
-- **Vulnerabilities** - Real-time findings with severity badges
-- **Activity Log** - Live scan events via WebSocket
-
-### Reports Page
-
-- **Report List** - All generated reports with metadata
-- **View Report** - In-browser HTML viewer
-- **Export Options** - Download as HTML, PDF, or JSON
-- **Delete Reports** - Remove old reports
+Real-time monitoring of per-scan Kali containers:
+- **Pool stats** - Active/max containers, Docker status, TTL
+- **Capacity bar** - Visual utilization indicator
+- **Per-container cards** - Name, scan link, uptime, installed tools, status
+- **Actions** - Health check, destroy (with confirmation), cleanup expired/orphans
+- **5-second auto-polling** for real-time updates
 
 ---
 
@@ -222,114 +427,77 @@ http://localhost:8000/api/v1
 | `POST` | `/scans` | Create new scan |
 | `GET` | `/scans` | List all scans |
 | `GET` | `/scans/{id}` | Get scan details |
-| `POST` | `/scans/{id}/start` | Start scan execution |
-| `POST` | `/scans/{id}/stop` | Stop running scan |
+| `POST` | `/scans/{id}/start` | Start scan |
+| `POST` | `/scans/{id}/stop` | Stop scan |
+| `POST` | `/scans/{id}/pause` | Pause scan |
+| `POST` | `/scans/{id}/resume` | Resume scan |
 | `DELETE` | `/scans/{id}` | Delete scan |
-| `GET` | `/scans/{id}/endpoints` | Get discovered endpoints |
-| `GET` | `/scans/{id}/vulnerabilities` | Get found vulnerabilities |
 
-#### Targets
+#### AI Agent
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/targets/validate` | Validate URL(s) |
-| `POST` | `/targets/upload` | Upload URL file |
+| `POST` | `/agent/run` | Launch autonomous agent |
+| `GET` | `/agent/status/{id}` | Get agent status + findings |
+| `GET` | `/agent/by-scan/{scan_id}` | Get agent by scan ID |
+| `POST` | `/agent/stop/{id}` | Stop agent |
+| `POST` | `/agent/pause/{id}` | Pause agent |
+| `POST` | `/agent/resume/{id}` | Resume agent |
+| `GET` | `/agent/findings/{id}` | Get findings with details |
+| `GET` | `/agent/logs/{id}` | Get agent logs |
 
-#### Prompts
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/prompts/presets` | List preset prompts |
-| `GET` | `/prompts/presets/{id}` | Get preset details |
-| `POST` | `/prompts/parse` | Parse custom prompt |
-
-#### Reports
+#### Sandbox
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/reports` | List all reports |
-| `GET` | `/reports/{id}` | Get report details |
-| `GET` | `/reports/{id}/download` | Download report |
-| `DELETE` | `/reports/{id}` | Delete report |
+| `GET` | `/sandbox` | List containers + pool status |
+| `GET` | `/sandbox/{scan_id}` | Health check container |
+| `DELETE` | `/sandbox/{scan_id}` | Destroy container |
+| `POST` | `/sandbox/cleanup` | Remove expired containers |
+| `POST` | `/sandbox/cleanup-orphans` | Remove orphan containers |
 
-#### Dashboard
+#### Scheduler
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/dashboard/stats` | Get dashboard statistics |
-| `GET` | `/dashboard/recent-scans` | Get recent scans |
-| `GET` | `/dashboard/recent-findings` | Get recent vulnerabilities |
+| `GET` | `/scheduler` | List scheduled jobs |
+| `POST` | `/scheduler` | Create scheduled job |
+| `DELETE` | `/scheduler/{id}` | Delete job |
+| `POST` | `/scheduler/{id}/pause` | Pause job |
+| `POST` | `/scheduler/{id}/resume` | Resume job |
+
+#### Vulnerability Lab
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/vuln-lab/types` | List 100 vuln types by category |
+| `POST` | `/vuln-lab/run` | Run per-type vulnerability test |
+| `GET` | `/vuln-lab/challenges` | List challenge runs |
+| `GET` | `/vuln-lab/stats` | Detection rate stats |
+
+#### Reports & Dashboard
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/reports` | Generate report |
+| `POST` | `/reports/ai-generate` | AI-powered report |
+| `GET` | `/reports/{id}/view` | View HTML report |
+| `GET` | `/dashboard/stats` | Dashboard statistics |
+| `GET` | `/dashboard/activity-feed` | Recent activity |
 
 ### WebSocket
 
 ```
-ws://localhost:8000/ws/{scan_id}
+ws://localhost:8000/ws/scan/{scan_id}
 ```
 
-**Events:**
-- `scan_started` - Scan has begun
-- `scan_progress` - Progress update (percentage)
-- `endpoint_found` - New endpoint discovered
-- `vulnerability_found` - New vulnerability found
-- `scan_completed` - Scan finished
-- `scan_error` - Error occurred
+Events: `scan_started`, `progress_update`, `finding_discovered`, `scan_completed`, `scan_error`
 
----
+### API Docs
 
-## Vulnerability Engine
-
-### How It Works
-
-1. **Prompt Parsing** - User prompt analyzed for vulnerability keywords
-2. **Type Extraction** - Relevant vulnerability types identified
-3. **Tester Selection** - Appropriate testers loaded from registry
-4. **Payload Generation** - Context-aware payloads generated
-5. **Testing Execution** - Tests run against target endpoints
-6. **Finding Reporting** - Results sent via WebSocket in real-time
-
-### Prompt Examples
-
-```
-"Test for SQL injection and XSS vulnerabilities"
-→ Extracts: sql_injection, xss_reflected, xss_stored
-
-"Check for OWASP Top 10 issues"
-→ Extracts: All major vulnerability types
-
-"Look for authentication bypass and IDOR"
-→ Extracts: auth_bypass, idor, bola
-
-"Find server-side request forgery and file inclusion"
-→ Extracts: ssrf, lfi, rfi, path_traversal
-```
-
-### Adding Custom Testers
-
-Create a new tester in `backend/core/vuln_engine/testers/`:
-
-```python
-from .base_tester import BaseTester, TestResult
-
-class MyCustomTester(BaseTester):
-    """Custom vulnerability tester"""
-
-    async def test(self, url: str, endpoint: str, params: dict) -> list[TestResult]:
-        results = []
-        # Your testing logic here
-        return results
-```
-
-Register in `backend/core/vuln_engine/registry.py`:
-
-```python
-VULNERABILITY_REGISTRY["my_custom_vuln"] = {
-    "name": "My Custom Vulnerability",
-    "category": "custom",
-    "severity": "high",
-    "tester": "MyCustomTester",
-    # ...
-}
-```
+Interactive docs available at:
+- Swagger UI: `http://localhost:8000/api/docs`
+- ReDoc: `http://localhost:8000/api/redoc`
 
 ---
 
@@ -338,91 +506,89 @@ VULNERABILITY_REGISTRY["my_custom_vuln"] = {
 ### Environment Variables
 
 ```bash
-# .env file
+# LLM API Keys (at least one required)
+ANTHROPIC_API_KEY=your-key
+OPENAI_API_KEY=your-key
+GEMINI_API_KEY=your-key
 
-# LLM API Keys (at least one required for AI-powered testing)
-ANTHROPIC_API_KEY=your-anthropic-api-key
-OPENAI_API_KEY=your-openai-api-key
+# Local LLM (optional)
+OLLAMA_BASE_URL=http://localhost:11434
+LMSTUDIO_BASE_URL=http://localhost:1234
+OPENROUTER_API_KEY=your-key
 
-# Database (default is SQLite)
+# Database
 DATABASE_URL=sqlite+aiosqlite:///./data/neurosploit.db
 
-# Server Configuration
+# Server
 HOST=0.0.0.0
 PORT=8000
 DEBUG=false
 ```
 
-### Preset Prompts
+### config/config.json
 
-Available presets in `/api/v1/prompts/presets`:
-
-| ID | Name | Description |
-|----|------|-------------|
-| `full_pentest` | Full Penetration Test | Comprehensive testing across all categories |
-| `owasp_top10` | OWASP Top 10 | Focus on OWASP Top 10 vulnerabilities |
-| `api_security` | API Security | API-specific security testing |
-| `bug_bounty` | Bug Bounty Hunter | High-impact findings for bounty programs |
-| `quick_scan` | Quick Security Scan | Fast essential security checks |
-| `auth_testing` | Authentication Testing | Auth and session security |
+```json
+{
+  "llm": {
+    "default_profile": "gemini_pro_default",
+    "profiles": { ... }
+  },
+  "agent_roles": {
+    "pentest_generalist": { "vuln_coverage": 100 },
+    "bug_bounty_hunter": { "vuln_coverage": 100 }
+  },
+  "sandbox": {
+    "mode": "per_scan",
+    "kali": {
+      "enabled": true,
+      "image": "neurosploit-kali:latest",
+      "max_concurrent": 5,
+      "container_ttl_minutes": 60
+    }
+  },
+  "mcp_servers": {
+    "neurosploit_tools": {
+      "transport": "stdio",
+      "command": "python3",
+      "args": ["-m", "core.mcp_server"]
+    }
+  }
+}
+```
 
 ---
 
 ## Development
 
-### Backend Development
+### Backend
 
 ```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
-
-# Run with hot reload
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
-# API docs available at http://localhost:8000/docs
+# API docs: http://localhost:8000/api/docs
 ```
 
-### Frontend Development
+### Frontend
 
 ```bash
 cd frontend
 npm install
-npm run dev
-
-# Build for production
-npm run build
+npm run dev        # Dev server at http://localhost:5173
+npm run build      # Production build
 ```
 
-### Running Tests
+### Build Kali Sandbox
 
 ```bash
-# Backend tests
-cd backend
-pytest
-
-# Frontend tests
-cd frontend
-npm test
+./scripts/build-kali.sh --test    # Build + health check
 ```
 
----
+### MCP Server
 
-## Upgrading from v2
-
-v3 is a complete rewrite with a new architecture. Key differences:
-
-| Feature | v2 | v3 |
-|---------|----|----|
-| Interface | CLI only | Web GUI + API |
-| Vulnerability Testing | Hardcoded (XSS, SQLi, LFI) | Dynamic 50+ types |
-| Test Selection | Manual | Prompt-driven |
-| Progress Updates | Terminal output | WebSocket real-time |
-| Reports | HTML file | Web viewer + export |
-| Deployment | Python script | Docker Compose |
-
-**Migration:** v3 is a separate installation. Your v2 configurations and results are not compatible.
+```bash
+python3 -m core.mcp_server        # Starts stdio MCP server (12 tools)
+```
 
 ---
 
@@ -430,7 +596,7 @@ v3 is a complete rewrite with a new architecture. Key differences:
 
 **This tool is for authorized security testing only.**
 
-- Only test systems you own or have written permission to test
+- Only test systems you own or have explicit written permission to test
 - Follow responsible disclosure practices
 - Comply with all applicable laws and regulations
 - Unauthorized access to computer systems is illegal
@@ -443,25 +609,17 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ---
 
-## Contributing
+## Tech Stack
 
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
----
-
-## Acknowledgements
-
-### Technologies
-- FastAPI, SQLAlchemy, Pydantic
-- React, TypeScript, TailwindCSS, Zustand
-- Docker, Nginx
-
-### LLM Providers
-- Anthropic Claude
-- OpenAI GPT
+| Layer | Technologies |
+|-------|-------------|
+| **Backend** | Python, FastAPI, SQLAlchemy, Pydantic, aiohttp |
+| **Frontend** | React 18, TypeScript, TailwindCSS, Vite |
+| **AI/LLM** | Anthropic Claude, OpenAI GPT, Google Gemini, Ollama, LMStudio, OpenRouter |
+| **Sandbox** | Docker, Kali Linux, ProjectDiscovery suite, Nmap, SQLMap, Nikto |
+| **Tools** | Nuclei, Naabu, httpx, Subfinder, Katana, FFuf, Gobuster, Dalfox |
+| **Infra** | Docker Compose, MCP Protocol, Playwright, APScheduler |
 
 ---
 
-**NeuroSploit v3** - *AI-Powered Penetration Testing Platform*
+**NeuroSploit v3** - *AI-Powered Autonomous Penetration Testing Platform*

@@ -1,0 +1,44 @@
+# ============================================================================
+# NeuroSploit v3 - Project Configuration
+# ============================================================================
+# This file is for tool configuration (pytest, linters, etc.) and dependency
+# documentation. Dependencies are installed via requirements.txt files.
+# Run: ./rebuild.sh --install
+# ============================================================================
+
+[project]
+name = "neurosploitv2"
+version = "3.0.0"
+description = "AI-Powered Penetration Testing Framework"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+
+# Reference only — actual install uses requirements.txt / backend/requirements.txt
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aiosqlite>=0.19.0",
+    "requests",
+    "aiohttp>=3.9.0",
+    "httpx>=0.26.0",
+    "anthropic>=0.18.0",
+    "openai>=1.10.0",
+    "google-generativeai",
+    "python-multipart>=0.0.6",
+    "python-jose[cryptography]>=3.3.0",
+    "python-dotenv>=1.0.0",
+    "jinja2>=3.1.0",
+    "weasyprint>=60.0; platform_system != 'Windows'",
+    "apscheduler>=3.10.0",
+]
+
+[project.optional-dependencies]
+extras = ["mcp>=1.0.0", "playwright>=1.40.0"]
+dev = ["pytest>=7.4.0", "pytest-asyncio>=0.23.0"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

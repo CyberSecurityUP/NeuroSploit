@@ -663,6 +663,43 @@ class NeuroSploitv2:
             margin-top: 3rem;
         }}
 
+        /* OHVR Structure */
+        .ohvr-section {{
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }}
+        .ohvr-section h5 {{
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }}
+        .screenshot-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }}
+        .screenshot-card {{
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+        .screenshot-card img {{
+            width: 100%;
+            height: auto;
+            display: block;
+        }}
+        .screenshot-caption {{
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }}
+
         /* Print Styles */
         @media print {{
             body {{ background: white; color: black; }}
