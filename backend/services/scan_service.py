@@ -29,6 +29,39 @@ from backend.core.vuln_engine.engine import DynamicVulnerabilityEngine
 from backend.core.vuln_engine.payload_generator import PayloadGenerator
 from backend.core.autonomous_scanner import AutonomousScanner
 from backend.core.ai_pentest_agent import AIPentestAgent
+from backend.core.ai_prompt_processor import TestingPlan
+
+
+# Phase control: signaling between API and running background tasks
+_scan_phase_control: Dict[str, str] = {}  # scan_id → target_phase
+PHASE_ORDER = ["initializing", "recon", "analyzing", "testing", "completed"]
+
+
+def skip_to_phase(scan_id: str, target_phase: str) -> bool:
+    """Signal a running scan to skip ahead to the given phase."""
+    if target_phase not in PHASE_ORDER:
+        return False
+    _scan_phase_control[scan_id] = target_phase
+    return True
+
+
+def _default_skip_plan() -> "TestingPlan":
+    """Default testing plan used when analysis phase is skipped."""
+    return TestingPlan(
+        vulnerability_types=[
+            "xss_reflected", "sqli_error", "sqli_blind", "command_injection",
+            "lfi", "path_traversal", "ssrf", "auth_bypass", "idor",
+            "cors_misconfiguration", "open_redirect", "missing_security_headers",
+            "rfi", "csrf", "xxe", "ssti"
+        ],
+        testing_focus=["Comprehensive vulnerability assessment (analysis phase skipped)"],
+        custom_payloads=[],
+        testing_depth="medium",
+        specific_endpoints=[],
+        bypass_techniques=[],
+        priority_order=["SQL Injection", "XSS", "Command Injection", "SSRF", "Authentication"],
+        ai_reasoning="Default testing plan - AI analysis phase was skipped by user"
+    )
 
 
 # Global authorization message for AI
@@ -71,6 +104,21 @@ class ScanService:
         self.ai_analyzer = AIVulnerabilityAnalyzer()
         self.payload_generator = PayloadGenerator()
         self._stop_requested = False
+
+    def _should_skip_phase(self, scan_id: str, current_phase: str) -> Optional[str]:
+        """Check if the scan should skip ahead to a different phase.
+        Returns the target phase if skip is needed, None otherwise."""
+        target = _scan_phase_control.pop(scan_id, None)
+        if not target:
+            return None
+        try:
+            cur_idx = PHASE_ORDER.index(current_phase)
+            tgt_idx = PHASE_ORDER.index(target)
+            if tgt_idx > cur_idx:
+                return target
+        except ValueError:
+            pass
+        return None
 
     async def _create_agent_task(
         self,
@@ -192,7 +240,19 @@ class ScanService:
 
             # Phase 1: REAL Reconnaissance (if enabled)
             recon_data = {}
-            if scan.recon_enabled:
+            skip_target = self._should_skip_phase(scan_id, "initializing")
+            recon_skipped = False
+            if skip_target:
+                # User requested skip from initializing
+                skip_idx = PHASE_ORDER.index(skip_target)
+                if skip_idx >= PHASE_ORDER.index("recon"):
+                    recon_skipped = True
+                    await ws_manager.broadcast_log(scan_id, "warning", "")
+                    await ws_manager.broadcast_log(scan_id, "warning", ">> PHASE SKIPPED: Reconnaissance (user request)")
+                    await ws_manager.broadcast_phase_change(scan_id, "recon_skipped")
+                    scan.recon_enabled = False
+
+            if scan.recon_enabled and not recon_skipped:
                 scan.current_phase = "recon"
                 await self.db.commit()
                 await ws_manager.broadcast_phase_change(scan_id, "recon")
@@ -356,247 +416,293 @@ class ScanService:
                 await self.db.commit()
                 await ws_manager.broadcast_log(scan_id, "info", f"Autonomous discovery complete. Total endpoints: {scan.total_endpoints}")
 
-            # Phase 2: AI Prompt Processing
-            scan.current_phase = "analyzing"
-            await self.db.commit()
-            await ws_manager.broadcast_phase_change(scan_id, "analyzing")
-            await ws_manager.broadcast_progress(scan_id, 40, "AI analyzing prompt and data...")
-            await ws_manager.broadcast_log(scan_id, "info", "")
-            await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
-            await ws_manager.broadcast_log(scan_id, "info", "PHASE 2: AI ANALYSIS")
-            await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
+            # Check for phase skip before analysis
+            skip_target = self._should_skip_phase(scan_id, "recon") or (skip_target if skip_target and PHASE_ORDER.index(skip_target) >= PHASE_ORDER.index("analyzing") else None)
+            analysis_skipped = False
+            testing_plan = None
 
-            # Create AI analysis task
-            analysis_task = await self._create_agent_task(
-                scan_id=scan_id,
-                task_type="analysis",
-                task_name="AI Strategy Analysis",
+            if skip_target and PHASE_ORDER.index(skip_target) >= PHASE_ORDER.index("analyzing"):
+                analysis_skipped = True
+                testing_plan = _default_skip_plan()
+                await ws_manager.broadcast_log(scan_id, "warning", "")
+                await ws_manager.broadcast_log(scan_id, "warning", ">> PHASE SKIPPED: AI Analysis (user request)")
+                await ws_manager.broadcast_log(scan_id, "info", f"Using default testing plan with {len(testing_plan.vulnerability_types)} vulnerability types")
+                await ws_manager.broadcast_phase_change(scan_id, "analyzing_skipped")
+
+                if skip_target == "completed":
+                    # User wants to skip everything - finalize
+                    self._stop_requested = True
+
+            if not analysis_skipped:
+                # Phase 2: AI Prompt Processing
+                scan.current_phase = "analyzing"
+                await self.db.commit()
+                await ws_manager.broadcast_phase_change(scan_id, "analyzing")
+                await ws_manager.broadcast_progress(scan_id, 40, "AI analyzing prompt and data...")
+                await ws_manager.broadcast_log(scan_id, "info", "")
+                await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
+                await ws_manager.broadcast_log(scan_id, "info", "PHASE 2: AI ANALYSIS")
+                await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
+
+            if not analysis_skipped:
+                # Create AI analysis task
+                analysis_task = await self._create_agent_task(
+                    scan_id=scan_id,
+                    task_type="analysis",
+                    task_name="AI Strategy Analysis",
                 description="Analyzing prompt and recon data to determine testing strategy",
                 tool_name="ai_prompt_processor",
                 tool_category="ai"
             )
 
-            try:
-                # Enhance prompt with authorization
-                enhanced_prompt = f"{GLOBAL_AUTHORIZATION}\n\nUSER REQUEST:\n{prompt_content}"
+                try:
+                    # Enhance prompt with authorization
+                    enhanced_prompt = f"{GLOBAL_AUTHORIZATION}\n\nUSER REQUEST:\n{prompt_content}"
 
-                # Get AI-generated testing plan
-                await ws_manager.broadcast_log(scan_id, "info", "AI processing prompt and determining attack strategy...")
+                    # Get AI-generated testing plan
+                    await ws_manager.broadcast_log(scan_id, "info", "AI processing prompt and determining attack strategy...")
 
-                testing_plan = await self.ai_processor.process_prompt(
-                    prompt=enhanced_prompt,
-                    recon_data=recon_data,
-                    target_info={"targets": [t.url for t in targets]}
-                )
+                    testing_plan = await self.ai_processor.process_prompt(
+                        prompt=enhanced_prompt,
+                        recon_data=recon_data,
+                        target_info={"targets": [t.url for t in targets]}
+                    )
 
-                await ws_manager.broadcast_log(scan_id, "info", "")
-                await ws_manager.broadcast_log(scan_id, "info", "AI TESTING PLAN:")
-                await ws_manager.broadcast_log(scan_id, "info", f"  Vulnerability Types: {', '.join(testing_plan.vulnerability_types[:10])}")
-                if len(testing_plan.vulnerability_types) > 10:
-                    await ws_manager.broadcast_log(scan_id, "info", f"  ... and {len(testing_plan.vulnerability_types) - 10} more types")
-                await ws_manager.broadcast_log(scan_id, "info", f"  Testing Focus: {', '.join(testing_plan.testing_focus[:5])}")
-                await ws_manager.broadcast_log(scan_id, "info", f"  Depth: {testing_plan.testing_depth}")
-                await ws_manager.broadcast_log(scan_id, "info", "")
-                await ws_manager.broadcast_log(scan_id, "info", f"AI Reasoning: {testing_plan.ai_reasoning[:300]}...")
+                    await ws_manager.broadcast_log(scan_id, "info", "")
+                    await ws_manager.broadcast_log(scan_id, "info", "AI TESTING PLAN:")
+                    await ws_manager.broadcast_log(scan_id, "info", f"  Vulnerability Types: {', '.join(testing_plan.vulnerability_types[:10])}")
+                    if len(testing_plan.vulnerability_types) > 10:
+                        await ws_manager.broadcast_log(scan_id, "info", f"  ... and {len(testing_plan.vulnerability_types) - 10} more types")
+                    await ws_manager.broadcast_log(scan_id, "info", f"  Testing Focus: {', '.join(testing_plan.testing_focus[:5])}")
+                    await ws_manager.broadcast_log(scan_id, "info", f"  Depth: {testing_plan.testing_depth}")
+                    await ws_manager.broadcast_log(scan_id, "info", "")
+                    await ws_manager.broadcast_log(scan_id, "info", f"AI Reasoning: {testing_plan.ai_reasoning[:300]}...")
 
-                await self._complete_agent_task(
-                    analysis_task,
-                    items_processed=1,
-                    items_found=len(testing_plan.vulnerability_types),
-                    summary=f"Generated testing plan with {len(testing_plan.vulnerability_types)} vulnerability types"
-                )
-            except Exception as e:
-                await self._fail_agent_task(analysis_task, str(e))
-                raise
+                    await self._complete_agent_task(
+                        analysis_task,
+                        items_processed=1,
+                        items_found=len(testing_plan.vulnerability_types),
+                        summary=f"Generated testing plan with {len(testing_plan.vulnerability_types)} vulnerability types"
+                    )
+                except Exception as e:
+                    await self._fail_agent_task(analysis_task, str(e))
+                    raise
+
+            # Ensure testing_plan exists (either from AI or default skip plan)
+            if testing_plan is None:
+                testing_plan = _default_skip_plan()
 
             await ws_manager.broadcast_progress(scan_id, 45, f"Testing {len(testing_plan.vulnerability_types)} vuln types")
 
-            # Phase 3: AI OFFENSIVE AGENT
-            scan.current_phase = "testing"
-            await self.db.commit()
-            await ws_manager.broadcast_phase_change(scan_id, "testing")
-            await ws_manager.broadcast_log(scan_id, "info", "")
-            await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
-            await ws_manager.broadcast_log(scan_id, "info", "PHASE 3: AI OFFENSIVE AGENT")
-            await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
+            # Check for phase skip before testing
+            skip_target = self._should_skip_phase(scan_id, "analyzing")
+            testing_skipped = False
+            if skip_target and PHASE_ORDER.index(skip_target) >= PHASE_ORDER.index("testing"):
+                if skip_target == "completed":
+                    testing_skipped = True
+                    self._stop_requested = True
+                    await ws_manager.broadcast_log(scan_id, "warning", "")
+                    await ws_manager.broadcast_log(scan_id, "warning", ">> PHASE SKIPPED: Testing (user request - jumping to completion)")
+                    await ws_manager.broadcast_phase_change(scan_id, "testing_skipped")
 
-            # Run the AI Offensive Agent for each target
-            for target in targets:
-                await ws_manager.broadcast_log(scan_id, "info", f"Deploying AI Agent on: {target.url}")
-
-                # Create AI pentest agent task
-                agent_task = await self._create_agent_task(
-                    scan_id=scan_id,
-                    task_type="testing",
-                    task_name=f"AI Pentest Agent: {target.hostname or target.url[:30]}",
-                    description=f"AI-powered penetration testing on {target.url}",
-                    tool_name="ai_pentest_agent",
-                    tool_category="ai"
-                )
-
-                try:
-                    # Create log callback for the agent
-                    async def agent_log(level: str, message: str):
-                        await ws_manager.broadcast_log(scan_id, level, message)
-
-                    # Build auth headers
-                    auth_headers = self._build_auth_headers(scan)
-
-                    findings_count = 0
-                    endpoints_tested = 0
-
-                    async with AIPentestAgent(
-                        target=target.url,
-                        log_callback=agent_log,
-                        auth_headers=auth_headers,
-                        max_depth=5
-                    ) as agent:
-                        agent_report = await agent.run()
-
-                        # Save agent findings as vulnerabilities
-                        for finding in agent_report.get("findings", []):
-                            finding_severity = finding["severity"]
-                            vuln = Vulnerability(
-                                scan_id=scan_id,
-                                title=f"{finding['type'].upper()} - {finding['endpoint'][:50]}",
-                                vulnerability_type=finding["type"],
-                                severity=finding_severity,
-                                description=finding["evidence"],
-                                affected_endpoint=finding["endpoint"],
-                                poc_payload=finding["payload"],
-                                poc_request=finding.get("raw_request", "")[:5000],
-                                poc_response=finding.get("raw_response", "")[:5000],
-                                remediation=finding.get("impact", ""),
-                                ai_analysis="\n".join(finding.get("exploitation_steps", []))
-                            )
-                            self.db.add(vuln)
-                            await self.db.flush()  # Ensure ID is assigned
-                            findings_count += 1
-
-                            # Increment vulnerability count
-                            await self._increment_vulnerability_count(scan, finding_severity)
-
-                            await ws_manager.broadcast_vulnerability_found(scan_id, {
-                                "id": vuln.id,
-                                "title": vuln.title,
-                                "severity": vuln.severity,
-                                "type": finding["type"],
-                                "endpoint": finding["endpoint"]
-                            })
-
-                        # Update endpoint count
-                        endpoints_tested = agent_report.get("summary", {}).get("total_endpoints", 0)
-                        scan.total_endpoints += endpoints_tested
-
-                    await self._complete_agent_task(
-                        agent_task,
-                        items_processed=endpoints_tested,
-                        items_found=findings_count,
-                        summary=f"Tested {endpoints_tested} endpoints, found {findings_count} vulnerabilities"
-                    )
-                except Exception as e:
-                    await self._fail_agent_task(agent_task, str(e))
-
+            if not testing_skipped:
+                # Phase 3: AI OFFENSIVE AGENT
+                scan.current_phase = "testing"
                 await self.db.commit()
+                await ws_manager.broadcast_phase_change(scan_id, "testing")
+                await ws_manager.broadcast_log(scan_id, "info", "")
+                await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
+                await ws_manager.broadcast_log(scan_id, "info", "PHASE 3: AI OFFENSIVE AGENT")
+                await ws_manager.broadcast_log(scan_id, "info", "=" * 40)
 
-            # Continue with additional AI-driven testing
-
-            # Get all endpoints to test
-            endpoints_result = await self.db.execute(
-                select(Endpoint).where(Endpoint.scan_id == scan_id)
-            )
-            endpoints = list(endpoints_result.scalars().all())
-
-            # Add URLs from recon as endpoints
-            for url in recon_data.get("urls", [])[:100]:  # Test up to 100 URLs
-                if "?" in url and url not in [e.url for e in endpoints]:
-                    endpoint = Endpoint(
-                        scan_id=scan_id,
-                        url=url,
-                        method="GET",
-                        path=url.split("?")[0].split("/")[-1] if "/" in url else "/"
-                    )
-                    self.db.add(endpoint)
-                    endpoints.append(endpoint)
-            await self.db.commit()
-
-            # If STILL no endpoints, create from targets with common paths
-            if not endpoints:
-                await ws_manager.broadcast_log(scan_id, "warning", "No endpoints found. Creating test endpoints from targets...")
-                common_paths = [
-                    "/", "/login", "/admin", "/api", "/search", "/user",
-                    "/?id=1", "/?page=1", "/?q=test", "/?search=test"
-                ]
+                # Run the AI Offensive Agent for each target
                 for target in targets:
-                    for path in common_paths:
-                        url = target.url.rstrip("/") + path
+                    await ws_manager.broadcast_log(scan_id, "info", f"Deploying AI Agent on: {target.url}")
+
+                    # Create AI pentest agent task
+                    agent_task = await self._create_agent_task(
+                        scan_id=scan_id,
+                        task_type="testing",
+                        task_name=f"AI Pentest Agent: {target.hostname or target.url[:30]}",
+                        description=f"AI-powered penetration testing on {target.url}",
+                        tool_name="ai_pentest_agent",
+                        tool_category="ai"
+                    )
+
+                    try:
+                        # Create log callback for the agent
+                        async def agent_log(level: str, message: str):
+                            await ws_manager.broadcast_log(scan_id, level, message)
+
+                        # Build auth headers
+                        auth_headers = self._build_auth_headers(scan)
+
+                        findings_count = 0
+                        endpoints_tested = 0
+
+                        async with AIPentestAgent(
+                            target=target.url,
+                            log_callback=agent_log,
+                            auth_headers=auth_headers,
+                            max_depth=5
+                        ) as agent:
+                            agent_report = await agent.run()
+
+                            # Save agent findings as vulnerabilities
+                            for finding in agent_report.get("findings", []):
+                                finding_severity = finding["severity"]
+                                vuln = Vulnerability(
+                                    scan_id=scan_id,
+                                    title=f"{finding['type'].upper()} - {finding['endpoint'][:50]}",
+                                    vulnerability_type=finding["type"],
+                                    severity=finding_severity,
+                                    description=finding["evidence"],
+                                    affected_endpoint=finding["endpoint"],
+                                    poc_payload=finding["payload"],
+                                    poc_request=finding.get("raw_request", "")[:5000],
+                                    poc_response=finding.get("raw_response", "")[:5000],
+                                    remediation=finding.get("impact", ""),
+                                    ai_analysis="\n".join(finding.get("exploitation_steps", []))
+                                )
+                                self.db.add(vuln)
+                                await self.db.flush()  # Ensure ID is assigned
+                                findings_count += 1
+
+                                # Increment vulnerability count
+                                await self._increment_vulnerability_count(scan, finding_severity)
+
+                                await ws_manager.broadcast_vulnerability_found(scan_id, {
+                                    "id": vuln.id,
+                                    "title": vuln.title,
+                                    "severity": vuln.severity,
+                                    "type": finding["type"],
+                                    "endpoint": finding["endpoint"]
+                                })
+
+                            # Update endpoint count
+                            endpoints_tested = agent_report.get("summary", {}).get("total_endpoints", 0)
+                            scan.total_endpoints += endpoints_tested
+
+                        await self._complete_agent_task(
+                            agent_task,
+                            items_processed=endpoints_tested,
+                            items_found=findings_count,
+                            summary=f"Tested {endpoints_tested} endpoints, found {findings_count} vulnerabilities"
+                        )
+                    except Exception as e:
+                        await self._fail_agent_task(agent_task, str(e))
+
+                    await self.db.commit()
+
+                # Continue with additional AI-driven testing
+
+                # Get all endpoints to test
+                endpoints_result = await self.db.execute(
+                    select(Endpoint).where(Endpoint.scan_id == scan_id)
+                )
+                endpoints = list(endpoints_result.scalars().all())
+
+                # Add URLs from recon as endpoints
+                for url in recon_data.get("urls", [])[:100]:  # Test up to 100 URLs
+                    if "?" in url and url not in [e.url for e in endpoints]:
                         endpoint = Endpoint(
                             scan_id=scan_id,
-                            target_id=target.id,
                             url=url,
                             method="GET",
-                            path=path
+                            path=url.split("?")[0].split("/")[-1] if "/" in url else "/"
                         )
                         self.db.add(endpoint)
                         endpoints.append(endpoint)
-                        scan.total_endpoints += 1
                 await self.db.commit()
 
-            await ws_manager.broadcast_log(scan_id, "info", f"Testing {len(endpoints)} endpoints for {len(testing_plan.vulnerability_types)} vuln types")
-            await ws_manager.broadcast_log(scan_id, "info", "")
+                # If STILL no endpoints, create from targets with common paths
+                if not endpoints:
+                    await ws_manager.broadcast_log(scan_id, "warning", "No endpoints found. Creating test endpoints from targets...")
+                    common_paths = [
+                        "/", "/login", "/admin", "/api", "/search", "/user",
+                        "/?id=1", "/?page=1", "/?q=test", "/?search=test"
+                    ]
+                    for target in targets:
+                        for path in common_paths:
+                            url = target.url.rstrip("/") + path
+                            endpoint = Endpoint(
+                                scan_id=scan_id,
+                                target_id=target.id,
+                                url=url,
+                                method="GET",
+                                path=path
+                            )
+                            self.db.add(endpoint)
+                            endpoints.append(endpoint)
+                            scan.total_endpoints += 1
+                    await self.db.commit()
 
-            # Create vulnerability testing task
-            vuln_testing_task = await self._create_agent_task(
-                scan_id=scan_id,
-                task_type="testing",
-                task_name="Vulnerability Testing",
-                description=f"Testing {len(endpoints)} endpoints for {len(testing_plan.vulnerability_types)} vulnerability types",
-                tool_name="dynamic_vuln_engine",
-                tool_category="scanner"
-            )
+                await ws_manager.broadcast_log(scan_id, "info", f"Testing {len(endpoints)} endpoints for {len(testing_plan.vulnerability_types)} vuln types")
+                await ws_manager.broadcast_log(scan_id, "info", "")
 
-            try:
-                # Test endpoints with AI-determined vulnerabilities
-                total_endpoints = len(endpoints)
-                endpoints_tested = 0
-                vulns_before = scan.total_vulnerabilities
-
-                async with DynamicVulnerabilityEngine() as engine:
-                    for i, endpoint in enumerate(endpoints):
-                        if self._stop_requested:
-                            break
-
-                        progress = 45 + int((i / total_endpoints) * 45)
-                        await ws_manager.broadcast_progress(
-                            scan_id, progress,
-                            f"Testing {i+1}/{total_endpoints}: {endpoint.path or endpoint.url[:50]}"
-                        )
-
-                        # Log what we're testing
-                        await ws_manager.broadcast_log(scan_id, "debug", f"[{i+1}/{total_endpoints}] Testing: {endpoint.url[:80]}")
-
-                        await self._test_endpoint_with_ai(
-                            scan=scan,
-                            endpoint=endpoint,
-                            testing_plan=testing_plan,
-                            engine=engine,
-                            recon_data=recon_data
-                        )
-                        endpoints_tested += 1
-
-                # Update final counts
-                await self._update_vulnerability_counts(scan)
-
-                vulns_found = scan.total_vulnerabilities - vulns_before
-                await self._complete_agent_task(
-                    vuln_testing_task,
-                    items_processed=endpoints_tested,
-                    items_found=vulns_found,
-                    summary=f"Tested {endpoints_tested} endpoints, found {vulns_found} vulnerabilities"
+                # Create vulnerability testing task
+                vuln_testing_task = await self._create_agent_task(
+                    scan_id=scan_id,
+                    task_type="testing",
+                    task_name="Vulnerability Testing",
+                    description=f"Testing {len(endpoints)} endpoints for {len(testing_plan.vulnerability_types)} vulnerability types",
+                    tool_name="dynamic_vuln_engine",
+                    tool_category="scanner"
                 )
-            except Exception as e:
-                await self._fail_agent_task(vuln_testing_task, str(e))
-                raise
+
+                try:
+                    # Test endpoints with AI-determined vulnerabilities
+                    total_endpoints = len(endpoints)
+                    endpoints_tested = 0
+                    vulns_before = scan.total_vulnerabilities
+
+                    # Check for mid-phase skip signal
+                    skip_now = self._should_skip_phase(scan_id, "testing")
+                    if skip_now:
+                        self._stop_requested = True
+
+                    async with DynamicVulnerabilityEngine() as engine:
+                        for i, endpoint in enumerate(endpoints):
+                            if self._stop_requested:
+                                break
+
+                            # Check for skip signal during testing loop
+                            skip_now = self._should_skip_phase(scan_id, "testing")
+                            if skip_now:
+                                await ws_manager.broadcast_log(scan_id, "warning", ">> Phase skip requested - finishing testing early")
+                                break
+
+                            progress = 45 + int((i / total_endpoints) * 45)
+                            await ws_manager.broadcast_progress(
+                                scan_id, progress,
+                                f"Testing {i+1}/{total_endpoints}: {endpoint.path or endpoint.url[:50]}"
+                            )
+
+                            # Log what we're testing
+                            await ws_manager.broadcast_log(scan_id, "debug", f"[{i+1}/{total_endpoints}] Testing: {endpoint.url[:80]}")
+
+                            await self._test_endpoint_with_ai(
+                                scan=scan,
+                                endpoint=endpoint,
+                                testing_plan=testing_plan,
+                                engine=engine,
+                                recon_data=recon_data
+                            )
+                            endpoints_tested += 1
+
+                    # Update final counts
+                    await self._update_vulnerability_counts(scan)
+
+                    vulns_found = scan.total_vulnerabilities - vulns_before
+                    await self._complete_agent_task(
+                        vuln_testing_task,
+                        items_processed=endpoints_tested,
+                        items_found=vulns_found,
+                        summary=f"Tested {endpoints_tested} endpoints, found {vulns_found} vulnerabilities"
+                    )
+                except Exception as e:
+                    await self._fail_agent_task(vuln_testing_task, str(e))
+                    raise
 
             # Phase 4: Complete
             scan.status = "completed"

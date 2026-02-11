@@ -35,20 +35,15 @@ class XSSReflectedTester(BaseTester):
 
         # Check if payload is reflected
         if payload in response_body:
-            # Check if it's in a dangerous context
-            dangerous_patterns = [
-                rf'<script[^>]*>{re.escape(payload)}',
-                rf'on\w+\s*=\s*["\']?{re.escape(payload)}',
-                rf'javascript:\s*{re.escape(payload)}',
-                rf'<[^>]+{re.escape(payload)}[^>]*>',
-            ]
-
-            for pattern in dangerous_patterns:
-                if re.search(pattern, response_body, re.IGNORECASE):
-                    return True, 0.9, f"XSS payload reflected in dangerous context: {pattern}"
-
-            # Payload reflected but possibly encoded
-            return True, 0.7, "XSS payload reflected in response"
+            # Use context-aware analysis to determine execution position
+            from backend.core.xss_context_analyzer import analyze_xss_execution_context
+            ctx = analyze_xss_execution_context(response_body, payload)
+            if ctx["executable"]:
+                return True, 0.95, f"XSS payload in auto-executing context: {ctx['detail']}"
+            elif ctx["interactive"]:
+                return True, 0.85, f"XSS payload in interactive context: {ctx['detail']}"
+            # Reflected but not in executable position
+            return True, 0.5, f"XSS payload reflected but {ctx['context']}: {ctx['detail']}"
 
         # Check for partial reflection (script tags, etc.)
         for marker in self.markers:
@@ -59,11 +54,21 @@ class XSSReflectedTester(BaseTester):
 
 
 class XSSStoredTester(BaseTester):
-    """Tester for Stored XSS vulnerabilities"""
+    """Tester for Stored XSS vulnerabilities.
+
+    Supports two-phase verification:
+    Phase 1: analyze_response() - Check if submission succeeded (data stored)
+    Phase 2: analyze_display_response() - Check if payload executes on display page
+    """
 
     def __init__(self):
         super().__init__()
         self.name = "xss_stored"
+        self.storage_indicators = [
+            "success", "created", "saved", "posted", "submitted",
+            "thank", "comment", "added", "published", "updated",
+            "your comment", "your post", "your message",
+        ]
 
     def analyze_response(
         self,
@@ -73,12 +78,78 @@ class XSSStoredTester(BaseTester):
         response_body: str,
         context: Dict
     ) -> Tuple[bool, float, Optional[str]]:
-        """Check for stored XSS - requires subsequent request verification"""
-        # For stored XSS, we need to check if data was stored
-        # This is a simplified check - full implementation would verify on retrieval
-        if response_status in [200, 201, 302]:
-            if "success" in response_body.lower() or "created" in response_body.lower():
-                return True, 0.5, "Data possibly stored - verify retrieval for stored XSS"
+        """Phase 1: Check if payload was likely stored.
+
+        Returns confidence 0.3-0.5 for storage-only confirmation.
+        Full confirmation requires Phase 2 (analyze_display_response).
+        """
+        body_lower = response_body.lower()
+
+        # Redirect after POST is a common form submission pattern
+        if response_status in [301, 302, 303]:
+            return True, 0.4, "Redirect after submission - payload likely stored"
+
+        if response_status in [200, 201]:
+            # Check for storage success indicators
+            for indicator in self.storage_indicators:
+                if indicator in body_lower:
+                    return True, 0.4, f"Storage indicator found: '{indicator}'"
+
+            # Check if payload is reflected in the same response (immediate display)
+            if payload in response_body:
+                dangerous = [
+                    "<script", "onerror=", "onload=", "onclick=", "onfocus=",
+                    "onmouseover=", "<svg", "<img", "<iframe", "javascript:"
+                ]
+                payload_lower = payload.lower()
+                for ctx in dangerous:
+                    if ctx in payload_lower:
+                        return True, 0.8, f"Stored XSS: payload reflected in dangerous context ({ctx})"
+                return True, 0.6, "Payload reflected in submission response"
+
+        # POST returning 200 often means submission accepted
+        if response_status == 200 and context.get("method") == "POST":
+            return True, 0.3, "POST returned 200 - submission possibly accepted"
+
+        return False, 0.0, None
+
+    def analyze_display_response(
+        self,
+        payload: str,
+        response_status: int,
+        response_headers: Dict,
+        response_body: str,
+        context: Dict
+    ) -> Tuple[bool, float, Optional[str]]:
+        """Phase 2: Verify payload executes on the display page.
+
+        Called after navigating to the page where stored content is rendered.
+        """
+        if response_status >= 400:
+            return False, 0.0, None
+
+        # Check if payload exists unescaped in display page
+        if payload in response_body:
+            # Use context-aware analysis to determine execution position
+            from backend.core.xss_context_analyzer import analyze_xss_execution_context
+            ctx = analyze_xss_execution_context(response_body, payload)
+            if ctx["executable"]:
+                return True, 0.95, f"Stored XSS confirmed: {ctx['detail']}"
+            elif ctx["interactive"]:
+                return True, 0.90, f"Stored XSS (interaction required): {ctx['detail']}"
+            # Payload present but not executable
+            return True, 0.5, f"Stored payload on display page but {ctx['context']}: {ctx['detail']}"
+
+        # Check for core execution markers even if full payload is modified
+        core_markers = [
+            "alert(1)", "alert(document.domain)", "onerror=alert",
+            "onload=alert", "onfocus=alert", "ontoggle=alert",
+        ]
+        body_lower = response_body.lower()
+        for marker in core_markers:
+            if marker in payload.lower() and marker in body_lower:
+                return True, 0.85, f"Stored XSS: execution marker '{marker}' found on display page"
+
         return False, 0.0, None
 
 

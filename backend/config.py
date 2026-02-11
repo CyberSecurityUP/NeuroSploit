@@ -32,8 +32,15 @@ class Settings(BaseSettings):
     # LLM Settings
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
+    OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
     DEFAULT_LLM_PROVIDER: str = "claude"
     DEFAULT_LLM_MODEL: str = "claude-sonnet-4-20250514"
+    MAX_OUTPUT_TOKENS: Optional[int] = None
+    ENABLE_MODEL_ROUTING: bool = False
+
+    # Feature Flags
+    ENABLE_KNOWLEDGE_AUGMENTATION: bool = False
+    ENABLE_BROWSER_VALIDATION: bool = False
 
     # Scan Settings
     MAX_CONCURRENT_SCANS: int = 3

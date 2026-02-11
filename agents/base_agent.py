@@ -47,6 +47,35 @@ class BaseAgent:
         self.interesting_findings = []
         self.tool_history = []
 
+        # Knowledge augmentation (opt-in via env)
+        self.augmentor = None
+        if os.getenv('ENABLE_KNOWLEDGE_AUGMENTATION', 'false').lower() == 'true':
+            try:
+                from core.knowledge_augmentor import KnowledgeAugmentor
+                ka_config = config.get('knowledge_augmentation', {})
+                self.augmentor = KnowledgeAugmentor(
+                    dataset_path=ka_config.get('dataset_path', 'models/bug-bounty/bugbounty_finetuning_dataset.json'),
+                    max_patterns=ka_config.get('max_patterns_per_query', 3)
+                )
+                logger.info("Knowledge augmentation enabled")
+            except Exception as e:
+                logger.warning(f"Knowledge augmentation init failed: {e}")
+
+        # MCP tool client (opt-in via config)
+        self.mcp_client = None
+        if config.get('mcp_servers', {}).get('enabled', False):
+            try:
+                from core.mcp_client import MCPToolClient
+                self.mcp_client = MCPToolClient(config)
+                logger.info("MCP tool client enabled")
+            except Exception as e:
+                logger.warning(f"MCP client init failed: {e}")
+
+        # Browser validation (opt-in via env)
+        self.browser_validation_enabled = (
+            os.getenv('ENABLE_BROWSER_VALIDATION', 'false').lower() == 'true'
+        )
+
         logger.info(f"Initialized {self.agent_name} - Autonomous Agent")
 
     def _extract_targets(self, user_input: str) -> List[str]:
@@ -130,6 +159,68 @@ class BaseAgent:
 
         self.tool_history.append(result)
         return result
+
+    def run_mcp_tool(self, tool_name: str, arguments: Optional[Dict] = None) -> Optional[str]:
+        """Execute a tool via MCP if available, returns None for subprocess fallback."""
+        if not self.mcp_client or not self.mcp_client.enabled:
+            return None
+
+        import asyncio
+        try:
+            result = asyncio.run(self.mcp_client.try_tool(tool_name, arguments))
+            if result is not None:
+                logger.info(f"MCP tool executed: {tool_name}")
+            return result
+        except Exception as e:
+            logger.debug(f"MCP tool '{tool_name}' not available: {e}")
+            return None
+
+    def run_browser_validation(self, finding_id: str, url: str,
+                                payload: str = None) -> Dict:
+        """Validate a finding using Playwright browser.
+
+        Only executes if ENABLE_BROWSER_VALIDATION is set.
+        Returns validation result with screenshots.
+        """
+        if not self.browser_validation_enabled:
+            return {"skipped": True, "reason": "Browser validation disabled"}
+
+        try:
+            from core.browser_validator import validate_finding_sync
+            screenshots_dir = self.config.get('browser_validation', {}).get(
+                'screenshots_dir', 'reports/screenshots'
+            )
+            return validate_finding_sync(
+                finding_id=finding_id,
+                url=url,
+                payload=payload,
+                screenshots_dir=f"{screenshots_dir}/{self.agent_name}",
+                headless=self.config.get('browser_validation', {}).get('headless', True)
+            )
+        except Exception as e:
+            logger.error(f"Browser validation failed for {finding_id}: {e}")
+            return {"finding_id": finding_id, "error": str(e)}
+
+    def get_augmented_context(self, vulnerability_types: List[str]) -> str:
+        """Get knowledge augmentation context for detected vulnerability types.
+
+        Returns formatted pattern context string to inject into prompts.
+        """
+        if not self.augmentor:
+            return ""
+
+        augmentation = ""
+        technologies = list(self.tech_stack.get('detected', []))
+
+        for vtype in vulnerability_types[:3]:  # Limit to avoid context bloat
+            patterns = self.augmentor.get_relevant_patterns(
+                vulnerability_type=vtype,
+                technologies=technologies
+            )
+            if patterns:
+                augmentation += patterns
+
+        return augmentation
 
     def execute(self, user_input: str, campaign_data: Dict = None, recon_context: Dict = None) -> Dict:
         """
