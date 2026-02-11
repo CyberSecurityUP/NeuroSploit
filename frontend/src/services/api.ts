@@ -2,7 +2,9 @@ import axios from 'axios'
 import type {
   Scan, Vulnerability, Prompt, PromptPreset, Report, DashboardStats,
   AgentTask, AgentRequest, AgentResponse, AgentStatus, AgentLog, AgentMode,
-  ScanAgentTask, ActivityFeedItem
+  ScanAgentTask, ActivityFeedItem, ScheduleJob, ScheduleJobRequest, AgentRole,
+  VulnLabChallenge, VulnLabRunRequest, VulnLabRunResponse, VulnLabRealtimeStatus,
+  VulnTypeCategory, VulnLabStats, SandboxPoolStatus
 } from '../types'
 
 const api = axios.create({
@@ -48,8 +50,23 @@ export const scansApi = {
     return response.data
   },
 
+  pause: async (scanId: string) => {
+    const response = await api.post(`/scans/${scanId}/pause`)
+    return response.data
+  },
+
+  resume: async (scanId: string) => {
+    const response = await api.post(`/scans/${scanId}/resume`)
+    return response.data
+  },
+
   delete: async (scanId: string) => {
     const response = await api.delete(`/scans/${scanId}`)
+    return response.data
+  },
+
+  skipToPhase: async (scanId: string, phase: string) => {
+    const response = await api.post(`/scans/${scanId}/skip-to/${phase}`)
     return response.data
   },
 
@@ -154,9 +171,19 @@ export const reportsApi = {
     return response.data
   },
 
+  generateAiReport: async (data: {
+    scan_id: string
+    title?: string
+  }): Promise<Report> => {
+    const response = await api.post('/reports/ai-generate', data)
+    return response.data
+  },
+
   getViewUrl: (reportId: string) => `/api/v1/reports/${reportId}/view`,
 
   getDownloadUrl: (reportId: string, format: string) => `/api/v1/reports/${reportId}/download/${format}`,
+
+  getDownloadZipUrl: (reportId: string) => `/api/v1/reports/${reportId}/download-zip`,
 
   delete: async (reportId: string) => {
     const response = await api.delete(`/reports/${reportId}`)
@@ -210,6 +237,14 @@ export const vulnerabilitiesApi = {
     const response = await api.get(`/vulnerabilities/${vulnId}`)
     return response.data
   },
+
+  validate: async (vulnId: string, validationStatus: string, notes?: string) => {
+    const response = await api.patch(`/scans/vulnerabilities/${vulnId}/validate`, {
+      validation_status: validationStatus,
+      notes,
+    })
+    return response.data
+  },
 }
 
 // Scan Agent Tasks API (for tracking scan-specific tasks)
@@ -261,6 +296,16 @@ export const agentApi = {
     return response.data
   },
 
+  // Get agent status by scan_id (reverse lookup)
+  getByScan: async (scanId: string): Promise<AgentStatus | null> => {
+    try {
+      const response = await api.get(`/agent/by-scan/${scanId}`)
+      return response.data
+    } catch {
+      return null
+    }
+  },
+
   // Get agent logs
   getLogs: async (agentId: string, limit = 100): Promise<{ agent_id: string; total_logs: number; logs: AgentLog[] }> => {
     const response = await api.get(`/agent/logs/${agentId}?limit=${limit}`)
@@ -285,9 +330,41 @@ export const agentApi = {
     return response.data
   },
 
+  // Pause a running agent
+  pause: async (agentId: string) => {
+    const response = await api.post(`/agent/pause/${agentId}`)
+    return response.data
+  },
+
+  // Resume a paused agent
+  resume: async (agentId: string) => {
+    const response = await api.post(`/agent/resume/${agentId}`)
+    return response.data
+  },
+
+  // Skip to a specific phase
+  skipToPhase: async (agentId: string, phase: string) => {
+    const response = await api.post(`/agent/skip-to/${agentId}/${phase}`)
+    return response.data
+  },
+
   // Send custom prompt to agent
   sendPrompt: async (agentId: string, prompt: string) => {
     const response = await api.post(`/agent/prompt/${agentId}`, { prompt })
+    return response.data
+  },
+
+  // One-click auto pentest
+  autoPentest: async (target: string, options?: { subdomain_discovery?: boolean; targets?: string[]; auth_type?: string; auth_value?: string; prompt?: string }): Promise<AgentResponse> => {
+    const response = await api.post('/agent/run', {
+      target,
+      mode: 'auto_pentest',
+      subdomain_discovery: options?.subdomain_discovery || false,
+      targets: options?.targets,
+      auth_type: options?.auth_type,
+      auth_value: options?.auth_value,
+      prompt: options?.prompt,
+    })
     return response.data
   },
 
@@ -390,6 +467,176 @@ export const agentApi = {
       })
       return response.data
     },
+  },
+}
+
+// Vulnerability Lab API
+export const vulnLabApi = {
+  getTypes: async (): Promise<{ categories: Record<string, VulnTypeCategory>; total_types: number }> => {
+    const response = await api.get('/vuln-lab/types')
+    return response.data
+  },
+
+  run: async (request: VulnLabRunRequest): Promise<VulnLabRunResponse> => {
+    const response = await api.post('/vuln-lab/run', request)
+    return response.data
+  },
+
+  listChallenges: async (filters?: {
+    vuln_type?: string
+    vuln_category?: string
+    status?: string
+    result?: string
+    limit?: number
+  }): Promise<{ challenges: VulnLabChallenge[]; total: number }> => {
+    const params = new URLSearchParams()
+    if (filters?.vuln_type) params.append('vuln_type', filters.vuln_type)
+    if (filters?.vuln_category) params.append('vuln_category', filters.vuln_category)
+    if (filters?.status) params.append('status', filters.status)
+    if (filters?.result) params.append('result', filters.result)
+    if (filters?.limit) params.append('limit', String(filters.limit))
+    const qs = params.toString()
+    const response = await api.get(`/vuln-lab/challenges${qs ? `?${qs}` : ''}`)
+    return response.data
+  },
+
+  getChallenge: async (challengeId: string): Promise<VulnLabRealtimeStatus | VulnLabChallenge> => {
+    const response = await api.get(`/vuln-lab/challenges/${challengeId}`)
+    return response.data
+  },
+
+  getStats: async (): Promise<VulnLabStats> => {
+    const response = await api.get('/vuln-lab/stats')
+    return response.data
+  },
+
+  stopChallenge: async (challengeId: string) => {
+    const response = await api.post(`/vuln-lab/challenges/${challengeId}/stop`)
+    return response.data
+  },
+
+  deleteChallenge: async (challengeId: string) => {
+    const response = await api.delete(`/vuln-lab/challenges/${challengeId}`)
+    return response.data
+  },
+
+  getLogs: async (challengeId: string, limit = 100) => {
+    const response = await api.get(`/vuln-lab/logs/${challengeId}?limit=${limit}`)
+    return response.data
+  },
+}
+
+// Scheduler API
+export const schedulerApi = {
+  list: async (): Promise<ScheduleJob[]> => {
+    const response = await api.get('/scheduler/')
+    return response.data
+  },
+
+  create: async (data: ScheduleJobRequest): Promise<ScheduleJob> => {
+    const response = await api.post('/scheduler/', data)
+    return response.data
+  },
+
+  delete: async (jobId: string) => {
+    const response = await api.delete(`/scheduler/${jobId}`)
+    return response.data
+  },
+
+  pause: async (jobId: string) => {
+    const response = await api.post(`/scheduler/${jobId}/pause`)
+    return response.data
+  },
+
+  resume: async (jobId: string) => {
+    const response = await api.post(`/scheduler/${jobId}/resume`)
+    return response.data
+  },
+
+  getAgentRoles: async (): Promise<AgentRole[]> => {
+    const response = await api.get('/scheduler/agent-roles')
+    return response.data
+  },
+}
+
+// Terminal Agent API
+export const terminalApi = {
+  createSession: async (target: string, name?: string, template_id?: string) => {
+    const response = await api.post('/terminal/session', { target, name, template_id })
+    return response.data
+  },
+
+  listSessions: async () => {
+    const response = await api.get('/terminal/sessions')
+    return response.data
+  },
+
+  getSession: async (sessionId: string) => {
+    const response = await api.get(`/terminal/sessions/${sessionId}`)
+    return response.data
+  },
+
+  deleteSession: async (sessionId: string) => {
+    const response = await api.delete(`/terminal/sessions/${sessionId}`)
+    return response.data
+  },
+
+  sendMessage: async (sessionId: string, message: string) => {
+    const response = await api.post(`/terminal/sessions/${sessionId}/message`, { message })
+    return response.data
+  },
+
+  executeCommand: async (sessionId: string, command: string, execution_method: string) => {
+    const response = await api.post(`/terminal/sessions/${sessionId}/execute`, { command, execution_method })
+    return response.data
+  },
+
+  addExploitationStep: async (sessionId: string, step: { description: string; command: string; result: string; step_type: string }) => {
+    const response = await api.post(`/terminal/sessions/${sessionId}/exploitation-path`, step)
+    return response.data
+  },
+
+  getExploitationPath: async (sessionId: string) => {
+    const response = await api.get(`/terminal/sessions/${sessionId}/exploitation-path`)
+    return response.data
+  },
+
+  getVpnStatus: async (sessionId: string) => {
+    const response = await api.get(`/terminal/sessions/${sessionId}/vpn-status`)
+    return response.data
+  },
+
+  listTemplates: async () => {
+    const response = await api.get('/terminal/templates')
+    return response.data
+  },
+}
+
+// Sandbox API
+export const sandboxApi = {
+  list: async (): Promise<SandboxPoolStatus> => {
+    const response = await api.get('/sandbox/')
+    return response.data
+  },
+
+  healthCheck: async (scanId: string) => {
+    const response = await api.get(`/sandbox/${scanId}`)
+    return response.data
+  },
+
+  destroy: async (scanId: string) => {
+    const response = await api.delete(`/sandbox/${scanId}`)
+    return response.data
+  },
+
+  cleanup: async () => {
+    const response = await api.post('/sandbox/cleanup')
+    return response.data
+  },
+
+  cleanupOrphans: async () => {
+    const response = await api.post('/sandbox/cleanup-orphans')
+    return response.data
   },
 }
 

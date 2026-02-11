@@ -1,0 +1,98 @@
+# NeuroSploit v3 - Security Sandbox Container
+# Kali-based container with real penetration testing tools
+# Provides Nuclei, Naabu, and other ProjectDiscovery tools via isolated execution
+
+FROM golang:1.24-bookworm AS go-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends git build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Install ProjectDiscovery suite + other Go security tools
+RUN go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest && \
+    go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest && \
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
+    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
+    go install -v github.com/projectdiscovery/katana/cmd/katana@latest && \
+    go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest && \
+    go install -v github.com/projectdiscovery/uncover/cmd/uncover@latest && \
+    go install -v github.com/ffuf/ffuf/v2@latest && \
+    go install -v github.com/OJ/gobuster/v3@v3.7.0 && \
+    go install -v github.com/hahwul/dalfox/v2@latest && \
+    go install -v github.com/tomnomnom/waybackurls@latest
+
+# Final runtime image - Debian-based for compatibility
+FROM debian:bookworm-slim
+
+LABEL maintainer="NeuroSploit Team"
+LABEL description="NeuroSploit Security Sandbox - Isolated tool execution environment"
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    curl \
+    wget \
+    nmap \
+    python3 \
+    python3-pip \
+    git \
+    jq \
+    dnsutils \
+    openssl \
+    libpcap-dev \
+    ca-certificates \
+    whois \
+    netcat-openbsd \
+    nikto \
+    masscan \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python security tools
+RUN pip3 install --no-cache-dir --break-system-packages \
+    sqlmap \
+    wfuzz \
+    dirsearch \
+    arjun \
+    wafw00f \
+    2>/dev/null || pip3 install --no-cache-dir --break-system-packages sqlmap
+
+# Copy Go binaries from builder
+COPY --from=go-builder /go/bin/nuclei /usr/local/bin/
+COPY --from=go-builder /go/bin/naabu /usr/local/bin/
+COPY --from=go-builder /go/bin/httpx /usr/local/bin/
+COPY --from=go-builder /go/bin/subfinder /usr/local/bin/
+COPY --from=go-builder /go/bin/katana /usr/local/bin/
+COPY --from=go-builder /go/bin/dnsx /usr/local/bin/
+COPY --from=go-builder /go/bin/uncover /usr/local/bin/
+COPY --from=go-builder /go/bin/ffuf /usr/local/bin/
+COPY --from=go-builder /go/bin/gobuster /usr/local/bin/
+COPY --from=go-builder /go/bin/dalfox /usr/local/bin/
+COPY --from=go-builder /go/bin/waybackurls /usr/local/bin/
+
+# Create directories
+RUN mkdir -p /opt/wordlists /opt/output /opt/templates /opt/nuclei-templates
+
+# Download wordlists
+RUN wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt \
+    -O /opt/wordlists/common.txt && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/directory-list-2.3-medium.txt \
+    -O /opt/wordlists/directory-list-medium.txt && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt \
+    -O /opt/wordlists/subdomains-5000.txt && \
+    wget -q https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/10-million-password-list-top-1000.txt \
+    -O /opt/wordlists/passwords-top1000.txt
+
+# Update Nuclei templates (8000+ vulnerability checks)
+RUN nuclei -update-templates -silent 2>/dev/null || true
+
+# Health check script
+RUN echo '#!/bin/bash\nnuclei -version > /dev/null 2>&1 && naabu -version > /dev/null 2>&1 && echo "OK"' > /opt/healthcheck.sh && \
+    chmod +x /opt/healthcheck.sh
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD /opt/healthcheck.sh
+
+WORKDIR /opt/output
+
+ENTRYPOINT ["/bin/bash", "-c"]

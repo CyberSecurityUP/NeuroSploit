@@ -1,0 +1,51 @@
+# NeuroSploit v3 - Security Sandbox
+# Isolated container for running real penetration testing tools
+#
+# Usage:
+#   docker compose -f docker-compose.sandbox.yml up -d
+#   docker compose -f docker-compose.sandbox.yml exec sandbox nuclei -u https://target.com
+#   docker compose -f docker-compose.sandbox.yml down
+
+services:
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    image: neurosploit-sandbox:latest
+    container_name: neurosploit-sandbox
+    command: ["sleep infinity"]
+    restart: unless-stopped
+    networks:
+      - sandbox-net
+    volumes:
+      - sandbox-output:/opt/output
+      - sandbox-templates:/opt/nuclei-templates
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_RAW      # Required for naabu/nmap raw sockets
+      - NET_ADMIN     # Required for packet capture
+    healthcheck:
+      test: ["CMD", "/opt/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  sandbox-net:
+    driver: bridge
+    internal: false
+
+volumes:
+  sandbox-output:
+  sandbox-templates:

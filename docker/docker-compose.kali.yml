@@ -1,0 +1,38 @@
+# NeuroSploit v3 - Kali Sandbox Build & Management
+#
+# Build image:
+#   docker compose -f docker/docker-compose.kali.yml build
+#
+# Build (no cache):
+#   docker compose -f docker/docker-compose.kali.yml build --no-cache
+#
+# Test container manually:
+#   docker compose -f docker/docker-compose.kali.yml run --rm kali-sandbox "nuclei -version"
+#
+# Note: In production, containers are managed by ContainerPool (core/container_pool.py).
+#       This compose file is for building the image and manual testing only.
+
+services:
+  kali-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.kali
+    image: neurosploit-kali:latest
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      neurosploit.type: "kali-sandbox"
+      neurosploit.version: "3.0"

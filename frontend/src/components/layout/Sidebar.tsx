@@ -7,14 +7,24 @@ import {
   Settings,
   Activity,
   Shield,
-  Zap
+  Zap,
+  Clock,
+  Rocket,
+  FlaskConical,
+  Terminal,
+  Container
 } from 'lucide-react'
 
 const navItems = [
   { path: '/', icon: Home, label: 'Dashboard' },
+  { path: '/auto', icon: Rocket, label: 'Auto Pentest' },
+  { path: '/vuln-lab', icon: FlaskConical, label: 'Vuln Lab' },
+  { path: '/terminal', icon: Terminal, label: 'Terminal Agent' },
+  { path: '/sandboxes', icon: Container, label: 'Sandboxes' },
   { path: '/scan/new', icon: Bot, label: 'AI Agent' },
   { path: '/realtime', icon: Zap, label: 'Real-time Task' },
   { path: '/tasks', icon: BookOpen, label: 'Task Library' },
+  { path: '/scheduler', icon: Clock, label: 'Scheduler' },
   { path: '/reports', icon: FileText, label: 'Reports' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ]

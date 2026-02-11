@@ -2,7 +2,7 @@
 export interface Scan {
   id: string
   name: string | null
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'stopped'
+  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'stopped'
   scan_type: 'quick' | 'full' | 'custom'
   recon_enabled: boolean
   progress: number
@@ -52,10 +52,19 @@ export interface Vulnerability {
   poc_request: string | null
   poc_response: string | null
   poc_payload: string | null
+  poc_parameter: string | null
+  poc_evidence: string | null
   impact: string | null
   remediation: string | null
   references: string[]
   ai_analysis: string | null
+  poc_code?: string | null
+  validation_status?: 'ai_confirmed' | 'ai_rejected' | 'validated' | 'false_positive' | 'pending_review'
+  ai_rejection_reason?: string | null
+  confidence_score?: number            // 0-100 numeric (from agent findings)
+  confidence_breakdown?: Record<string, number>
+  proof_of_execution?: string
+  negative_controls?: string
   created_at: string
 }
 
@@ -160,7 +169,7 @@ export interface ScanAgentTask {
 }
 
 // Agent types
-export type AgentMode = 'full_auto' | 'recon_only' | 'prompt_only' | 'analyze_only'
+export type AgentMode = 'full_auto' | 'recon_only' | 'prompt_only' | 'analyze_only' | 'auto_pentest'
 
 export interface AgentTask {
   id: string
@@ -186,6 +195,8 @@ export interface AgentRequest {
   auth_value?: string
   custom_headers?: Record<string, string>
   max_depth?: number
+  subdomain_discovery?: boolean
+  targets?: string[]
 }
 
 export interface AgentResponse {
@@ -198,7 +209,7 @@ export interface AgentResponse {
 export interface AgentStatus {
   agent_id: string
   scan_id?: string  // Link to database scan
-  status: 'running' | 'completed' | 'error' | 'stopped'
+  status: 'running' | 'paused' | 'completed' | 'error' | 'stopped'
   mode: string
   target: string
   task?: string
@@ -209,6 +220,8 @@ export interface AgentStatus {
   logs_count: number
   findings_count: number
   findings: AgentFinding[]
+  rejected_findings_count?: number
+  rejected_findings?: AgentFinding[]
   report?: AgentReport
   error?: string
 }
@@ -234,6 +247,12 @@ export interface AgentFinding {
   references: string[]
   ai_verified: boolean
   confidence?: string
+  confidence_score?: number            // 0-100 numeric
+  confidence_breakdown?: Record<string, number>  // Scoring breakdown
+  proof_of_execution?: string          // What proof was found
+  negative_controls?: string           // Control test results
+  ai_status?: 'confirmed' | 'rejected' | 'pending'
+  rejection_reason?: string
 }
 
 export interface AgentReport {
@@ -314,6 +333,160 @@ export interface RealtimeSessionSummary {
   created_at: string
   findings_count: number
   messages_count: number
+}
+
+// Agent Role type (from config.json)
+export interface AgentRole {
+  id: string
+  name: string
+  description: string
+  tools: string[]
+}
+
+// Scheduler types
+export interface ScheduleJob {
+  id: string
+  target: string
+  scan_type: string
+  schedule: string
+  status: 'active' | 'paused'
+  next_run: string | null
+  last_run: string | null
+  run_count: number
+  agent_role: string | null
+  llm_profile: string | null
+}
+
+export interface ScheduleJobRequest {
+  job_id: string
+  target: string
+  scan_type: string
+  cron_expression?: string
+  interval_minutes?: number
+  agent_role?: string
+  llm_profile?: string
+}
+
+// Vulnerability Lab types
+export interface VulnLabLogEntry {
+  level: string
+  message: string
+  time: string
+  source: string
+}
+
+export interface VulnLabChallenge {
+  id: string
+  target_url: string
+  challenge_name: string | null
+  vuln_type: string
+  vuln_category: string | null
+  auth_type: string | null
+  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'stopped'
+  result: 'detected' | 'not_detected' | 'error' | null
+  agent_id: string | null
+  scan_id: string | null
+  findings_count: number
+  critical_count: number
+  high_count: number
+  medium_count: number
+  low_count: number
+  info_count: number
+  findings_detail: Array<{
+    title: string
+    vulnerability_type: string
+    severity: string
+    affected_endpoint: string
+    evidence: string
+    payload?: string
+  }>
+  started_at: string | null
+  completed_at: string | null
+  duration: number | null
+  notes: string | null
+  logs?: VulnLabLogEntry[]
+  logs_count?: number
+  endpoints_count?: number
+  created_at: string | null
+}
+
+export interface VulnLabRunRequest {
+  target_url: string
+  vuln_type: string
+  challenge_name?: string
+  auth_type?: string
+  auth_value?: string
+  custom_headers?: Record<string, string>
+  notes?: string
+}
+
+export interface VulnLabRunResponse {
+  challenge_id: string
+  agent_id: string
+  status: string
+  message: string
+}
+
+export interface VulnLabRealtimeStatus {
+  challenge_id: string
+  status: string
+  progress: number
+  phase: string
+  findings_count: number
+  findings: any[]
+  logs_count: number
+  logs?: VulnLabLogEntry[]
+  error: string | null
+  result: string | null
+  scan_id: string | null
+  agent_id: string | null
+  vuln_type?: string
+  target?: string
+  source: string
+}
+
+export interface VulnTypeCategory {
+  label: string
+  types: Array<{
+    key: string
+    title: string
+    severity: string
+    cwe_id: string
+    description: string
+  }>
+  count: number
+}
+
+export interface VulnLabStats {
+  total: number
+  running: number
+  status_counts: Record<string, number>
+  result_counts: Record<string, number>
+  detection_rate: number
+  by_type: Record<string, { detected: number; not_detected: number; error: number; total: number }>
+  by_category: Record<string, { detected: number; not_detected: number; error: number; total: number }>
+}
+
+// Sandbox Container types
+export interface SandboxContainer {
+  scan_id: string
+  container_name: string
+  available: boolean
+  installed_tools: string[]
+  created_at: string | null
+  uptime_seconds: number
+}
+
+export interface SandboxPoolStatus {
+  pool: {
+    active: number
+    max_concurrent: number
+    image: string
+    container_ttl_minutes: number
+    docker_available: boolean
+  }
+  containers: SandboxContainer[]
+  error?: string
 }
 
 // Activity Feed types
