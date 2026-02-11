@@ -1,35 +1,7 @@
 {
     "llm": {
-        "default_profile": "ollama_whiterabbit",
+        "default_profile": "gemini_pro_default",
         "profiles": {
-            "ollama_whiterabbit": {
-                "provider": "ollama",
-                "model": "lazarevtill/Llama-3-WhiteRabbitNeo-8B-v2.0:q4_0",
-                "api_key": "",
-                "temperature": 0.8,
-                "max_tokens": 4096,
-                "input_token_limit": 8000,
-                "output_token_limit": 4000,
-                "cache_enabled": false,
-                "search_context_level": "high",
-                "pdf_support_enabled": false,
-                "guardrails_enabled": false,
-                "hallucination_mitigation_strategy": null
-            },
-            "ollama_llama3_default": {
-                "provider": "ollama",
-                "model": "llama3:8b",
-                "api_key": "",
-                "temperature": 0.7,
-                "max_tokens": 4096,
-                "input_token_limit": 8000,
-                "output_token_limit": 4000,
-                "cache_enabled": true,
-                "search_context_level": "medium",
-                "pdf_support_enabled": false,
-                "guardrails_enabled": true,
-                "hallucination_mitigation_strategy": null
-            },
             "gemini_pro_default": {
                 "provider": "gemini",
                 "model": "gemini-pro",
@@ -43,52 +15,25 @@
                 "pdf_support_enabled": true,
                 "guardrails_enabled": true,
                 "hallucination_mitigation_strategy": "consistency_check"
-            },
-            "claude_opus_default": {
-                "provider": "claude",
-                "model": "claude-sonnet-4-20250514",
-                "api_key": "${ANTHROPIC_API_KEY}",
-                "temperature": 0.8,
-                "max_tokens": 8192,
-                "input_token_limit": 200000,
-                "output_token_limit": 8192,
-                "cache_enabled": false,
-                "search_context_level": "high",
-                "pdf_support_enabled": false,
-                "guardrails_enabled": false,
-                "hallucination_mitigation_strategy": null
-            },
-            "gpt_4o_default": {
-                "provider": "gpt",
-                "model": "gpt-4o",
-                "api_key": "${OPENAI_API_KEY}",
-                "temperature": 0.7,
-                "max_tokens": 4096,
-                "input_token_limit": 128000,
-                "output_token_limit": 4096,
-                "cache_enabled": true,
-                "search_context_level": "high",
-                "pdf_support_enabled": true,
-                "guardrails_enabled": true,
-                "hallucination_mitigation_strategy": "consistency_check"
-            },
-            "lmstudio_default": {
-                "provider": "lmstudio",
-                "model": "local-model",
-                "api_key": "",
-                "temperature": 0.7,
-                "max_tokens": 4096,
-                "input_token_limit": 32000,
-                "output_token_limit": 4096,
-                "cache_enabled": false,
-                "search_context_level": "medium",
-                "pdf_support_enabled": false,
-                "guardrails_enabled": true,
-                "hallucination_mitigation_strategy": null
             }
         }
     },
     "agent_roles": {
+        "pentest_generalist": {
+            "enabled": true,
+            "tools_allowed": [
+                "nmap",
+                "metasploit",
+                "burpsuite",
+                "sqlmap",
+                "hydra"
+            ],
+            "description": "Performs comprehensive penetration tests across various domains.",
+            "methodology": ["OWASP-WSTG", "PTES", "OWASP-Top10-2021"],
+            "default_prompt": "auto_pentest",
+            "vuln_coverage": 100,
+            "ai_prompts": true
+        },
         "bug_bounty_hunter": {
             "enabled": true,
             "tools_allowed": [
@@ -97,67 +42,11 @@
                 "burpsuite",
                 "sqlmap"
             ],
-            "description": "Focuses on web application vulnerabilities, leveraging recon and exploitation tools."
-        },
-        "blue_team_agent": {
-            "enabled": true,
-            "tools_allowed": [],
-            "description": "Analyzes logs and telemetry for threats, provides defensive strategies."
-        },
-        "exploit_expert": {
-            "enabled": true,
-            "tools_allowed": [
-                "metasploit",
-                "nmap"
-            ],
-            "description": "Devises exploitation strategies and payloads for identified vulnerabilities."
-        },
-        "red_team_agent": {
-            "enabled": true,
-            "tools_allowed": [
-                "nmap",
-                "metasploit",
-                "hydra"
-            ],
-            "description": "Plans and executes simulated attacks to test an organization's defenses."
-        },
-        "replay_attack_specialist": {
-            "enabled": true,
-            "tools_allowed": [
-                "burpsuite"
-            ],
-            "description": "Identifies and leverages replay attack vectors in network traffic or authentication."
-        },
-        "pentest_generalist": {
-            "enabled": true,
-            "tools_allowed": [
-                "nmap",
-                "subfinder",
-                "nuclei",
-                "metasploit",
-                "burpsuite",
-                "sqlmap",
-                "hydra"
-            ],
-            "description": "Performs comprehensive penetration tests across various domains."
-        },
-        "owasp_expert": {
-            "enabled": true,
-            "tools_allowed": [
-                "burpsuite",
-                "sqlmap"
-            ],
-            "description": "Specializes in assessing web applications against OWASP Top 10 vulnerabilities."
-        },
-        "cwe_expert": {
-            "enabled": true,
-            "tools_allowed": [],
-            "description": "Analyzes code and reports for weaknesses based on MITRE CWE Top 25."
-        },
-        "malware_analyst": {
-            "enabled": true,
-            "tools_allowed": [],
-            "description": "Examines malware samples to understand functionality and identify IOCs."
+            "description": "Focuses on web application vulnerabilities with 100 vuln types.",
+            "methodology": ["OWASP-WSTG", "OWASP-Top10-2021"],
+            "default_prompt": "auto_pentest",
+            "vuln_coverage": 100,
+            "ai_prompts": true
         }
     },
     "methodologies": {
@@ -171,20 +60,51 @@
         "nmap": "/usr/bin/nmap",
         "metasploit": "/usr/bin/msfconsole",
         "burpsuite": "/usr/bin/burpsuite",
-        "sqlmap": "/usr/local/bin/sqlmap",
-        "hydra": "/usr/bin/hydra",
-        "nuclei": "/usr/local/bin/nuclei",
-        "nikto": "/usr/bin/nikto",
-        "gobuster": "/usr/bin/gobuster",
-        "ffuf": "/usr/bin/ffuf",
-        "subfinder": "/opt/homebrew/bin/subfinder",
-        "httpx": "/usr/local/bin/httpx",
-        "whatweb": "/usr/bin/whatweb",
-        "curl": "/usr/bin/curl",
-        "wpscan": "/usr/bin/wpscan",
-        "dirsearch": "/usr/local/bin/dirsearch",
-        "wafw00f": "/usr/local/bin/wafw00f",
-        "jq": "/usr/bin/jq"
+        "sqlmap": "/usr/bin/sqlmap",
+        "hydra": "/usr/bin/hydra"
+    },
+    "mcp_servers": {
+        "neurosploit_tools": {
+            "transport": "stdio",
+            "command": "python3",
+            "args": ["-m", "core.mcp_server"],
+            "description": "NeuroSploit pentest tools: screenshots, payload delivery, DNS, port scan, tech detect, subdomain enum, findings, AI prompts, Nuclei scanner, Naabu port scanner, sandbox execution"
+        }
+    },
+    "sandbox": {
+        "enabled": false,
+        "mode": "per_scan",
+        "image": "neurosploit-sandbox:latest",
+        "container_name": "neurosploit-sandbox",
+        "auto_start": false,
+        "kali": {
+            "enabled": true,
+            "image": "neurosploit-kali:latest",
+            "max_concurrent": 5,
+            "container_ttl_minutes": 60,
+            "auto_cleanup_orphans": true
+        },
+        "resources": {
+            "memory_limit": "2g",
+            "cpu_limit": 2.0
+        },
+        "tools": [
+            "nuclei", "naabu", "nmap", "httpx", "subfinder", "katana",
+            "dnsx", "ffuf", "gobuster", "dalfox", "nikto", "sqlmap",
+            "whatweb", "curl", "dig", "whois", "masscan", "dirsearch",
+            "wfuzz", "arjun", "wafw00f", "waybackurls"
+        ],
+        "nuclei": {
+            "rate_limit": 150,
+            "timeout": 600,
+            "severity_filter": "critical,high,medium",
+            "auto_update_templates": true
+        },
+        "naabu": {
+            "rate": 1000,
+            "top_ports": 1000,
+            "timeout": 300
+        }
     },
     "output": {
         "format": "json",

@@ -4,9 +4,11 @@ Professional Pentest Report Generator
 Generates detailed reports with PoCs, CVSS scores, requests/responses
 """
 
+import base64
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Any
 import html
 import logging
@@ -48,6 +50,41 @@ class ReportGenerator:
         """Format code block with syntax highlighting"""
         escaped = self._escape_html(code)
         return f'<pre><code class="language-{language}">{escaped}</code></pre>'
+
+    def embed_screenshot(self, filepath: str) -> str:
+        """Convert a screenshot file to a base64 data URI for HTML embedding."""
+        path = Path(filepath)
+        if not path.exists():
+            return ""
+        try:
+            with open(path, 'rb') as f:
+                data = base64.b64encode(f.read()).decode('ascii')
+            return f"data:image/png;base64,{data}"
+        except Exception:
+            return ""
+
+    def build_screenshots_html(self, finding_id: str, screenshots_dir: str = "reports/screenshots") -> str:
+        """Build screenshot grid HTML for a finding, embedding images as base64."""
+        finding_dir = Path(screenshots_dir) / finding_id
+        if not finding_dir.exists():
+            return ""
+
+        screenshots = sorted(finding_dir.glob("*.png"))[:3]
+        if not screenshots:
+            return ""
+
+        cards = ""
+        for ss in screenshots:
+            data_uri = self.embed_screenshot(str(ss))
+            if data_uri:
+                caption = ss.stem.replace('_', ' ').title()
+                cards += f"""
+                <div class="screenshot-card">
+                    <img src="{data_uri}" alt="{caption}" />
+                    <div class="screenshot-caption">{caption}</div>
+                </div>"""
+
+        return f'<div class="screenshot-grid">{cards}</div>' if cards else ""
 
     def generate_executive_summary(self) -> str:
         """Generate executive summary section"""
@@ -611,16 +648,38 @@ class ReportGenerator:
         return html
 
     def save_report(self, output_dir: str = "reports") -> str:
-        """Save HTML report to file"""
-        os.makedirs(output_dir, exist_ok=True)
+        """Save HTML report to a per-report folder with screenshots."""
+        import shutil
+
+        # Create per-report folder
+        target = self.scan_results.get("target_url", self.scan_results.get("target", "unknown"))
+        target_name = target.replace("://", "_").replace("/", "_").rstrip("_")[:40]
+        report_folder = f"report_{target_name}_{self.timestamp}"
+        report_dir = os.path.join(output_dir, report_folder)
+        os.makedirs(report_dir, exist_ok=True)
 
         filename = f"pentest_report_{self.timestamp}.html"
-        filepath = os.path.join(output_dir, filename)
+        filepath = os.path.join(report_dir, filename)
 
         html_content = self.generate_html_report()
 
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(html_content)
+
+        # Copy screenshots into report folder
+        screenshots_src = os.path.join("reports", "screenshots")
+        if os.path.exists(screenshots_src):
+            screenshots_dest = os.path.join(report_dir, "screenshots")
+            vulns = self.scan_results.get("vulnerabilities", [])
+            for vuln in vulns:
+                fid = vuln.get("id", "")
+                if fid:
+                    src_dir = os.path.join(screenshots_src, str(fid))
+                    if os.path.exists(src_dir):
+                        dest_dir = os.path.join(screenshots_dest, str(fid))
+                        os.makedirs(dest_dir, exist_ok=True)
+                        for ss_file in Path(src_dir).glob("*.png"):
+                            shutil.copy2(str(ss_file), os.path.join(dest_dir, ss_file.name))
 
         logger.info(f"Report saved to: {filepath}")
         return filepath
