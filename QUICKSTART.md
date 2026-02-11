@@ -1,334 +1,289 @@
-# NeuroSploitv2 - Quick Start Guide
+# NeuroSploit v3 - Quick Start Guide
 
-## 🚀 Fast Track Setup (5 minutes)
+Get NeuroSploit running in under 5 minutes.
 
-### 1. Install Dependencies
+---
+
+## Prerequisites
+
+| Requirement | Minimum | Recommended |
+|-------------|---------|-------------|
+| **Python** | 3.10+ | 3.12 |
+| **Node.js** | 18+ | 20 LTS |
+| **Docker** | 24+ | Latest (for Kali sandbox) |
+| **RAM** | 4 GB | 8 GB+ |
+| **Disk** | 2 GB | 5 GB (with Kali image) |
+| **LLM API Key** | 1 provider | Claude recommended |
+
+---
+
+## Step 1: Clone & Configure
+
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/your-org/NeuroSploitv2.git
+cd NeuroSploitv2
+
+# Create your environment file
+cp .env.example .env
 ```
 
-### 2. Set Up API Keys (Choose One)
+Edit `.env` and add at least one API key:
 
-#### Option A: Using Gemini (Free Tier Available)
 ```bash
-export GEMINI_API_KEY="your_gemini_api_key_here"
-```
-Get your key at: https://makersuite.google.com/app/apikey
-
-#### Option B: Using LM Studio (Fully Local, No API Key)
-```bash
-# Download and install LM Studio from: https://lmstudio.ai/
-# Start LM Studio and load a model
-# Start the local server on port 1234
-
-# Update config/config.json:
-{
-  "llm": {
-    "default_profile": "lmstudio_default"
-  }
-}
+# Pick one (or more):
+ANTHROPIC_API_KEY=sk-ant-...        # Claude (recommended)
+OPENAI_API_KEY=sk-...               # GPT-4
+GEMINI_API_KEY=AI...                 # Gemini Pro
+OPENROUTER_API_KEY=sk-or-...        # OpenRouter (any model)
 ```
 
-#### Option C: Using Ollama (Fully Local, No API Key)
-```bash
-# Install Ollama: https://ollama.ai/
-ollama pull llama3:8b
-ollama serve
+> **No API key?** Use a local LLM (Ollama or LM Studio) -- see [Local LLM Setup](#local-llm-setup) below.
 
-# Update config/config.json:
-{
-  "llm": {
-    "default_profile": "ollama_llama3_default"
-  }
-}
+---
+
+## Step 2: Install Dependencies
+
+### Backend
+
+```bash
+pip install -r backend/requirements.txt
 ```
 
-### 3. Test Installation
-```bash
-# List available agents
-python neurosploit.py --list-agents
+### Frontend
 
-# List available LLM profiles
-python neurosploit.py --list-profiles
+```bash
+cd frontend
+npm install
+cd ..
 ```
 
 ---
 
-## 📝 Basic Usage Examples
+## Step 3: Build Kali Sandbox Image (Optional but Recommended)
 
-### Example 1: OSINT Reconnaissance
+The Kali sandbox enables isolated tool execution (Nuclei, Nmap, SQLMap, etc.) in Docker containers.
+
 ```bash
-python neurosploit.py \
-  --agent-role bug_bounty_hunter \
-  --input "Perform OSINT reconnaissance on example.com"
+# Requires Docker Desktop running
+./scripts/build-kali.sh --test
 ```
 
-**What it does:**
-- Uses OSINT Collector to gather public information
-- Resolves IP addresses
-- Detects web technologies
-- Generates email patterns
-- Identifies potential social media accounts
+This builds a Kali Linux image with 28 pre-installed security tools. Takes ~5 min on first build.
 
-### Example 2: Subdomain Enumeration
+> **No Docker?** NeuroSploit works without it -- the agent uses HTTP-only testing. Docker adds tool-based scanning (Nuclei, Nmap, etc.).
+
+---
+
+## Step 4: Start NeuroSploit
+
+### Option A: Development Mode (hot reload)
+
+Terminal 1 -- Backend:
 ```bash
-python neurosploit.py \
-  --agent-role pentest_generalist \
-  --input "Find all subdomains for example.com"
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-**What it does:**
-- Queries Certificate Transparency logs
-- Brute-forces common subdomain names
-- Validates discovered subdomains via DNS
-
-### Example 3: DNS Enumeration
+Terminal 2 -- Frontend:
 ```bash
-python neurosploit.py \
-  --agent-role pentest_generalist \
-  --input "Enumerate all DNS records for example.com"
+cd frontend
+npm run dev
 ```
 
-**What it does:**
-- Discovers A records (IPv4)
-- Discovers AAAA records (IPv6)
-- Finds MX records (mail servers)
-- Identifies NS records (name servers)
-- Extracts TXT records
+Open: **http://localhost:5173**
 
-### Example 4: Interactive Mode
+### Option B: Production Mode
+
 ```bash
-python neurosploit.py -i
+# Build frontend
+cd frontend && npm run build && cd ..
+
+# Start backend (serves frontend too)
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
-**Commands available:**
-```
-> list_roles
-> run_agent pentest_generalist "scan example.com"
-> config
-> exit
+Open: **http://localhost:8000**
+
+### Option C: Quick Start Script
+
+```bash
+./start.sh
 ```
 
 ---
 
-## 🧪 Testing the New Features
+## Step 5: Verify Setup
 
-### Test 1: OSINT Collector
-```python
-python3 << 'EOF'
-from tools.recon.osint_collector import OSINTCollector
-
-collector = OSINTCollector({})
-results = collector.collect("google.com")
-
-print("IP Addresses:", results['ip_addresses'])
-print("Technologies:", results['technologies'])
-print("Email Patterns:", results['email_patterns'][:3])
-print("Social Media:", results['social_media'])
-EOF
-```
-
-**Expected Output:**
-```
-IP Addresses: ['142.250.xxx.xxx', ...]
-Technologies: {'server': 'gws', 'status_code': 200, ...}
-Email Patterns: ['info@google.com', 'contact@google.com', ...]
-Social Media: {'twitter': 'https://twitter.com/google', ...}
-```
-
-### Test 2: Subdomain Finder
-```python
-python3 << 'EOF'
-from tools.recon.subdomain_finder import SubdomainFinder
-
-finder = SubdomainFinder({})
-subdomains = finder.find("github.com")
-
-print(f"Found {len(subdomains)} subdomains")
-print("First 5:", subdomains[:5])
-EOF
-```
-
-**Expected Output:**
-```
-Found 15+ subdomains
-First 5: ['api.github.com', 'www.github.com', 'gist.github.com', ...]
-```
-
-### Test 3: DNS Enumerator
-```python
-python3 << 'EOF'
-from tools.recon.dns_enumerator import DNSEnumerator
-
-enumerator = DNSEnumerator({})
-records = enumerator.enumerate("github.com")
-
-print("A Records:", records['records']['A'])
-print("MX Records:", records['records']['MX'])
-print("NS Records:", records['records']['NS'])
-EOF
-```
-
-### Test 4: LM Studio Integration
-```bash
-# 1. Start LM Studio server
-# 2. Load a model (e.g., Llama 3, Mistral, Phi-3)
-# 3. Start the server
-
-# 4. Test connection
-curl http://localhost:1234/v1/models
-
-# 5. Run NeuroSploit with LM Studio
-python neurosploit.py \
-  --llm-profile lmstudio_default \
-  --agent-role pentest_generalist \
-  --input "Explain the OWASP Top 10"
-```
-
----
-
-## 🔧 Testing Tool Chaining
-
-Create a test script to see tool chaining in action:
+### Check API Health
 
 ```bash
-python neurosploit.py -i
+curl http://localhost:8000/api/health
 ```
 
-Then enter:
-```
-run_agent pentest_generalist "Perform complete reconnaissance: DNS enumeration, subdomain discovery, and OSINT collection for example.com"
-```
-
-The AI will automatically chain multiple tools:
-1. DNS Enumerator → finds DNS records
-2. Subdomain Finder → discovers subdomains
-3. OSINT Collector → gathers intelligence
-
-All results are combined and analyzed by the AI.
-
----
-
-## 📊 View Results
-
-### JSON Results
-```bash
-ls -lt results/
-cat results/campaign_*.json | jq '.'
-```
-
-### HTML Reports
-```bash
-ls -lt reports/
-open reports/report_*.html  # macOS
-xdg-open reports/report_*.html  # Linux
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### Issue: "No module named 'anthropic'"
-```bash
-pip install anthropic openai google-generativeai requests
-```
-
-### Issue: LM Studio Connection Error
-```bash
-# Verify LM Studio server is running
-curl http://localhost:1234/v1/models
-
-# Check logs in LM Studio console
-# Ensure model is loaded and server is started
-```
-
-### Issue: "Tool not found"
-Edit `config/config.json` and update tool paths:
+Expected response:
 ```json
 {
-  "tools": {
-    "nmap": "/usr/bin/nmap",
-    "metasploit": "/usr/bin/msfconsole"
+  "status": "healthy",
+  "app": "NeuroSploit",
+  "version": "3.0.0",
+  "llm": {
+    "status": "configured",
+    "provider": "claude",
+    "message": "AI agent ready"
   }
 }
 ```
 
-### Issue: DNS Enumeration Shows Limited Results
+### Check Swagger Docs
+
+Open **http://localhost:8000/api/docs** for interactive API documentation.
+
+---
+
+## Your First Scan
+
+### Option 1: Auto Pentest (Recommended)
+
+1. Open the web interface
+2. Click **Auto Pentest** in the sidebar
+3. Enter a target URL (e.g., `http://testphp.vulnweb.com`)
+4. Click **Start Auto Pentest**
+5. Watch the 3-stream parallel scan in real-time
+
+### Option 2: Via API
+
 ```bash
-# Install nslookup
-# macOS: Already included
-# Linux: sudo apt-get install dnsutils
+curl -X POST http://localhost:8000/api/v1/agent/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target": "http://testphp.vulnweb.com",
+    "mode": "auto_pentest"
+  }'
 ```
 
+### Option 3: Vuln Lab (Single Type)
+
+1. Click **Vuln Lab** in the sidebar
+2. Pick a vulnerability type (e.g., `xss_reflected`)
+3. Enter target URL
+4. Click **Run Test**
+
 ---
 
-## 🎯 Advanced Examples
+## Pages Overview
 
-### Custom Agent Workflow
+| Page | What it does |
+|------|-------------|
+| **Dashboard** (`/`) | Stats, severity charts, recent activity |
+| **Auto Pentest** (`/auto`) | One-click full autonomous pentest |
+| **Vuln Lab** (`/vuln-lab`) | Test specific vuln types (100 available) |
+| **Terminal Agent** (`/terminal`) | AI chat + command execution |
+| **Sandboxes** (`/sandboxes`) | Monitor Kali containers in real-time |
+| **Scheduler** (`/scheduler`) | Schedule recurring scans |
+| **Reports** (`/reports`) | View/download generated reports |
+| **Settings** (`/settings`) | Configure LLM providers, features |
+
+---
+
+## Local LLM Setup
+
+### Ollama (Easiest)
+
 ```bash
-# 1. Web Application Pentest
-python neurosploit.py \
-  --agent-role owasp_expert \
-  --input "Analyze https://testphp.vulnweb.com for OWASP Top 10 vulnerabilities"
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
 
-# 2. Network Reconnaissance
-python neurosploit.py \
-  --agent-role red_team_agent \
-  --input "Plan a network penetration test for 192.168.1.0/24"
+# Pull a model
+ollama pull llama3.1
 
-# 3. Malware Analysis
-python neurosploit.py \
-  --agent-role malware_analyst \
-  --input "Analyze this malware sample: /path/to/sample.exe"
+# Add to .env
+echo "OLLAMA_BASE_URL=http://localhost:11434" >> .env
 ```
 
-### Using Different LLM Profiles
-```bash
-# High-quality reasoning with Claude
-python neurosploit.py \
-  --llm-profile claude_opus_default \
-  --agent-role exploit_expert \
-  --input "Generate an exploitation strategy for CVE-2024-XXXX"
+### LM Studio
 
-# Fast local processing with Ollama
-python neurosploit.py \
-  --llm-profile ollama_llama3_default \
-  --agent-role bug_bounty_hunter \
-  --input "Quick scan of example.com"
+1. Download from [lmstudio.ai](https://lmstudio.ai)
+2. Load any model (e.g., Mistral, Llama)
+3. Start the server on port 1234
+4. Add to `.env`:
+   ```
+   LMSTUDIO_BASE_URL=http://localhost:1234
+   ```
+
+---
+
+## Kali Sandbox Commands
+
+```bash
+# Build image
+./scripts/build-kali.sh
+
+# Rebuild from scratch
+./scripts/build-kali.sh --fresh
+
+# Build + verify tools work
+./scripts/build-kali.sh --test
+
+# Check running containers (via API)
+curl http://localhost:8000/api/v1/sandbox/
+
+# Monitor via web UI
+# Open http://localhost:8000/sandboxes
 ```
 
----
+### Pre-installed tools (28)
 
-## 📚 Next Steps
+nuclei, naabu, httpx, subfinder, katana, dnsx, uncover, ffuf, gobuster, dalfox, waybackurls, nmap, nikto, sqlmap, masscan, whatweb, curl, wget, git, python3, pip3, go, jq, dig, whois, openssl, netcat, bash
 
-1. **Read the Full Documentation:** Check `README.md`
-2. **Explore Agent Prompts:** Look at `prompts/md_library/`
-3. **Review Improvements:** Read `IMPROVEMENTS.md`
-4. **Customize Config:** Edit `config/config.json`
-5. **Create Custom Agents:** Use `custom_agents/example_agent.py` as template
+### On-demand tools (28 more)
 
----
+Installed inside the container automatically when first needed:
 
-## 🔐 Important Security Notes
-
-1. **Always get authorization** before testing systems
-2. **Use in isolated environments** for learning
-3. **Never test production systems** without permission
-4. **Review all AI-generated commands** before execution
-5. **Keep API keys secure** (use environment variables)
+wpscan, dirb, hydra, john, hashcat, testssl, sslscan, enum4linux, dnsrecon, amass, medusa, crackmapexec, gau, gitleaks, anew, httprobe, dirsearch, wfuzz, arjun, wafw00f, sslyze, commix, trufflehog, retire, fierce, nbtscan, responder
 
 ---
 
-## 💡 Pro Tips
+## Troubleshooting
 
-1. **Interactive Mode is Fastest:** Use `-i` for quick iterations
-2. **Tool Chaining Saves Time:** Let AI orchestrate multiple tools
-3. **Local LLMs are Free:** Use LM Studio or Ollama for unlimited usage
-4. **Results are Logged:** Check `results/` and `reports/` directories
-5. **Custom Prompts:** Modify `prompts/md_library/` for specialized behavior
+### "AI agent not configured"
+
+Check your `.env` has at least one valid API key:
+```bash
+curl http://localhost:8000/api/health | python3 -m json.tool
+```
+
+### "Kali sandbox image not found"
+
+Build the Docker image:
+```bash
+./scripts/build-kali.sh
+```
+
+### "Docker daemon not running"
+
+Start Docker Desktop, then retry.
+
+### "Port 8000 already in use"
+
+```bash
+lsof -i :8000
+kill <PID>
+```
+
+### Frontend not loading
+
+Dev mode: ensure frontend is running (`npm run dev` in `/frontend`).
+Production: ensure `frontend/dist/` exists (`cd frontend && npm run build`).
 
 ---
 
-**Happy Pentesting! 🎯**
+## What's Next
 
-For more help: `python neurosploit.py --help`
+- Read the full [README.md](README.md) for architecture details
+- Explore the **100 vulnerability types** in Vuln Lab
+- Set up **scheduled scans** for continuous monitoring
+- Try the **Terminal Agent** for interactive AI-guided testing
+- Check the **Sandbox Dashboard** to monitor container health
+
+---
+
+**NeuroSploit v3** - *AI-Powered Autonomous Penetration Testing Platform*
