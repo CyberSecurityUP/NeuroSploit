@@ -12,6 +12,8 @@
 
 NeuroSploit v3 is an advanced security assessment platform that combines AI-driven autonomous agents with 100 vulnerability types, per-scan isolated Kali Linux containers, false-positive hardening, exploit chaining, and a modern React web interface with real-time monitoring.
 
+Created by Joas Antonio dos Santos
+
 ---
 
 ## Highlights
