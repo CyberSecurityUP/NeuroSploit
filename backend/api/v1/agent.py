@@ -127,6 +127,7 @@ class AgentRequest(BaseModel):
     methodology_file: Optional[str] = Field(None, description="Path to external .md methodology file to inject into all AI calls")
     enable_cli_agent: bool = Field(False, description="Enable CLI Agent (AI CLI inside Kali sandbox)")
     cli_agent_provider: Optional[str] = Field(None, description="CLI provider: claude_code, gemini_cli, codex_cli")
+    selected_md_agents: Optional[List[str]] = Field(None, description="List of .md agent names to run (e.g. ['owasp_expert', 'red_team_agent']). None = defaults.")
 
 
 class AgentResponse(BaseModel):
@@ -243,6 +244,7 @@ async def run_agent(request: AgentRequest, background_tasks: BackgroundTasks):
         request.methodology_file,
         request.enable_cli_agent,
         request.cli_agent_provider,
+        request.selected_md_agents,
     )
 
     mode_descriptions = {
@@ -278,6 +280,7 @@ async def _run_agent_task(
     methodology_file: Optional[str] = None,
     enable_cli_agent: bool = False,
     cli_agent_provider: Optional[str] = None,
+    selected_md_agents: Optional[List[str]] = None,
 ):
     """Background task to run the agent with DATABASE PERSISTENCE and REAL-TIME FINDINGS"""
     logs = []
@@ -406,6 +409,7 @@ async def _run_agent_task(
                 methodology_file=methodology_file,
                 enable_cli_agent=enable_cli_agent,
                 cli_agent_provider=cli_agent_provider,
+                selected_md_agents=selected_md_agents,
             ) as agent:
                 # Store agent instance for stop functionality
                 agent_instances[agent_id] = agent
@@ -573,6 +577,19 @@ async def _run_agent_task(
                 logger.info(f"[CONTAINER] Guaranteed cleanup for scan {scan_id}")
             except Exception:
                 pass
+
+
+@router.get("/md-agents")
+async def list_md_agents():
+    """List all available .md-based specialist agents."""
+    try:
+        from backend.core.md_agent import MdAgentLibrary
+        library = MdAgentLibrary()
+        return {"agents": library.list_agents()}
+    except ImportError:
+        return {"agents": []}
+    except Exception as e:
+        return {"agents": [], "error": str(e)}
 
 
 @router.get("/active")

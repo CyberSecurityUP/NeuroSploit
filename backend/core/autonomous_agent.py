@@ -171,6 +171,14 @@ except ImportError:
     HAS_CLI_AGENT = False
     CLIAgentRunner = None
 
+# Phase 5.5: Markdown-based Agent Orchestration (post-recon agent dispatch)
+try:
+    from backend.core.md_agent import MdAgentOrchestrator
+    HAS_MD_AGENTS = True
+except ImportError:
+    HAS_MD_AGENTS = False
+    MdAgentOrchestrator = None
+
 # Phase 6: Per-Vulnerability-Type Agent Orchestration
 try:
     from backend.core.vuln_orchestrator import VulnOrchestrator
@@ -350,10 +358,14 @@ class LLMClient:
     def __init__(self, preferred_provider: Optional[str] = None, preferred_model: Optional[str] = None):
         self.anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
         self.openai_key = os.getenv("OPENAI_API_KEY", "")
-        self.google_key = os.getenv("GOOGLE_API_KEY", "") or os.getenv("GEMINI_API_KEY", "")
+        self.google_key = os.getenv("GEMINI_API_KEY", "") or os.getenv("GOOGLE_API_KEY", "")
         self.together_key = os.getenv("TOGETHER_API_KEY", "")
         self.fireworks_key = os.getenv("FIREWORKS_API_KEY", "")
         self.openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
+        self.azure_openai_key = os.getenv("AZURE_OPENAI_API_KEY", "")
+        self.azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+        self.azure_openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+        self.azure_openai_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
         self.codex_key = os.getenv("CODEX_API_KEY", "")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2")
         self.configured_model = os.getenv("DEFAULT_LLM_MODEL", "")  # User-configured model name
@@ -399,6 +411,8 @@ class LLMClient:
             self.openrouter_key = None
         if self.codex_key in ["", "your-codex-api-key"]:
             self.codex_key = None
+        if self.azure_openai_key in ["", "your-azure-openai-api-key"]:
+            self.azure_openai_key = None
 
         # Try providers in order of preference
         self._initialize_provider()
@@ -428,6 +442,22 @@ class LLMClient:
             except Exception as e:
                 self.error_message = f"OpenAI init error: {e}"
                 print(f"[LLM] OpenAI initialization failed: {e}")
+
+        # 2a. Try Azure OpenAI
+        if OPENAI_AVAILABLE and self.azure_openai_key and self.azure_openai_endpoint:
+            try:
+                self.client = openai.AzureOpenAI(
+                    api_key=self.azure_openai_key,
+                    api_version=self.azure_openai_api_version,
+                    azure_endpoint=self.azure_openai_endpoint,
+                )
+                self.provider = "azure_openai"
+                self.model_name = self.azure_openai_deployment or self.configured_model or "gpt-4o"
+                print(f"[LLM] Azure OpenAI initialized (deployment: {self.model_name})")
+                return
+            except Exception as e:
+                self.error_message = f"Azure OpenAI init error: {e}"
+                print(f"[LLM] Azure OpenAI initialization failed: {e}")
 
         # 2b. Try Codex (OpenAI-compatible)
         if OPENAI_AVAILABLE and self.codex_key:
@@ -623,6 +653,17 @@ class LLMClient:
             elif self.provider == "codex":
                 response = self.client.chat.completions.create(
                     model=self.model_name or "codex-mini-latest",
+                    max_tokens=max_tokens,
+                    messages=[
+                        {"role": "system", "content": system or default_system},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                return response.choices[0].message.content
+
+            elif self.provider == "azure_openai":
+                response = self.client.chat.completions.create(
+                    model=self.model_name or "gpt-4o",
                     max_tokens=max_tokens,
                     messages=[
                         {"role": "system", "content": system or default_system},
@@ -948,6 +989,7 @@ class AutonomousAgent:
         methodology_file: Optional[str] = None,
         enable_cli_agent: bool = False,
         cli_agent_provider: Optional[str] = None,
+        selected_md_agents: Optional[List[str]] = None,
     ):
         self.target = self._normalize_target(target)
         self.mode = mode
@@ -966,6 +1008,7 @@ class AutonomousAgent:
         self.preferred_model = preferred_model
         self.enable_cli_agent = enable_cli_agent
         self.cli_agent_provider = cli_agent_provider
+        self.selected_md_agents: Optional[List[str]] = selected_md_agents
         self._cancelled = False
         self._paused = False
         self._skip_to_phase: Optional[str] = None  # Phase skip target
@@ -1101,6 +1144,9 @@ class AutonomousAgent:
 
         # Phase 5: Multi-agent orchestrator (optional replacement for 3-stream)
         self._orchestrator = None  # Lazy-init after session
+
+        # Phase 5.5: MD-based agent orchestrator (post-recon dispatch)
+        self._md_orchestrator = None  # Lazy-init after session
 
         # Researcher AI (0-day discovery with Kali sandbox, opt-in)
         self._researcher = None  # Lazy-init after session
@@ -3874,6 +3920,17 @@ NOT_VULNERABLE: <reason>"""
                 request_engine=self.request_engine,
             )
 
+        # Phase 5.5: MD-based agent orchestrator (always available)
+        if HAS_MD_AGENTS:
+            self._md_orchestrator = MdAgentOrchestrator(
+                llm=self.llm,
+                memory=self.memory,
+                budget=self.token_budget,
+                validation_judge=self.validation_judge,
+                log_callback=self.log,
+                progress_callback=self.progress_callback,
+            )
+
         # Researcher AI: 0-day discovery with Kali sandbox (opt-in)
         researcher_enabled = (
             HAS_RESEARCHER
@@ -4780,6 +4837,67 @@ NOT_VULNERABLE: <reason>"""
                                        f"(Priority: {chain.get('priority', '?')})")
             except Exception as e:
                 await self.log("debug", f"  [CHAIN] AI discovery error: {e}")
+
+        # ── MD-BASED AGENT DISPATCH (post-recon specialist agents) ──
+        if self._md_orchestrator and not self.is_cancelled():
+            try:
+                await self.log("info", "[MD-AGENTS] Dispatching specialist .md agents with recon context")
+                md_result = await self._md_orchestrator.run(
+                    target=self.target,
+                    recon_data=self.recon,
+                    existing_findings=self.findings,
+                    selected_agents=self.selected_md_agents,
+                    headers=dict(self.auth_headers),
+                    waf_info=(
+                        self._waf_result.get("waf_name", "")
+                        if self._waf_result else ""
+                    ),
+                )
+
+                # Merge MD agent findings into main findings via validation
+                md_findings_raw = md_result.get("findings", [])
+                md_confirmed = 0
+                for mf in md_findings_raw:
+                    if self.is_cancelled():
+                        break
+                    if not isinstance(mf, dict):
+                        continue
+                    try:
+                        finding = Finding(
+                            id=str(hashlib.md5(
+                                f"{mf.get('title', '')}{mf.get('affected_endpoint', '')}".encode()
+                            ).hexdigest())[:12],
+                            title=mf.get("title", "MD Agent Finding"),
+                            severity=mf.get("severity", "medium"),
+                            vulnerability_type=mf.get("vulnerability_type", "unknown"),
+                            cvss_score=mf.get("cvss_score", 0.0),
+                            cwe_id=mf.get("cwe_id", ""),
+                            description=mf.get("description", ""),
+                            affected_endpoint=mf.get("affected_endpoint", self.target),
+                            evidence=mf.get("evidence", ""),
+                            poc_code=mf.get("poc_code", ""),
+                            impact=mf.get("impact", ""),
+                            remediation=mf.get("remediation", ""),
+                            confidence_score=50,
+                            confidence="medium",
+                            ai_verified=False,
+                            ai_status="pending",
+                        )
+                        # Flow through validation pipeline
+                        await self._add_finding(finding)
+                        md_confirmed += 1
+                    except Exception as e:
+                        await self.log("debug", f"  [MD-AGENTS] Finding merge error: {e}")
+
+                agent_summary = md_result.get("agent_results", {})
+                agents_run = md_result.get("agents_run", 0)
+                await self.log("info",
+                    f"[MD-AGENTS] Complete: {agents_run} agents, "
+                    f"{len(md_findings_raw)} raw findings, "
+                    f"{md_confirmed} submitted to validation, "
+                    f"{md_result.get('duration', 0)}s")
+            except Exception as e:
+                await self.log("warning", f"[MD-AGENTS] Dispatch error: {e}")
 
         # ── RESEARCHER AI (0-day discovery with Kali sandbox) ──
         if self._researcher and not self.is_cancelled():

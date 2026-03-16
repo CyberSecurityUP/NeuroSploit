@@ -460,7 +460,7 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
     def _generate_gemini(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """Generate using Google Gemini API with requests (bypasses SDK issues)"""
         if not self.api_key:
-            raise ValueError("GOOGLE_API_KEY not set. Please set the environment variable or configure in config.yaml")
+            raise ValueError("GEMINI_API_KEY not set. Please set the environment variable or configure in config.yaml")
 
         # Use v1beta for generateContent endpoint
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
@@ -496,7 +496,7 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
                     return result["candidates"][0]["content"]["parts"][0]["text"]
 
                 elif response.status_code == 401 or response.status_code == 403:
-                    logger.error("Gemini API authentication failed. Check your GOOGLE_API_KEY")
+                    logger.error("Gemini API authentication failed. Check your GEMINI_API_KEY")
                     raise ValueError(f"Invalid API key: {response.text}")
 
                 elif response.status_code == 429:

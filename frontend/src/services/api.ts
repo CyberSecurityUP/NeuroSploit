@@ -382,7 +382,7 @@ export const agentApi = {
   },
 
   // One-click auto pentest
-  autoPentest: async (target: string, options?: { subdomain_discovery?: boolean; targets?: string[]; auth_type?: string; auth_value?: string; prompt?: string; enable_kali_sandbox?: boolean; custom_prompt_ids?: string[]; preferred_provider?: string; preferred_model?: string; mode?: string; enable_cli_agent?: boolean; cli_agent_provider?: string; methodology_file?: string }): Promise<AgentResponse> => {
+  autoPentest: async (target: string, options?: { subdomain_discovery?: boolean; targets?: string[]; auth_type?: string; auth_value?: string; prompt?: string; enable_kali_sandbox?: boolean; custom_prompt_ids?: string[]; preferred_provider?: string; preferred_model?: string; mode?: string; enable_cli_agent?: boolean; cli_agent_provider?: string; methodology_file?: string; selected_md_agents?: string[] }): Promise<AgentResponse> => {
     const response = await api.post('/agent/run', {
       target,
       mode: options?.mode || 'auto_pentest',
@@ -398,6 +398,7 @@ export const agentApi = {
       enable_cli_agent: options?.enable_cli_agent || false,
       cli_agent_provider: options?.cli_agent_provider || undefined,
       methodology_file: options?.methodology_file || undefined,
+      selected_md_agents: options?.selected_md_agents || undefined,
     })
     return response.data
   },

@@ -34,12 +34,18 @@ data/*.db
 data/*.db.*
 data/execution_history.json
 data/access_control_learning.json
+data/adaptive_learning.json
+data/providers.json
+data/reasoning_memory.json
+data/vectorstore/
+data/custom-knowledge/uploads/
 data/reports/
 
 # ==============================
 # Reports & Screenshots
 # ==============================
 reports/screenshots/
+reports/*.json
 
 # ==============================
 # Logs & PIDs
@@ -78,3 +84,9 @@ docker/*.env
 # Results (runtime output)
 # ==============================
 results/
+
+# ==============================
+# Large binary files
+# ==============================
+projeto.zip
+*.zip

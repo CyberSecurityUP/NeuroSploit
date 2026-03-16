@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
     GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
+    AZURE_OPENAI_API_KEY: Optional[str] = os.getenv("AZURE_OPENAI_API_KEY")
+    AZURE_OPENAI_ENDPOINT: Optional[str] = os.getenv("AZURE_OPENAI_ENDPOINT")
+    AZURE_OPENAI_API_VERSION: str = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
+    AZURE_OPENAI_DEPLOYMENT: Optional[str] = os.getenv("AZURE_OPENAI_DEPLOYMENT")
     TOGETHER_API_KEY: Optional[str] = os.getenv("TOGETHER_API_KEY")
     FIREWORKS_API_KEY: Optional[str] = os.getenv("FIREWORKS_API_KEY")
     DEFAULT_LLM_PROVIDER: str = "claude"
@@ -74,6 +78,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()
