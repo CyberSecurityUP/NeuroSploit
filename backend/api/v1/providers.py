@@ -155,6 +155,7 @@ async def test_connection(provider_id: str, account_id: str):
 PROVIDER_MODELS = {
     "claude_code": [
         "claude-opus-4-6-20250918",
+        "claude-sonnet-4-6-20250918",
         "claude-sonnet-4-5-20250929",
         "claude-haiku-4-5-20251001",
         "claude-sonnet-4-20250514",
@@ -163,6 +164,7 @@ PROVIDER_MODELS = {
     ],
     "kiro": [
         "claude-opus-4-6-20250918",
+        "claude-sonnet-4-6-20250918",
         "claude-sonnet-4-5-20250929",
         "claude-haiku-4-5-20251001",
         "claude-sonnet-4-20250514",
@@ -171,6 +173,7 @@ PROVIDER_MODELS = {
     ],
     "anthropic": [
         "claude-opus-4-6-20250918",
+        "claude-sonnet-4-6-20250918",
         "claude-sonnet-4-5-20250929",
         "claude-haiku-4-5-20251001",
         "claude-sonnet-4-20250514",
@@ -214,17 +217,18 @@ PROVIDER_MODELS = {
         "cursor-fast",
         "cursor-small",
         "gpt-4o",
+        "claude-sonnet-4-6-20250918",
         "claude-sonnet-4-5-20250929",
-        "claude-3-5-sonnet-20241022",
     ],
     "copilot": [
         "gpt-4o",
         "gpt-4o-mini",
+        "claude-sonnet-4-6-20250918",
         "claude-sonnet-4-5-20250929",
-        "claude-3-5-sonnet-20241022",
     ],
     "openrouter": [
         "anthropic/claude-opus-4-6",
+        "anthropic/claude-sonnet-4-6",
         "anthropic/claude-sonnet-4-5",
         "anthropic/claude-haiku-4-5",
         "anthropic/claude-sonnet-4",

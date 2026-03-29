@@ -81,7 +81,7 @@ DEFAULT_PROVIDERS: List[Dict] = [
     {
         "id": "claude_code", "name": "Claude Code", "auth_type": "oauth",
         "api_format": "anthropic", "base_url": "https://api.anthropic.com",
-        "tier": 1, "default_model": "claude-sonnet-4-5-20250929",
+        "tier": 1, "default_model": "claude-sonnet-4-20250514",
     },
     {
         "id": "codex_cli", "name": "OpenAI Codex CLI", "auth_type": "oauth",
@@ -116,13 +116,13 @@ DEFAULT_PROVIDERS: List[Dict] = [
     {
         "id": "kiro", "name": "Kiro AI", "auth_type": "oauth",
         "api_format": "anthropic", "base_url": "https://api.anthropic.com",
-        "tier": 1, "default_model": "claude-sonnet-4-5-20250929",
+        "tier": 1, "default_model": "claude-sonnet-4-20250514",
     },
     # === API Key Providers (Tier 1 - Paid) ===
     {
         "id": "anthropic", "name": "Anthropic", "auth_type": "api_key",
         "api_format": "anthropic", "base_url": "https://api.anthropic.com",
-        "tier": 1, "default_model": "claude-sonnet-4-5-20250929",
+        "tier": 1, "default_model": "claude-sonnet-4-20250514",
         "env_key": "ANTHROPIC_API_KEY",
     },
     {
@@ -140,7 +140,7 @@ DEFAULT_PROVIDERS: List[Dict] = [
     {
         "id": "openrouter", "name": "OpenRouter", "auth_type": "api_key",
         "api_format": "openai_compat", "base_url": "https://openrouter.ai/api/v1",
-        "tier": 1, "default_model": "anthropic/claude-sonnet-4-5",
+        "tier": 1, "default_model": "anthropic/claude-sonnet-4-20250514",
         "env_key": "OPENROUTER_API_KEY",
     },
     # === API Key Providers (Tier 2 - Cheap) ===

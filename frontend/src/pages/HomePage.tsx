@@ -369,8 +369,8 @@ export default function HomePage() {
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {([
-          { label: 'Auto Pentest', icon: Zap, to: '/auto', color: 'text-green-400', bg: 'bg-green-500/10 hover:bg-green-500/20', border: 'border-green-500/20 hover:border-green-500/40', desc: '3-stream AI testing' },
-          { label: 'Full IA Testing', icon: Shield, to: '/full-ia', color: 'text-red-400', bg: 'bg-red-500/10 hover:bg-red-500/20', border: 'border-red-500/20 hover:border-red-500/40', desc: '100 vuln types' },
+          { label: 'Auto Pentest', icon: Zap, to: '/auto', color: 'text-green-400', bg: 'bg-green-500/10 hover:bg-green-500/20', border: 'border-green-500/20 hover:border-green-500/40', desc: '109 agents + 100 vulns' },
+          { label: 'AI Agent', icon: Shield, to: '/scan/new', color: 'text-red-400', bg: 'bg-red-500/10 hover:bg-red-500/20', border: 'border-red-500/20 hover:border-red-500/40', desc: 'Custom AI scan' },
           { label: 'Vuln Lab', icon: FlaskConical, to: '/vuln-lab', color: 'text-purple-400', bg: 'bg-purple-500/10 hover:bg-purple-500/20', border: 'border-purple-500/20 hover:border-purple-500/40', desc: 'Per-type challenges' },
           { label: 'Terminal', icon: Terminal, to: '/terminal', color: 'text-cyan-400', bg: 'bg-cyan-500/10 hover:bg-cyan-500/20', border: 'border-cyan-500/20 hover:border-cyan-500/40', desc: 'AI chat + commands' },
         ] as const).map(action => (

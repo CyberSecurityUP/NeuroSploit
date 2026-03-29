@@ -16,7 +16,6 @@ import {
   Brain,
   Cable,
   Plug,
-  Crosshair,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -30,7 +29,6 @@ const navGroups = [
       { path: '/auto', icon: Rocket, label: 'Auto Pentest' },
       { path: '/scan/new', icon: Bot, label: 'AI Agent' },
       { path: '/realtime', icon: Zap, label: 'Real-time Task' },
-      { path: '/full-ia', icon: Crosshair, label: 'FULL AI TESTING' },
     ],
   },
   {

@@ -18,6 +18,27 @@ from datetime import datetime
 from enum import Enum
 from urllib.parse import urlparse
 
+
+def _safe_cvss_score(val) -> float:
+    """Sanitize cvss_score: convert to float, default 0.0 for non-numeric."""
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _safe_cvss_vector(val) -> str:
+    """Sanitize cvss_vector: return empty string for N/A or invalid values."""
+    if not val or not isinstance(val, str):
+        return ""
+    if val.strip().upper().startswith("N/A") or len(val.strip()) < 5:
+        return ""
+    return val[:100]
+
 from backend.core.autonomous_agent import AutonomousAgent, OperationMode
 from backend.core.task_library import get_task_library
 from backend.db.database import async_session_factory
@@ -123,7 +144,7 @@ class AgentRequest(BaseModel):
     enable_kali_sandbox: bool = Field(False, description="Enable Kali Linux sandbox for tool execution + AI researcher")
     custom_prompt_ids: Optional[List[str]] = Field(None, description="IDs of custom prompts to include in agent flow")
     preferred_provider: Optional[str] = Field(None, description="Preferred LLM provider (e.g., 'anthropic', 'gemini_cli', 'openai')")
-    preferred_model: Optional[str] = Field(None, description="Preferred model name (e.g., 'claude-sonnet-4-20250514', 'gemini-2.0-flash')")
+    preferred_model: Optional[str] = Field(None, description="Preferred model name (e.g., 'claude-sonnet-4-6-20250918', 'claude-opus-4-6-20250918', 'gemini-2.0-flash')")
     methodology_file: Optional[str] = Field(None, description="Path to external .md methodology file to inject into all AI calls")
     enable_cli_agent: bool = Field(False, description="Enable CLI Agent (AI CLI inside Kali sandbox)")
     cli_agent_provider: Optional[str] = Field(None, description="CLI provider: claude_code, gemini_cli, codex_cli")
@@ -431,8 +452,8 @@ async def _run_agent_task(
                         title=finding.get("title", finding.get("type", "Unknown")),
                         vulnerability_type=finding.get("vulnerability_type", finding.get("type", "unknown")),
                         severity=severity,
-                        cvss_score=finding.get("cvss_score"),
-                        cvss_vector=finding.get("cvss_vector"),
+                        cvss_score=_safe_cvss_score(finding.get("cvss_score")),
+                        cvss_vector=_safe_cvss_vector(finding.get("cvss_vector")),
                         cwe_id=finding.get("cwe_id"),
                         description=finding.get("description") or finding.get("evidence") or "",
                         affected_endpoint=finding.get("affected_endpoint", finding.get("endpoint", finding.get("url", target))),
@@ -463,8 +484,8 @@ async def _run_agent_task(
                         title=finding.get("title", finding.get("type", "Unknown")),
                         vulnerability_type=finding.get("vulnerability_type", finding.get("type", "unknown")),
                         severity=finding.get("severity", "medium").lower(),
-                        cvss_score=finding.get("cvss_score"),
-                        cvss_vector=finding.get("cvss_vector"),
+                        cvss_score=_safe_cvss_score(finding.get("cvss_score")),
+                        cvss_vector=_safe_cvss_vector(finding.get("cvss_vector")),
                         cwe_id=finding.get("cwe_id"),
                         description=finding.get("description") or finding.get("evidence") or "",
                         affected_endpoint=finding.get("affected_endpoint", finding.get("endpoint", finding.get("url", target))),
@@ -916,8 +937,8 @@ async def stop_agent(agent_id: str):
                             title=finding.get("title", finding.get("type", "Unknown")),
                             vulnerability_type=finding.get("vulnerability_type", finding.get("type", "unknown")),
                             severity=severity,
-                            cvss_score=finding.get("cvss_score"),
-                            cvss_vector=finding.get("cvss_vector"),
+                            cvss_score=_safe_cvss_score(finding.get("cvss_score")),
+                            cvss_vector=_safe_cvss_vector(finding.get("cvss_vector")),
                             cwe_id=finding.get("cwe_id"),
                             description=finding.get("description") or finding.get("evidence") or "",
                             affected_endpoint=finding.get("affected_endpoint", finding.get("endpoint", finding.get("url", target))),
@@ -949,8 +970,8 @@ async def stop_agent(agent_id: str):
                             title=finding.get("title", finding.get("type", "Unknown")),
                             vulnerability_type=finding.get("vulnerability_type", finding.get("type", "unknown")),
                             severity=finding.get("severity", "medium").lower(),
-                            cvss_score=finding.get("cvss_score"),
-                            cvss_vector=finding.get("cvss_vector"),
+                            cvss_score=_safe_cvss_score(finding.get("cvss_score")),
+                            cvss_vector=_safe_cvss_vector(finding.get("cvss_vector")),
                             cwe_id=finding.get("cwe_id"),
                             description=finding.get("description") or finding.get("evidence") or "",
                             affected_endpoint=finding.get("affected_endpoint", finding.get("endpoint", finding.get("url", target))),
@@ -2493,8 +2514,8 @@ async def _save_realtime_findings_to_db(session_id: str, session: Dict):
                     title=title,
                     vulnerability_type=finding.get("vulnerability_type", "unknown"),
                     severity=severity,
-                    cvss_score=finding.get("cvss_score"),
-                    cvss_vector=finding.get("cvss_vector"),
+                    cvss_score=_safe_cvss_score(finding.get("cvss_score")),
+                    cvss_vector=_safe_cvss_vector(finding.get("cvss_vector")),
                     cwe_id=finding.get("cwe_id"),
                     description=finding.get("description") or finding.get("evidence") or "",
                     affected_endpoint=finding.get("affected_endpoint", target),

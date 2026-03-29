@@ -11,7 +11,7 @@ from pathlib import Path
 
 from backend.config import settings
 from backend.db.database import init_db, close_db
-from backend.api.v1 import scans, targets, prompts, reports, dashboard, vulnerabilities, settings as settings_router, agent, agent_tasks, scheduler, vuln_lab, terminal, sandbox, knowledge, mcp, providers, full_ia, cli_agent
+from backend.api.v1 import scans, targets, prompts, reports, dashboard, vulnerabilities, settings as settings_router, agent, agent_tasks, scheduler, vuln_lab, terminal, sandbox, knowledge, mcp, providers, cli_agent
 from backend.api.websocket import manager as ws_manager
 
 
@@ -116,7 +116,6 @@ app.include_router(sandbox.router, prefix="/api/v1/sandbox", tags=["Sandbox"])
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["Knowledge"])
 app.include_router(mcp.router, prefix="/api/v1/mcp", tags=["MCP Servers"])
 app.include_router(providers.router, prefix="/api/v1/providers", tags=["Providers"])
-app.include_router(full_ia.router, prefix="/api/v1/full-ia", tags=["FULL AI Testing"])
 app.include_router(cli_agent.router)
 
 

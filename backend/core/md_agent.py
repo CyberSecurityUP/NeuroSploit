@@ -1,18 +1,19 @@
 """
-NeuroSploit v3 - Markdown-Based Agent System
+NeuroSploit v3 - Markdown-Based Agent System (Real Execution)
 
-Each .md file in prompts/md_library/ acts as a self-contained agent definition
-with its own methodology, system prompt, and output format.
+Each .md file in prompts/agents/ acts as a self-contained agent definition.
+Agents EXECUTE REAL HTTP TESTS against the target — not theoretical analysis.
 
-After recon completes, the MdAgentOrchestrator dispatches each selected agent
-against the target URL with full recon context.  Findings flow through the
-normal validation pipeline.
+Cycle per agent:
+  1. PLAN  — LLM reads methodology + recon context → generates test plan (HTTP requests)
+  2. EXECUTE — sends actual HTTP requests against the target
+  3. ANALYZE — LLM reviews real responses → confirms/rejects with evidence
 
 Components:
   - MdAgentDefinition: parsed .md agent metadata
-  - MdAgent(SpecialistAgent): executes a single .md agent via LLM
+  - MdAgent(SpecialistAgent): plans, executes, and analyzes real tests
   - MdAgentLibrary: loads & indexes all .md agent definitions
-  - MdAgentOrchestrator: runs selected agents post-recon
+  - MdAgentOrchestrator: runs agents in phases (recon → offensive → generalist)
 """
 
 import asyncio
@@ -20,20 +21,25 @@ import json
 import logging
 import re
 import time
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+from urllib.parse import urljoin, urlparse
 
-from core.agent_base import SpecialistAgent, AgentResult
+try:
+    import aiohttp
+    HAS_AIOHTTP = True
+except ImportError:
+    HAS_AIOHTTP = False
+
+try:
+    from backend.core.agent_base import SpecialistAgent, AgentResult
+except ImportError:
+    from core.agent_base import SpecialistAgent, AgentResult
 
 logger = logging.getLogger(__name__)
 
 # ─── Agent categories ───────────────────────────────────────────────
-# Only 'offensive' agents are dispatched during auto-pentest by default.
-# Others are available on explicit selection.
-
-# General-purpose agents (from md_library)
 AGENT_CATEGORIES: Dict[str, str] = {
     "pentest_generalist": "generalist",
     "red_team_agent": "generalist",
@@ -42,16 +48,19 @@ AGENT_CATEGORIES: Dict[str, str] = {
     "exploit_expert": "generalist",
     "cwe_expert": "generalist",
     "replay_attack_specialist": "generalist",
+    "recon_deep": "recon",
     "Pentestfull": "methodology",
 }
-# All vuln-type agents default to "offensive" (handled in _load_all fallback)
 
-# Agents that should NOT run as standalone agents (methodology files, dupes)
 SKIP_AGENTS = {"Pentestfull"}
+RUN_ALL_BY_DEFAULT = True
 
-# Default agents to run when none are explicitly selected:
-# Run ALL vuln-type (offensive) agents — the system is designed for 100-agent dispatch
-DEFAULT_OFFENSIVE_AGENTS: List[str] = []  # Empty = use all offensive agents
+# Max tests per agent to execute
+MAX_TESTS_PER_AGENT = 5
+# Max iterations of the plan→execute→analyze loop
+MAX_ITERATIONS = 2
+# HTTP request timeout per test
+REQUEST_TIMEOUT = 10
 
 
 # ─── Data classes ────────────────────────────────────────────────────
@@ -59,22 +68,24 @@ DEFAULT_OFFENSIVE_AGENTS: List[str] = []  # Empty = use all offensive agents
 @dataclass
 class MdAgentDefinition:
     """Parsed .md agent definition."""
-    name: str                       # filename stem (e.g. "owasp_expert")
-    display_name: str               # human-readable (e.g. "OWASP Expert")
-    category: str                   # offensive / analysis / defensive / methodology
-    user_prompt_template: str       # raw user prompt with {placeholders}
-    system_prompt: str              # system prompt
-    file_path: str                  # absolute path to .md file
-    placeholders: List[str] = field(default_factory=list)  # detected {vars}
+    name: str
+    display_name: str
+    category: str  # offensive / generalist / recon / methodology
+    user_prompt_template: str
+    system_prompt: str
+    file_path: str
+    placeholders: List[str] = field(default_factory=list)
 
 
-# ─── MdAgent: executes one .md agent via LLM ────────────────────────
+# ─── MdAgent: plans, executes, and analyzes real tests ───────────────
 
 class MdAgent(SpecialistAgent):
-    """Executes a single .md-based agent against a target URL.
+    """Executes a single .md-based agent with REAL HTTP testing.
 
-    The agent fills the .md template with recon context, sends to the LLM,
-    then parses structured findings from the response.
+    Cycle:
+      1. PLAN  — sends methodology + recon to LLM → gets structured test plan
+      2. EXECUTE — runs actual HTTP requests against the target
+      3. ANALYZE — LLM reviews real responses, confirms findings with evidence
     """
 
     def __init__(
@@ -85,6 +96,9 @@ class MdAgent(SpecialistAgent):
         budget_allocation: float = 0.0,
         budget=None,
         validation_judge=None,
+        http_session=None,
+        auth_headers: Optional[Dict] = None,
+        cancel_fn: Optional[Callable] = None,
     ):
         super().__init__(
             name=f"md_{definition.name}",
@@ -95,9 +109,12 @@ class MdAgent(SpecialistAgent):
         )
         self.definition = definition
         self.validation_judge = validation_judge
+        self.http_session = http_session
+        self.auth_headers = auth_headers or {}
+        self.cancel_fn = cancel_fn or (lambda: False)
 
     async def run(self, context: Dict) -> AgentResult:
-        """Execute the .md agent against the target with recon context."""
+        """Execute the full PLAN → EXECUTE → ANALYZE cycle."""
         result = AgentResult(agent_name=self.name)
         target = context.get("target", "")
 
@@ -105,41 +122,511 @@ class MdAgent(SpecialistAgent):
             result.error = "No target provided"
             return result
 
-        # Build prompts
-        user_prompt = self._build_user_prompt(context)
-        system_prompt = self.definition.system_prompt
+        # Check LLM availability upfront
+        if not self.llm:
+            result.error = "No LLM provided"
+            logger.warning(f"[{self.definition.name}] No LLM available — skipping")
+            return result
 
-        # LLM call
-        try:
-            response = await self._llm_call(
-                f"{system_prompt}\n\n{user_prompt}",
-                category="md_agent",
-                estimated_tokens=2000,
+        if not hasattr(self.llm, 'generate'):
+            result.error = f"LLM has no generate method (type: {type(self.llm).__name__})"
+            logger.warning(f"[{self.definition.name}] {result.error}")
+            return result
+
+        all_findings = []
+
+        for iteration in range(1, MAX_ITERATIONS + 1):
+            if self.cancel_fn():
+                break
+
+            # ── PHASE 1: PLAN ──
+            plan_prompt = self._build_plan_prompt(context, iteration, all_findings)
+            plan_response = await self._llm_with_retry(plan_prompt)
+
+            if not plan_response:
+                result.error = "LLM plan call failed after retries"
+                break
+
+            tests = self._parse_test_plan(plan_response, target)
+            if not tests:
+                # No actionable tests — fall back to theoretical analysis
+                theoretical = self._parse_findings(plan_response, target)
+                all_findings.extend(theoretical)
+                break
+
+            # ── PHASE 2: EXECUTE ──
+            test_results = await self._execute_tests(tests, target)
+            if not test_results:
+                break
+
+            # ── PHASE 3: ANALYZE ──
+            analysis_prompt = self._build_analysis_prompt(
+                context, test_results, target
             )
-        except Exception as e:
-            result.error = f"LLM call failed: {e}"
-            return result
+            analysis_response = await self._llm_with_retry(analysis_prompt)
+            if not analysis_response:
+                break
 
-        if not response:
-            result.error = "Empty LLM response"
-            return result
+            if analysis_response:
+                confirmed = self._parse_analysis_findings(
+                    analysis_response, test_results, target
+                )
+                all_findings.extend(confirmed)
 
-        # Parse findings from structured response
-        parsed = self._parse_findings(response, target)
-        result.findings = parsed
+                # If we found confirmed vulns, no need for another iteration
+                if confirmed:
+                    break
+
+        result.findings = all_findings
         result.data = {
             "agent_name": self.definition.display_name,
             "agent_category": self.definition.category,
-            "findings_count": len(parsed),
-            "raw_response_length": len(response),
+            "findings_count": len(all_findings),
+            "execution_mode": "real_http",
         }
         self.tasks_completed += 1
-
         return result
 
-    # ── Prompt building ──────────────────────────────────────────────
+    # ── LLM call with retry ─────────────────────────────────────────
 
-    def _build_user_prompt(self, context: Dict) -> str:
+    async def _llm_with_retry(self, prompt: str, max_retries: int = 3) -> Optional[str]:
+        """Call LLM with exponential backoff retry."""
+        last_error = ""
+        for attempt in range(max_retries):
+            try:
+                result = await self.llm.generate(prompt)
+                if result and len(result.strip()) > 10:
+                    return result
+                last_error = f"Empty/short response (len={len(result) if result else 0})"
+                logger.debug(f"[{self.definition.name}] {last_error}, attempt {attempt + 1}")
+            except Exception as e:
+                last_error = str(e)[:200]
+                logger.warning(f"[{self.definition.name}] LLM error (attempt {attempt + 1}/{max_retries}): {last_error}")
+
+            if attempt < max_retries - 1:
+                delay = 5 * (attempt + 1)  # 5s, 10s
+                await asyncio.sleep(delay)
+
+        logger.warning(f"[{self.definition.name}] All {max_retries} attempts failed: {last_error}")
+        return None
+
+    # ── PLAN prompt ──────────────────────────────────────────────────
+
+    def _build_plan_prompt(
+        self, context: Dict, iteration: int, previous_findings: List[Dict]
+    ) -> str:
+        """Build the planning prompt: methodology + recon → structured test plan."""
+        target = context.get("target", "")
+        endpoints = context.get("endpoints", [])
+        technologies = context.get("technologies", [])
+        parameters = context.get("parameters", {})
+        waf_info = context.get("waf_info", "")
+        forms = context.get("forms", [])
+
+        # Fill the .md template with recon context for methodology
+        methodology = self._fill_template(context)
+
+        # Recon summary for the LLM
+        endpoint_list = []
+        for ep in endpoints[:12]:
+            if isinstance(ep, dict):
+                url = ep.get("url", "")
+                method = ep.get("method", "GET")
+                params = ep.get("params", [])
+                endpoint_list.append(f"  {method} {url} params={params}")
+            else:
+                endpoint_list.append(f"  GET {ep}")
+
+        # JS sinks for DOM-related agents
+        js_sinks = context.get("js_sinks", [])
+        js_sinks_str = ""
+        if js_sinks:
+            sink_list = []
+            for s in js_sinks[:5]:
+                if hasattr(s, 'sink_type'):
+                    sink_list.append(f"  {s.sink_type}: {getattr(s, 'code_snippet', '')[:60]}")
+                elif isinstance(s, dict):
+                    sink_list.append(f"  {s.get('sink_type','?')}: {s.get('code_snippet','')[:60]}")
+            if sink_list:
+                js_sinks_str = f"\nJS Sinks (DOM XSS vectors):\n" + chr(10).join(sink_list)
+
+        # API endpoints
+        api_eps = context.get("api_endpoints", [])
+        api_str = ""
+        if api_eps:
+            api_str = f"\nAPI endpoints: {', '.join(str(a) for a in api_eps[:5])}"
+
+        # Forms
+        forms_str = ""
+        if forms:
+            form_list = []
+            for f in (forms if isinstance(forms, list) else [])[:3]:
+                if isinstance(f, dict):
+                    form_list.append(f"  {f.get('method','POST')} {f.get('action','?')} inputs={f.get('inputs',[])}")
+            if form_list:
+                forms_str = f"\nForms:\n" + chr(10).join(form_list)
+
+        recon_summary = f"""Target: {target}
+Tech: {', '.join(technologies[:5]) or 'Unknown'} | WAF: {waf_info or 'None'}
+Endpoints ({len(endpoints)} total, showing {len(endpoint_list)}):
+{chr(10).join(endpoint_list)}
+Params: {json.dumps(dict(list(parameters.items())[:8]) if isinstance(parameters, dict) else {}, default=str)}{forms_str}{js_sinks_str}{api_str}"""
+
+        previous_str = ""
+        if previous_findings:
+            previous_str = f"\n\nPrevious iteration found {len(previous_findings)} potential issues. Adapt your tests to probe deeper or try different vectors."
+
+        system = self.definition.system_prompt or (
+            f"You are a {self.definition.display_name} security testing agent. "
+            f"You perform REAL penetration tests by generating HTTP requests that will be executed against the target."
+        )
+
+        prompt = f"""{system}
+
+## Your Methodology
+{methodology}
+
+## Reconnaissance Data
+{recon_summary}
+{previous_str}
+
+## Your Task (Iteration {iteration}/{MAX_ITERATIONS})
+
+Based on your methodology and the recon data above, generate a CONCRETE test plan.
+Each test must be an HTTP request that will be ACTUALLY EXECUTED against the target.
+
+You MUST output a JSON block with this exact structure:
+
+```json
+{{
+  "reasoning": "Brief explanation of your attack strategy",
+  "tests": [
+    {{
+      "name": "Test name describing what you're checking",
+      "url": "Full URL to test (use target endpoints from recon)",
+      "method": "GET or POST",
+      "params": {{"param_name": "payload_value"}},
+      "headers": {{"Header-Name": "value"}},
+      "body": "POST body if needed (empty string for GET)",
+      "injection_point": "parameter|header|body",
+      "expected_if_vulnerable": "What to look for in the response if vulnerable"
+    }}
+  ]
+}}
+```
+
+Rules:
+- Generate {MAX_TESTS_PER_AGENT} specific tests maximum
+- Use REAL endpoints from the recon data
+- Use REAL parameters discovered
+- Payloads must be safe for testing (no destructive operations)
+- Each test targets a specific vulnerability pattern from your methodology
+- Include the expected_if_vulnerable field so we can verify results
+"""
+        return prompt
+
+    # ── EXECUTE tests ────────────────────────────────────────────────
+
+    async def _execute_tests(
+        self, tests: List[Dict], default_target: str
+    ) -> List[Dict]:
+        """Execute HTTP requests from the test plan. Returns results with real responses."""
+        results = []
+
+        # Create session if needed
+        own_session = False
+        session = self.http_session
+        if not session and HAS_AIOHTTP:
+            connector = aiohttp.TCPConnector(ssl=False)
+            session = aiohttp.ClientSession(connector=connector)
+            own_session = True
+        elif not session:
+            logger.warning(f"[{self.definition.name}] No HTTP session and aiohttp not available")
+            return []
+
+        try:
+            for test in tests[:MAX_TESTS_PER_AGENT]:
+                if self.cancel_fn():
+                    break
+
+                test_url = test.get("url", default_target)
+                method = test.get("method", "GET").upper()
+                params = test.get("params", {})
+                test_headers = test.get("headers", {})
+                body = test.get("body", "")
+                test_name = test.get("name", "unnamed")
+                expected = test.get("expected_if_vulnerable", "")
+
+                # Merge auth headers
+                req_headers = {**self.auth_headers, **test_headers}
+
+                start = time.time()
+                try:
+                    kwargs: Dict[str, Any] = {
+                        "timeout": aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+                        "headers": req_headers,
+                        "allow_redirects": False,
+                        "ssl": False,
+                    }
+
+                    if method == "GET":
+                        kwargs["params"] = params
+                    elif method == "POST":
+                        if body:
+                            kwargs["data"] = body
+                        elif params:
+                            kwargs["data"] = params
+
+                    async with session.request(method, test_url, **kwargs) as resp:
+                        status = resp.status
+                        resp_headers = dict(resp.headers)
+                        resp_body = await resp.text(errors="replace")
+                        elapsed = time.time() - start
+
+                    results.append({
+                        "test_name": test_name,
+                        "url": test_url,
+                        "method": method,
+                        "params": params,
+                        "payload": json.dumps(params) if params else body,
+                        "status": status,
+                        "response_headers": {k: v for k, v in list(resp_headers.items())[:15]},
+                        "body_preview": resp_body[:2000],
+                        "body_length": len(resp_body),
+                        "response_time": round(elapsed, 3),
+                        "expected_if_vulnerable": expected,
+                    })
+
+                except asyncio.TimeoutError:
+                    results.append({
+                        "test_name": test_name,
+                        "url": test_url,
+                        "method": method,
+                        "status": 0,
+                        "body_preview": "TIMEOUT",
+                        "body_length": 0,
+                        "response_time": REQUEST_TIMEOUT,
+                        "expected_if_vulnerable": expected,
+                    })
+                except Exception as e:
+                    results.append({
+                        "test_name": test_name,
+                        "url": test_url,
+                        "method": method,
+                        "status": 0,
+                        "body_preview": f"ERROR: {str(e)[:200]}",
+                        "body_length": 0,
+                        "response_time": 0,
+                        "expected_if_vulnerable": expected,
+                    })
+
+                # Small delay between requests to avoid hammering
+                await asyncio.sleep(0.15)
+
+        finally:
+            if own_session:
+                await session.close()
+
+        return results
+
+    # ── ANALYZE prompt ───────────────────────────────────────────────
+
+    def _build_analysis_prompt(
+        self, context: Dict, test_results: List[Dict], target: str
+    ) -> str:
+        """Build the analysis prompt: real HTTP responses → confirmed findings."""
+        vuln_type = self.definition.name
+
+        results_summary = []
+        for tr in test_results[:MAX_TESTS_PER_AGENT]:
+            results_summary.append({
+                "test_name": tr["test_name"],
+                "url": tr.get("url", ""),
+                "method": tr.get("method", ""),
+                "status": tr.get("status", 0),
+                "response_time": tr.get("response_time", 0),
+                "body_preview": tr.get("body_preview", "")[:1200],
+                "body_length": tr.get("body_length", 0),
+                "response_headers": tr.get("response_headers", {}),
+                "expected_if_vulnerable": tr.get("expected_if_vulnerable", ""),
+            })
+
+        results_json = json.dumps(results_summary, indent=2, default=str)[:8000]
+
+        return f"""You are a {self.definition.display_name} analyzing REAL HTTP responses from penetration tests against {target}.
+
+## Test Results (ACTUAL HTTP responses — not simulated)
+{results_json}
+
+## Your Task
+
+Analyze each test result and determine if a REAL vulnerability was found.
+You are looking at ACTUAL server responses. Be rigorous:
+
+- A vulnerability is CONFIRMED only if the response PROVES exploitation worked
+- Look for: payload reflection, error messages, data leaks, behavior changes, timing anomalies
+- Compare the "expected_if_vulnerable" hint with what actually appeared in the response
+- Do NOT hallucinate — if the evidence is not in the response body/headers/status, it's NOT confirmed
+- Status code alone is NOT proof (many 200s are normal, many 403s are WAF blocks)
+
+Output a JSON block:
+```json
+{{
+  "analysis": [
+    {{
+      "test_name": "Name of the test",
+      "is_vulnerable": true/false,
+      "confidence": "high|medium|low",
+      "evidence": "Exact text/pattern from the response that proves the vulnerability",
+      "title": "Short vulnerability title",
+      "severity": "critical|high|medium|low|info",
+      "explanation": "Why this is a real vulnerability (reference specific response content)"
+    }}
+  ]
+}}
+```
+
+Only include entries where is_vulnerable is true. If no vulnerabilities found, return empty analysis array.
+Be STRICT — false positives are worse than false negatives."""
+
+    # ── Parse test plan from LLM ─────────────────────────────────────
+
+    def _parse_test_plan(self, response: str, target: str) -> List[Dict]:
+        """Extract structured test plan from LLM plan response."""
+        # Find JSON block
+        json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response)
+        if not json_match:
+            json_match = re.search(r'(\{[\s\S]*"tests"[\s\S]*\})', response)
+
+        if not json_match:
+            return []
+
+        try:
+            plan = json.loads(json_match.group(1))
+        except json.JSONDecodeError:
+            # Try to fix common JSON issues
+            try:
+                cleaned = re.sub(r',\s*}', '}', json_match.group(1))
+                cleaned = re.sub(r',\s*]', ']', cleaned)
+                plan = json.loads(cleaned)
+            except json.JSONDecodeError:
+                return []
+
+        tests = plan.get("tests", [])
+        if not isinstance(tests, list):
+            return []
+
+        # Validate and normalize tests
+        valid_tests = []
+        for t in tests[:MAX_TESTS_PER_AGENT]:
+            if not isinstance(t, dict):
+                continue
+            url = t.get("url", "")
+            if not url:
+                continue
+            # Resolve relative URLs
+            if url.startswith("/"):
+                url = urljoin(target, url)
+            # Ensure URL is within scope (same host)
+            if urlparse(url).netloc and urlparse(url).netloc != urlparse(target).netloc:
+                continue
+            t["url"] = url
+            t["method"] = t.get("method", "GET").upper()
+            if t["method"] not in ("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"):
+                t["method"] = "GET"
+            valid_tests.append(t)
+
+        return valid_tests
+
+    # ── Parse analysis findings from LLM ─────────────────────────────
+
+    def _parse_analysis_findings(
+        self, response: str, test_results: List[Dict], target: str
+    ) -> List[Dict]:
+        """Extract confirmed findings from LLM analysis of real responses."""
+        json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response)
+        if not json_match:
+            json_match = re.search(r'(\{[\s\S]*"analysis"[\s\S]*\})', response)
+
+        if not json_match:
+            # Fall back to parsing FINDING: blocks
+            return self._parse_findings(response, target)
+
+        try:
+            data = json.loads(json_match.group(1))
+        except json.JSONDecodeError:
+            return self._parse_findings(response, target)
+
+        findings = []
+        for entry in data.get("analysis", []):
+            if not isinstance(entry, dict):
+                continue
+            if not entry.get("is_vulnerable"):
+                continue
+            if entry.get("confidence") not in ("high", "medium"):
+                continue
+
+            evidence = entry.get("evidence", "")
+            test_name = entry.get("test_name", "")
+
+            # Anti-hallucination: verify evidence exists in actual response
+            matched_result = None
+            for tr in test_results:
+                if tr.get("test_name") == test_name:
+                    matched_result = tr
+                    break
+
+            if evidence and matched_result:
+                body = matched_result.get("body_preview", "")
+                headers_str = json.dumps(matched_result.get("response_headers", {}))
+                combined = body + headers_str
+                # Check evidence is grounded in actual response
+                evidence_words = [w for w in evidence.lower().split() if len(w) > 3]
+                if evidence_words:
+                    grounded = sum(1 for w in evidence_words if w in combined.lower())
+                    if grounded < len(evidence_words) * 0.3:
+                        logger.debug(
+                            f"[{self.definition.name}] REJECTED: evidence not grounded "
+                            f"for {test_name}"
+                        )
+                        continue
+
+            vuln_type = self.definition.name
+
+            findings.append({
+                "title": entry.get("title", f"{self.definition.display_name} Finding"),
+                "severity": entry.get("severity", "medium"),
+                "vulnerability_type": vuln_type,
+                "cvss_score": 0.0,
+                "cwe_id": "",
+                "description": entry.get("explanation", ""),
+                "affected_endpoint": matched_result.get("url", target) if matched_result else target,
+                "evidence": evidence,
+                "poc_code": (
+                    f"# Request:\n{matched_result.get('method', 'GET')} "
+                    f"{matched_result.get('url', target)}\n"
+                    f"# Params: {json.dumps(matched_result.get('params', {}), default=str)}\n"
+                    f"# Response Status: {matched_result.get('status', '?')}\n"
+                    f"# Response Body (excerpt):\n{matched_result.get('body_preview', '')[:500]}"
+                ) if matched_result else "",
+                "impact": entry.get("explanation", ""),
+                "remediation": "",
+                "source_agent": self.definition.display_name,
+                "parameter": "",
+                "confidence": entry.get("confidence", "medium"),
+                "http_evidence": {
+                    "request_url": matched_result.get("url", "") if matched_result else "",
+                    "request_method": matched_result.get("method", "") if matched_result else "",
+                    "response_status": matched_result.get("status", 0) if matched_result else 0,
+                    "response_time": matched_result.get("response_time", 0) if matched_result else 0,
+                } if matched_result else {},
+            })
+
+        return findings
+
+    # ── Template filling (for methodology context) ───────────────────
+
+    def _fill_template(self, context: Dict) -> str:
         """Fill the .md template placeholders with recon context."""
         target = context.get("target", "")
         endpoints = context.get("endpoints", [])
@@ -149,50 +636,6 @@ class MdAgent(SpecialistAgent):
         forms = context.get("forms", [])
         waf_info = context.get("waf_info", "")
         existing_findings = context.get("existing_findings", [])
-
-        # Build context objects for different placeholder patterns
-        scope_json = json.dumps({
-            "target": target,
-            "endpoints_discovered": len(endpoints),
-            "technologies": technologies[:15],
-            "waf": waf_info or "Not detected",
-        }, indent=2)
-
-        initial_info_json = json.dumps({
-            "target_url": target,
-            "endpoints": [
-                ep.get("url", ep) if isinstance(ep, dict) else str(ep)
-                for ep in endpoints[:30]
-            ],
-            "parameters": (
-                {k: v for k, v in list(parameters.items())[:20]}
-                if isinstance(parameters, dict) else {}
-            ),
-            "technologies": technologies[:15],
-            "headers": {k: v for k, v in list(headers.items())[:10]},
-            "forms": [
-                {"action": f.get("action", ""), "method": f.get("method", "GET")}
-                for f in (forms[:10] if isinstance(forms, list) else [])
-            ],
-        }, indent=2)
-
-        target_environment_json = json.dumps({
-            "target": target,
-            "technology_stack": technologies[:10],
-            "waf": waf_info or "None detected",
-            "endpoints_count": len(endpoints),
-            "parameters_count": (
-                len(parameters) if isinstance(parameters, dict) else 0
-            ),
-        }, indent=2)
-
-        existing_findings_summary = ""
-        if existing_findings:
-            existing_findings_summary = "\n".join(
-                f"- [{getattr(f, 'severity', 'unknown').upper()}] "
-                f"{getattr(f, 'title', '?')} at {getattr(f, 'affected_endpoint', '?')}"
-                for f in existing_findings[:20]
-            )
 
         recon_data_json = json.dumps({
             "target": target,
@@ -205,135 +648,87 @@ class MdAgent(SpecialistAgent):
                 {k: v for k, v in list(parameters.items())[:20]}
                 if isinstance(parameters, dict) else {}
             ),
-            "existing_findings": existing_findings_summary or "None yet",
         }, indent=2)
 
-        # Replacement map for all known placeholders
+        scope_json = json.dumps({
+            "target": target,
+            "endpoints_discovered": len(endpoints),
+            "technologies": technologies[:15],
+            "waf": waf_info or "Not detected",
+        }, indent=2)
+
+        existing_summary = ""
+        if existing_findings:
+            existing_summary = "\n".join(
+                f"- [{getattr(f, 'severity', 'unknown').upper()}] "
+                f"{getattr(f, 'title', '?')} at {getattr(f, 'affected_endpoint', '?')}"
+                for f in existing_findings[:20]
+            )
+
         replacements = {
-            # New vuln-type agents use these two:
             "{target}": target,
             "{recon_json}": recon_data_json,
-            # Legacy generalist agents use these:
             "{scope_json}": scope_json,
-            "{initial_info_json}": initial_info_json,
-            "{mission_objectives_json}": json.dumps({
-                "primary": f"Identify and exploit vulnerabilities on {target}",
-                "scope": "Web application only",
-                "existing_findings": len(existing_findings),
-            }, indent=2),
-            "{target_environment_json}": target_environment_json,
+            "{initial_info_json}": recon_data_json,
+            "{target_environment_json}": scope_json,
             "{user_input}": target,
-            "{target_info_json}": initial_info_json,
+            "{target_info_json}": recon_data_json,
             "{recon_data_json}": recon_data_json,
-            "{vulnerability_details_json}": json.dumps({
-                "target": target,
-                "known_technologies": technologies[:10],
-                "endpoints": [
-                    ep.get("url", ep) if isinstance(ep, dict) else str(ep)
-                    for ep in endpoints[:15]
-                ],
-            }, indent=2),
-            "{traffic_logs_json}": json.dumps({
-                "target": target,
-                "note": "Live traffic analysis - test authentication replay on discovered endpoints",
-                "endpoints": [
-                    ep.get("url", ep) if isinstance(ep, dict) else str(ep)
-                    for ep in endpoints[:10]
-                ],
-            }, indent=2),
+            "{mission_objectives_json}": json.dumps({
+                "primary": f"Test {target} for vulnerabilities",
+                "existing_findings": len(existing_findings),
+            }),
+            "{vulnerability_details_json}": recon_data_json,
+            "{traffic_logs_json}": json.dumps({"target": target}),
             "{code_vulnerability_json}": json.dumps({
-                "target": target,
-                "technologies": technologies[:10],
-                "note": "Analyze target for CWE weaknesses based on observed behavior",
-            }, indent=2),
+                "target": target, "technologies": technologies[:10],
+            }),
         }
 
-        # Apply replacements
         prompt = self.definition.user_prompt_template
         for placeholder, value in replacements.items():
             prompt = prompt.replace(placeholder, value)
 
-        # Inject recon context appendix if any placeholders remain unfilled
-        if "{" in prompt:
-            prompt += f"\n\n**Recon Context:**\n{recon_data_json}"
+        return prompt[:2000]  # Cap methodology length to save tokens
 
-        return prompt
-
-    # ── Finding parsing ──────────────────────────────────────────────
+    # ── Legacy finding parsing (fallback for theoretical responses) ───
 
     def _parse_findings(self, response: str, target: str) -> List[Dict]:
-        """Parse structured findings from LLM response.
-
-        Handles multiple output formats from different .md agents:
-        - FINDING: key-value blocks (vuln-type agents)
-        - Headed sections (## [SEVERITY] Vulnerability: ...)
-        - OWASP format (## OWASP A0X: ...)
-        - Generic bold-label patterns
-        """
+        """Parse FINDING: blocks or ## sections from LLM response (fallback)."""
         findings = []
 
-        # Pattern 1: FINDING: blocks (used by 100 vuln-type agents)
+        # Pattern 1: FINDING: blocks
         finding_blocks = re.split(r"(?:^|\n)FINDING:", response)
         if len(finding_blocks) > 1:
-            for block in finding_blocks[1:]:  # skip text before first FINDING:
+            for block in finding_blocks[1:]:
                 parsed = self._parse_finding_block(block, target)
                 if parsed:
                     findings.append(parsed)
             if findings:
                 return findings
 
-        # Pattern 2: Section-based findings (## [SEVERITY] Vulnerability: Title)
+        # Pattern 2: Section-based
         vuln_sections = re.findall(
             r"##\s*\[?(Critical|High|Medium|Low|Info)\]?\s*(?:Vulnerability|Attack|OWASP\s+A\d+)[\s:]*([^\n]+)",
             response, re.IGNORECASE,
         )
-
         if vuln_sections:
             parts = re.split(
                 r"(?=##\s*\[?(?:Critical|High|Medium|Low|Info)\]?\s*(?:Vulnerability|Attack|OWASP))",
                 response, flags=re.IGNORECASE,
             )
             for part in parts:
-                finding = self._parse_finding_section(part, target)
-                if finding:
-                    findings.append(finding)
-        else:
-            # Pattern 3: Generic vulnerability mentions with evidence
-            generic = re.findall(
-                r"\*\*(?:Vulnerability|Finding|Issue)[:\s]*\*\*\s*([^\n]+)",
-                response, re.IGNORECASE,
-            )
-            for title in generic:
-                findings.append({
-                    "title": title.strip(),
-                    "severity": "medium",
-                    "vulnerability_type": self._infer_vuln_type(title),
-                    "description": "",
-                    "affected_endpoint": target,
-                    "evidence": "",
-                    "poc_code": "",
-                    "source_agent": self.definition.display_name,
-                })
+                f = self._parse_finding_section(part, target)
+                if f:
+                    findings.append(f)
 
         return findings
 
     def _parse_finding_block(self, block: str, target: str) -> Optional[Dict]:
-        """Parse a FINDING: key-value block from vuln-type agent response.
-
-        Expected format:
-            FINDING:
-            - Title: SSRF in url parameter at /api/fetch
-            - Severity: High
-            - CWE: CWE-918
-            - Endpoint: https://target.com/api/fetch
-            - Evidence: Internal content returned
-            - Impact: Internal network access
-            - Remediation: Whitelist URLs
-        """
+        """Parse a FINDING: key-value block."""
         if not block.strip():
             return None
 
-        # Extract key-value pairs (- Key: Value)
         kvs: Dict[str, str] = {}
         for match in re.finditer(r"-\s*([A-Za-z][\w\s/]*?):\s*(.+)", block):
             key = match.group(1).strip().lower().replace(" ", "_")
@@ -343,7 +738,6 @@ class MdAgent(SpecialistAgent):
         if not title:
             return None
 
-        # Extract severity
         sev_raw = kvs.get("severity", "medium").lower().strip()
         severity = "medium"
         for s in ("critical", "high", "medium", "low", "info"):
@@ -351,22 +745,14 @@ class MdAgent(SpecialistAgent):
                 severity = s
                 break
 
-        # Extract CWE
         cwe = ""
-        cwe_raw = kvs.get("cwe", "")
-        cwe_match = re.search(r"CWE-(\d+)", cwe_raw)
+        cwe_match = re.search(r"CWE-(\d+)", kvs.get("cwe", ""))
         if cwe_match:
             cwe = f"CWE-{cwe_match.group(1)}"
 
-        # Use agent name as vuln type if it matches a known type
         vuln_type = self.definition.name
-        if vuln_type.startswith("md_"):
-            vuln_type = vuln_type[3:]
-
-        # Extract endpoint
         endpoint = kvs.get("endpoint", kvs.get("url", target)).strip()
 
-        # Extract code blocks as PoC
         poc = ""
         code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", block, re.DOTALL)
         if code_blocks:
@@ -389,11 +775,10 @@ class MdAgent(SpecialistAgent):
         }
 
     def _parse_finding_section(self, section: str, target: str) -> Optional[Dict]:
-        """Parse a single finding section from the response."""
+        """Parse a ## [SEVERITY] Vulnerability: ... section."""
         if not section.strip():
             return None
 
-        # Extract title
         title_match = re.search(
             r"##\s*\[?(?:Critical|High|Medium|Low|Info)\]?\s*(?:Vulnerability|Attack|OWASP[^:]*)[:\s]*(.+)",
             section, re.IGNORECASE,
@@ -402,7 +787,6 @@ class MdAgent(SpecialistAgent):
         if not title:
             return None
 
-        # Extract severity from header or table
         severity = "medium"
         sev_match = re.search(
             r"\*\*Severity\*\*\s*\|?\s*(Critical|High|Medium|Low|Info)",
@@ -418,77 +802,34 @@ class MdAgent(SpecialistAgent):
             if header_sev:
                 severity = header_sev.group(1).lower()
 
-        # Extract CVSS
-        cvss_match = re.search(r"(\d+\.\d+)", section[:500])
-        cvss = float(cvss_match.group(1)) if cvss_match else 0.0
-
-        # Extract CWE
         cwe_match = re.search(r"CWE-(\d+)", section)
         cwe = f"CWE-{cwe_match.group(1)}" if cwe_match else ""
 
-        # Extract endpoint
-        endpoint = target
-        ep_match = re.search(
-            r"\*\*Endpoint\*\*\s*\|?\s*(https?://[^\s|]+)",
-            section, re.IGNORECASE,
-        )
-        if ep_match:
-            endpoint = ep_match.group(1).strip()
-
-        # Extract description
-        desc = ""
-        desc_match = re.search(
-            r"###?\s*Description\s*\n(.*?)(?=\n###?\s|\Z)",
-            section, re.DOTALL | re.IGNORECASE,
-        )
-        if desc_match:
-            desc = desc_match.group(1).strip()[:1000]
-
-        # Extract PoC code blocks
         poc = ""
         code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", section, re.DOTALL)
         if code_blocks:
-            poc = "\n---\n".join(block.strip() for block in code_blocks[:3])
+            poc = "\n---\n".join(b.strip() for b in code_blocks[:3])
 
-        # Extract evidence/proof
         evidence = ""
         ev_match = re.search(
-            r"###?\s*(?:Proof|Evidence|Tool (?:Output|Evidence))\s*\n(.*?)(?=\n###?\s|\Z)",
+            r"###?\s*(?:Proof|Evidence)\s*\n(.*?)(?=\n###?\s|\Z)",
             section, re.DOTALL | re.IGNORECASE,
         )
         if ev_match:
             evidence = ev_match.group(1).strip()[:1000]
 
-        # Extract impact
-        impact = ""
-        imp_match = re.search(
-            r"###?\s*Impact\s*\n(.*?)(?=\n###?\s|\Z)",
-            section, re.DOTALL | re.IGNORECASE,
-        )
-        if imp_match:
-            impact = imp_match.group(1).strip()[:500]
-
-        # Extract remediation
-        remediation = ""
-        rem_match = re.search(
-            r"###?\s*(?:Remediation|Mitigations?|Fix)\s*\n(.*?)(?=\n###?\s|\Z)",
-            section, re.DOTALL | re.IGNORECASE,
-        )
-        if rem_match:
-            remediation = rem_match.group(1).strip()[:500]
-
         return {
             "title": title,
             "severity": severity,
             "vulnerability_type": self._infer_vuln_type(title),
-            "cvss_score": cvss,
+            "cvss_score": 0.0,
             "cwe_id": cwe,
-            "description": desc,
-            "affected_endpoint": endpoint,
+            "description": "",
+            "affected_endpoint": target,
             "evidence": evidence,
             "poc_code": poc,
-            "impact": impact,
-            "remediation": remediation,
+            "impact": "",
+            "remediation": "",
             "source_agent": self.definition.display_name,
         }
 
@@ -497,61 +838,24 @@ class MdAgent(SpecialistAgent):
         """Infer vulnerability type from finding title."""
         title_lower = title.lower()
         type_map = {
-            "sql injection": "sqli_error",
-            "sqli": "sqli_error",
-            "xss": "xss_reflected",
-            "cross-site scripting": "xss_reflected",
-            "stored xss": "xss_stored",
-            "dom xss": "xss_dom",
-            "command injection": "command_injection",
-            "rce": "command_injection",
-            "remote code": "command_injection",
-            "ssrf": "ssrf",
-            "server-side request": "ssrf",
-            "csrf": "csrf",
-            "cross-site request": "csrf",
-            "lfi": "lfi",
-            "local file": "lfi",
-            "path traversal": "path_traversal",
-            "directory traversal": "path_traversal",
-            "file upload": "file_upload",
-            "xxe": "xxe",
-            "xml external": "xxe",
-            "ssti": "ssti",
-            "template injection": "ssti",
-            "open redirect": "open_redirect",
-            "redirect": "open_redirect",
-            "idor": "idor",
-            "insecure direct": "idor",
-            "broken access": "bola",
-            "access control": "bola",
-            "authentication": "auth_bypass",
-            "auth bypass": "auth_bypass",
-            "brute force": "brute_force",
-            "jwt": "jwt_manipulation",
-            "session": "session_fixation",
-            "clickjacking": "clickjacking",
-            "cors": "cors_misconfig",
-            "crlf": "crlf_injection",
-            "header injection": "header_injection",
-            "security header": "security_headers",
-            "ssl": "ssl_issues",
-            "tls": "ssl_issues",
-            "information disclosure": "information_disclosure",
-            "sensitive data": "sensitive_data_exposure",
-            "directory listing": "directory_listing",
-            "debug": "debug_mode",
-            "deserialization": "insecure_deserialization",
-            "nosql": "nosql_injection",
-            "ldap": "ldap_injection",
-            "graphql": "graphql_injection",
-            "race condition": "race_condition",
-            "business logic": "business_logic",
-            "rate limit": "rate_limit_bypass",
+            "sql injection": "sqli_error", "sqli": "sqli_error",
+            "xss": "xss_reflected", "cross-site scripting": "xss_reflected",
+            "stored xss": "xss_stored", "dom xss": "xss_dom",
+            "command injection": "command_injection", "rce": "command_injection",
+            "ssrf": "ssrf", "csrf": "csrf", "lfi": "lfi",
+            "path traversal": "path_traversal", "file upload": "file_upload",
+            "xxe": "xxe", "ssti": "ssti", "open redirect": "open_redirect",
+            "idor": "idor", "bola": "bola", "auth bypass": "auth_bypass",
+            "jwt": "jwt_manipulation", "cors": "cors_misconfig",
+            "crlf": "crlf_injection", "header injection": "header_injection",
+            "nosql": "nosql_injection", "graphql": "graphql_injection",
+            "race condition": "race_condition", "business logic": "business_logic",
             "subdomain takeover": "subdomain_takeover",
-            "host header": "host_header_injection",
             "prototype pollution": "prototype_pollution",
             "websocket": "websocket_hijacking",
+            "information disclosure": "information_disclosure",
+            "directory listing": "directory_listing",
+            "clickjacking": "clickjacking", "ssl": "ssl_issues",
         }
         for keyword, vtype in type_map.items():
             if keyword in title_lower:
@@ -562,16 +866,18 @@ class MdAgent(SpecialistAgent):
 # ─── MdAgentLibrary: loads all .md agents ────────────────────────────
 
 class MdAgentLibrary:
-    """Loads all .md files from prompts/agents/ and indexes them
-    as executable agent definitions (100+ vuln-type agents)."""
+    """Loads all .md files from prompts/agents/ and indexes them."""
 
-    def __init__(self, md_dir: str = "prompts/agents"):
+    def __init__(self, md_dir: str = ""):
+        if not md_dir:
+            # Resolve relative to project root (parent of backend/)
+            project_root = Path(__file__).resolve().parent.parent.parent
+            md_dir = str(project_root / "prompts" / "agents")
         self.md_dir = Path(md_dir)
         self.agents: Dict[str, MdAgentDefinition] = {}
         self._load_all()
 
     def _load_all(self):
-        """Load all .md files as agent definitions."""
         if not self.md_dir.is_dir():
             logger.warning(f"MD agent directory not found: {self.md_dir}")
             return
@@ -584,7 +890,6 @@ class MdAgentLibrary:
             try:
                 content = md_file.read_text(encoding="utf-8")
 
-                # Parse structured format
                 user_match = re.search(
                     r"## User Prompt\n(.*?)(?=\n## System Prompt|\Z)",
                     content, re.DOTALL,
@@ -600,15 +905,12 @@ class MdAgentLibrary:
                 if not user_prompt and not system_prompt:
                     system_prompt = content.strip()
 
-                # Detect placeholders
                 placeholders = re.findall(r"\{(\w+)\}", user_prompt)
 
-                # Build display name
                 display_name = name.replace("_", " ").title()
                 title_match = re.search(r"^#\s+(.+)", content)
                 if title_match:
                     raw_title = title_match.group(1).strip()
-                    # Remove suffixes: "Prompt", "Specialist Agent", "Agent"
                     display_name = re.sub(
                         r"\s*(?:Specialist Agent|Agent|Prompt)\s*$",
                         "", raw_title,
@@ -637,6 +939,13 @@ class MdAgentLibrary:
     def get_agent(self, name: str) -> Optional[MdAgentDefinition]:
         return self.agents.get(name)
 
+    def get_all_runnable(self) -> List[MdAgentDefinition]:
+        """Return ALL agents that can be dispatched."""
+        return [
+            a for a in self.agents.values()
+            if a.category in ("offensive", "generalist", "recon")
+        ]
+
     def get_offensive_agents(self) -> List[MdAgentDefinition]:
         return [a for a in self.agents.values() if a.category == "offensive"]
 
@@ -644,7 +953,6 @@ class MdAgentLibrary:
         return [a for a in self.agents.values() if a.category == category]
 
     def list_agents(self) -> List[Dict]:
-        """Return agent metadata list for API/frontend."""
         return [
             {
                 "name": a.name,
@@ -656,19 +964,19 @@ class MdAgentLibrary:
         ]
 
 
-# ─── MdAgentOrchestrator: runs agents post-recon ────────────────────
+# ─── MdAgentOrchestrator: phased execution ──────────────────────────
 
 class MdAgentOrchestrator:
-    """Coordinates execution of .md-based agents after recon.
+    """Coordinates execution of .md-based agents in phases.
 
     Flow:
-      1. Select agents (explicit list or defaults)
-      2. Build shared context from recon data
-      3. Run agents in parallel (bounded concurrency)
-      4. Collect and merge findings
+      Phase 1: Recon agents (discover more attack surface)
+      Phase 2: Offensive agents (test specific vuln types, 5 concurrent)
+      Phase 3: Generalist agents (cross-cutting analysis)
+    All agents execute REAL HTTP requests.
     """
 
-    MAX_CONCURRENT = 3
+    MAX_CONCURRENT = 2  # Keep low to avoid API rate limits
 
     def __init__(
         self,
@@ -678,6 +986,9 @@ class MdAgentOrchestrator:
         validation_judge=None,
         log_callback: Optional[Callable] = None,
         progress_callback: Optional[Callable] = None,
+        http_session=None,
+        auth_headers: Optional[Dict] = None,
+        cancel_fn: Optional[Callable] = None,
     ):
         self.llm = llm
         self.memory = memory
@@ -685,6 +996,9 @@ class MdAgentOrchestrator:
         self.validation_judge = validation_judge
         self.log = log_callback
         self.progress_callback = progress_callback
+        self.http_session = http_session
+        self.auth_headers = auth_headers or {}
+        self.cancel_fn = cancel_fn or (lambda: False)
         self.library = MdAgentLibrary()
         self._cancel_event = asyncio.Event()
 
@@ -701,87 +1015,79 @@ class MdAgentOrchestrator:
         headers: Optional[Dict] = None,
         waf_info: str = "",
     ) -> Dict:
-        """Execute selected .md agents against target.
-
-        Args:
-            target: Target URL.
-            recon_data: ReconData object from recon phase.
-            existing_findings: Findings discovered so far.
-            selected_agents: List of agent names to run. None = defaults.
-            headers: Auth/custom headers.
-            waf_info: WAF detection info.
-
-        Returns:
-            Dict with findings, agent_results, statistics.
-        """
+        """Execute agents in phases: recon → offensive → generalist."""
         start_time = time.time()
         self._cancel_event.clear()
 
-        # Resolve agent selection
+        # Merge auth headers
+        all_headers = {**self.auth_headers}
+        if headers:
+            all_headers.update(headers)
+
+        # Resolve agents
         agents_to_run = self._resolve_agents(selected_agents)
         if not agents_to_run:
-            await self._log("warning", "[MD-AGENTS] No agents available to run")
+            await self._log("warning", "[AGENT GRID] No agents available")
             return {"findings": [], "agent_results": {}, "duration": 0}
 
-        agent_names = [a.display_name for a in agents_to_run]
-        await self._log("info", f"[MD-AGENTS] Dispatching {len(agents_to_run)} agents: "
-                                 f"{', '.join(agent_names)}")
+        # Split into phases
+        recon_agents = [a for a in agents_to_run if a.category == "recon"]
+        offensive_agents = [a for a in agents_to_run if a.category == "offensive"]
+        generalist_agents = [a for a in agents_to_run if a.category == "generalist"]
+
+        await self._log("info",
+            f"[AGENT GRID] {len(agents_to_run)} agents: "
+            f"{len(recon_agents)} recon, {len(offensive_agents)} offensive, "
+            f"{len(generalist_agents)} generalist")
 
         # Build shared context
         context = self._build_context(
-            target, recon_data, existing_findings, headers, waf_info,
+            target, recon_data, existing_findings, all_headers, waf_info,
         )
 
-        # Budget per agent
-        n_agents = len(agents_to_run)
-        per_agent_budget = 1.0 / max(n_agents, 1)
-
-        # Create MdAgent instances
-        md_agents: List[MdAgent] = []
-        for defn in agents_to_run:
-            agent = MdAgent(
-                definition=defn,
-                llm=self.llm,
-                memory=self.memory,
-                budget_allocation=per_agent_budget,
-                budget=self.budget,
-                validation_judge=self.validation_judge,
-            )
-            md_agents.append(agent)
-
-        # Run agents with bounded concurrency
-        semaphore = asyncio.Semaphore(self.MAX_CONCURRENT)
         all_results: Dict[str, AgentResult] = {}
+        all_findings: List[Dict] = []
 
-        async def _run_one(agent: MdAgent) -> AgentResult:
-            async with semaphore:
+        # ── Phase 1: Recon agents (sequential, enriches context) ──
+        if recon_agents and not self._cancel_event.is_set():
+            await self._log("info", "[PHASE 1] Recon agents — deep discovery")
+            for defn in recon_agents:
                 if self._cancel_event.is_set():
-                    return AgentResult(
-                        agent_name=agent.name, status="cancelled",
+                    break
+                r = await self._run_agent(defn, context, all_headers)
+                all_results[r.agent_name] = r
+                all_findings.extend(r.findings)
+                # Recon findings enrich context for subsequent phases
+                if r.findings:
+                    context["existing_findings"] = (
+                        context.get("existing_findings", []) + r.findings
                     )
-                await self._log("info",
-                    f"  [{agent.definition.display_name}] Starting...")
-                result = await agent.execute(context)
-                await self._log("info",
-                    f"  [{agent.definition.display_name}] Done: "
-                    f"{len(result.findings)} findings, "
-                    f"{result.duration:.1f}s")
-                return result
 
-        tasks = [_run_one(a) for a in md_agents]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # ── Phase 2: Offensive agents (parallel, bounded) ──
+        if offensive_agents and not self._cancel_event.is_set():
+            await self._log("info",
+                f"[PHASE 2] {len(offensive_agents)} offensive agents — real exploitation")
+            phase_results = await self._run_parallel(
+                offensive_agents, context, all_headers
+            )
+            for r in phase_results:
+                all_results[r.agent_name] = r
+                all_findings.extend(r.findings)
 
-        # Collect results
-        all_findings = []
-        for agent, res in zip(md_agents, results):
-            if isinstance(res, Exception):
-                logger.error(f"MD agent {agent.name} error: {res}")
-                all_results[agent.name] = AgentResult(
-                    agent_name=agent.name, status="failed", error=str(res),
-                )
-            else:
-                all_results[agent.name] = res
-                all_findings.extend(res.findings)
+        # ── Phase 3: Generalist agents (parallel, cross-analysis) ──
+        if generalist_agents and not self._cancel_event.is_set():
+            # Update context with all findings so far
+            context["existing_findings"] = (
+                context.get("existing_findings", []) + all_findings
+            )
+            await self._log("info",
+                f"[PHASE 3] {len(generalist_agents)} generalist agents — cross-analysis")
+            phase_results = await self._run_parallel(
+                generalist_agents, context, all_headers
+            )
+            for r in phase_results:
+                all_results[r.agent_name] = r
+                all_findings.extend(r.findings)
 
         elapsed = time.time() - start_time
         total_tokens = sum(
@@ -790,7 +1096,7 @@ class MdAgentOrchestrator:
         )
 
         await self._log("info",
-            f"[MD-AGENTS] Complete: {len(all_findings)} findings from "
+            f"[AGENT GRID] Complete: {len(all_findings)} findings from "
             f"{len(agents_to_run)} agents in {elapsed:.1f}s")
 
         return {
@@ -812,15 +1118,71 @@ class MdAgentOrchestrator:
             "duration": round(elapsed, 1),
         }
 
+    async def _run_agent(
+        self, defn: MdAgentDefinition, context: Dict, headers: Dict
+    ) -> AgentResult:
+        """Run a single agent."""
+        agent = MdAgent(
+            definition=defn,
+            llm=self.llm,
+            memory=self.memory,
+            budget_allocation=1.0 / max(len(self.library.agents), 1),
+            budget=self.budget,
+            validation_judge=self.validation_judge,
+            http_session=self.http_session,
+            auth_headers=headers,
+            cancel_fn=self.cancel_fn,
+        )
+        await self._log("info", f"  [{defn.display_name}] Starting...")
+        result = await agent.execute(context)
+        if result.error:
+            await self._log("warning",
+                f"  [{defn.display_name}] Error: {result.error[:100]}, {result.duration:.1f}s")
+        elif result.findings:
+            await self._log("success",
+                f"  [{defn.display_name}] {len(result.findings)} findings! {result.duration:.1f}s")
+        else:
+            await self._log("info",
+                f"  [{defn.display_name}] Clean, {result.duration:.1f}s")
+        return result
+
+    async def _run_parallel(
+        self, agents: List[MdAgentDefinition], context: Dict, headers: Dict
+    ) -> List[AgentResult]:
+        """Run agents in parallel with bounded concurrency."""
+        semaphore = asyncio.Semaphore(self.MAX_CONCURRENT)
+
+        agent_index = [0]  # mutable counter for staggering
+
+        async def _bounded(defn: MdAgentDefinition) -> AgentResult:
+            async with semaphore:
+                if self._cancel_event.is_set():
+                    return AgentResult(agent_name=f"md_{defn.name}", status="cancelled")
+                # Stagger API calls: small delay based on position
+                idx = agent_index[0]
+                agent_index[0] += 1
+                if idx > 0:
+                    await asyncio.sleep(2.0)  # 2s between each agent start to respect rate limits
+                return await self._run_agent(defn, context, headers)
+
+        tasks = [_bounded(d) for d in agents]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        final = []
+        for defn, res in zip(agents, results):
+            if isinstance(res, Exception):
+                logger.error(f"Agent {defn.name} error: {res}")
+                final.append(AgentResult(
+                    agent_name=f"md_{defn.name}", status="failed", error=str(res)
+                ))
+            else:
+                final.append(res)
+        return final
+
     def _resolve_agents(
         self, selected: Optional[List[str]],
     ) -> List[MdAgentDefinition]:
-        """Resolve agent selection to definitions.
-
-        When no agents are explicitly selected, dispatches ALL
-        offensive (vuln-type) agents — the XBOW-style architecture
-        runs one specialist per vulnerability type.
-        """
+        """Resolve agent selection."""
         if selected:
             resolved = []
             for name in selected:
@@ -831,7 +1193,8 @@ class MdAgentOrchestrator:
                     logger.warning(f"MD agent not found: {name}")
             return resolved
 
-        # Default: all offensive (vuln-type) agents
+        if RUN_ALL_BY_DEFAULT:
+            return self.library.get_all_runnable()
         return self.library.get_offensive_agents()
 
     def _build_context(
@@ -842,7 +1205,6 @@ class MdAgentOrchestrator:
         headers: Optional[Dict],
         waf_info: str,
     ) -> Dict:
-        """Build shared context dict from recon data."""
         ctx: Dict[str, Any] = {"target": target}
 
         if recon_data:
@@ -851,24 +1213,30 @@ class MdAgentOrchestrator:
             ctx["parameters"] = getattr(recon_data, "parameters", {})
             ctx["forms"] = getattr(recon_data, "forms", [])
             ctx["headers"] = getattr(recon_data, "response_headers", {})
+            ctx["js_files"] = getattr(recon_data, "js_files", [])
+            ctx["js_sinks"] = getattr(recon_data, "js_sinks", [])
+            ctx["api_endpoints"] = getattr(recon_data, "api_endpoints", [])
+            ctx["cookies"] = getattr(recon_data, "cookies", [])
         else:
             ctx["endpoints"] = []
             ctx["technologies"] = []
             ctx["parameters"] = {}
             ctx["forms"] = []
             ctx["headers"] = {}
+            ctx["js_files"] = []
+            ctx["js_sinks"] = []
+            ctx["api_endpoints"] = []
+            ctx["cookies"] = []
 
         if headers:
             ctx["headers"].update(headers)
 
         ctx["existing_findings"] = existing_findings or []
         ctx["waf_info"] = waf_info
-
         return ctx
 
     def cancel(self):
         self._cancel_event.set()
 
     def list_available_agents(self) -> List[Dict]:
-        """Return agent list for API/frontend."""
         return self.library.list_agents()

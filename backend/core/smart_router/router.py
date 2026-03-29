@@ -173,41 +173,41 @@ class SmartRouter:
     ) -> List[Tuple[Provider, Account]]:
         """Build ordered list of (provider, account) candidates.
 
-        If preferred is set, ONLY that provider is used (no fallback to others).
-        This ensures the user's explicit choice is respected.
+        If preferred is set, that provider is tried FIRST, then falls back
+        to other providers of the same tier if all accounts fail.
         If preferred is not set, all providers are tried by tier.
         """
         candidates = []
+        seen_account_ids = set()
 
         if preferred:
-            # Strict mode: only the preferred provider
+            # Preferred provider goes first in candidate list
             provider = self.registry.get_provider(preferred)
             if provider:
                 accounts = self.registry.get_active_accounts(preferred)
                 for acct in accounts:
                     if self.quota.is_available(acct.id):
                         candidates.append((provider, acct))
+                        seen_account_ids.add(acct.id)
                 if not candidates:
                     logger.warning(
                         f"SmartRouter: Preferred provider '{preferred}' has no active accounts! "
                         f"Falling back to all providers."
                     )
-                else:
-                    return candidates  # Only preferred provider candidates
 
-        # Auto mode or preferred has no active accounts: try all by tier
+        # Add remaining providers as fallback (by tier)
         for tier in (1, 2, 3):
             providers = self.registry.get_providers_by_tier(tier)
             for provider in providers:
-                # Skip disabled providers
                 if not getattr(provider, "enabled", True):
                     continue
                 acct = self.quota.next_account(
                     provider.id,
                     self.registry.get_active_accounts(provider.id),
                 )
-                if acct:
+                if acct and acct.id not in seen_account_ids:
                     candidates.append((provider, acct))
+                    seen_account_ids.add(acct.id)
 
         return candidates
 

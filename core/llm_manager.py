@@ -649,7 +649,7 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
         """Generate using OpenRouter API (OpenAI-compatible).
 
         OpenRouter supports hundreds of models through a unified API.
-        Models are specified as provider/model (e.g., 'anthropic/claude-sonnet-4-20250514').
+        Models are specified as provider/model (e.g., 'anthropic/claude-sonnet-4-6').
         API key comes from OPENROUTER_API_KEY env var or config profile.
         """
         if not self.api_key:

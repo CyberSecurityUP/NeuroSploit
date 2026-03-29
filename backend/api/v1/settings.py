@@ -533,9 +533,12 @@ MODEL_CACHE_TTL = 60  # seconds
 # Common cloud models for dropdown suggestions
 CLOUD_MODELS = {
     "claude": [
+        {"model_id": "claude-opus-4-6-20250918", "display_name": "Claude Opus 4.6", "context_length": 1000000},
+        {"model_id": "claude-sonnet-4-6-20250918", "display_name": "Claude Sonnet 4.6", "context_length": 1000000},
+        {"model_id": "claude-sonnet-4-5-20250929", "display_name": "Claude Sonnet 4.5", "context_length": 200000},
+        {"model_id": "claude-haiku-4-5-20251001", "display_name": "Claude Haiku 4.5", "context_length": 200000},
         {"model_id": "claude-sonnet-4-20250514", "display_name": "Claude Sonnet 4", "context_length": 200000},
         {"model_id": "claude-opus-4-20250514", "display_name": "Claude Opus 4", "context_length": 200000},
-        {"model_id": "claude-haiku-4-20250514", "display_name": "Claude Haiku 4", "context_length": 200000},
     ],
     "openai": [
         {"model_id": "gpt-4o", "display_name": "GPT-4o", "context_length": 128000},

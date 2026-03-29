@@ -17,15 +17,12 @@ import SandboxDashboardPage from './pages/SandboxDashboardPage'
 import KnowledgePage from './pages/KnowledgePage'
 import MCPManagementPage from './pages/MCPManagementPage'
 import ProvidersPage from './pages/ProvidersPage'
-import FullIATestingPage from './pages/FullIATestingPage'
-
 function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/auto" element={<AutoPentestPage />} />
-        <Route path="/full-ia" element={<FullIATestingPage />} />
         <Route path="/vuln-lab" element={<VulnLabPage />} />
         <Route path="/terminal" element={<TerminalAgentPage />} />
         <Route path="/scan/new" element={<NewScanPage />} />

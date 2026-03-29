@@ -3921,6 +3921,7 @@ NOT_VULNERABLE: <reason>"""
             )
 
         # Phase 5.5: MD-based agent orchestrator (always available)
+        # Agents execute REAL HTTP requests via the shared aiohttp session
         if HAS_MD_AGENTS:
             self._md_orchestrator = MdAgentOrchestrator(
                 llm=self.llm,
@@ -3929,6 +3930,9 @@ NOT_VULNERABLE: <reason>"""
                 validation_judge=self.validation_judge,
                 log_callback=self.log,
                 progress_callback=self.progress_callback,
+                http_session=self.session,
+                auth_headers=dict(self.auth_headers),
+                cancel_fn=self.is_cancelled,
             )
 
         # Researcher AI: 0-day discovery with Kali sandbox (opt-in)
@@ -4630,55 +4634,24 @@ NOT_VULNERABLE: <reason>"""
             await self.log("warning", f"  Sandbox scan error: {e}")
 
     async def _run_auto_pentest(self) -> Dict:
-        """Parallel auto pentest: 3 concurrent streams + deep analysis + report.
+        """Agent-first auto pentest: Recon → 108 AI agents with real HTTP → Report.
 
         Architecture:
-          Stream 1 (Recon)  ──→ asyncio.Queue ──→ Stream 2 (Junior Pentester)
-          Stream 3 (Tool Runner) runs sandbox tools + AI-decided tools
-          All streams feed findings in real-time via callbacks.
-
-        After parallel phase completes:
-          Deep Analysis: AI attack surface analysis + comprehensive 100-type testing
-          Finalization: Screenshots + AI enhancement + report generation
+          Phase 1 (0-20%):  Quick recon — discover endpoints, tech, params, WAF
+          Phase 2 (20-85%): Agent Grid — 108 agents execute real HTTP tests
+          Phase 3 (85-100%): Finalization — screenshots, enhancement, report
         """
         await self._update_progress(0, "Auto pentest starting")
         await self.log("info", "=" * 60)
-        await self.log("info", "  PARALLEL AUTO PENTEST MODE")
-        await self.log("info", "  3 concurrent streams | AI-powered | 100 vuln types")
+        await self.log("info", "  AGENT-FIRST AUTO PENTEST (108 AGENTS)")
+        await self.log("info", "  Recon → Agent Grid (real HTTP) → Report | Claude 4.6")
         await self.log("info", "=" * 60)
 
         # Override custom_prompt with DEFAULT_ASSESSMENT_PROMPT for auto mode
         if not self.custom_prompt:
             self.custom_prompt = DEFAULT_ASSESSMENT_PROMPT
 
-        # Phase 5: Multi-agent orchestrator (if enabled, replaces 3-stream)
-        if self._orchestrator:
-            await self.log("info", "  [MULTI-AGENT] Orchestrator enabled — delegating to specialist agents")
-            orch_result = await self._orchestrator.run(
-                target=self.target,
-                recon_data=self.recon,
-                initial_context={
-                    "headers": dict(self.auth_headers),
-                    "technologies": self.recon.technologies,
-                }
-            )
-            # Merge orchestrator findings into agent findings
-            for f in orch_result.get("findings", []):
-                if isinstance(f, Finding):
-                    await self._add_finding(f)
-            await self.log("info", f"  [MULTI-AGENT] Pipeline complete: "
-                           f"{orch_result.get('findings_count', 0)} findings")
-            # Continue to finalization phase below
-            report = await self._generate_full_report()
-            await self._update_progress(100, "Multi-agent pentest complete")
-            if hasattr(self, 'execution_history') and self.execution_history:
-                self.execution_history.flush()
-            await self.log("info", "=" * 60)
-            await self.log("info", f"  AUTO PENTEST COMPLETE: {len(self.findings)} findings")
-            await self.log("info", "=" * 60)
-            return report
-
-        # Shared state for parallel streams
+        # Shared state (needed by some helper methods)
         self._endpoint_queue = asyncio.Queue()
         self._recon_complete = asyncio.Event()
         self._tools_complete = asyncio.Event()
@@ -4686,133 +4659,49 @@ NOT_VULNERABLE: <reason>"""
         self._junior_tested_types: set = set()
         self._playbook_recommended_types: List[str] = []
         self._current_playbook_context: str = ""
-
-        # ── PRE-STREAM AI MASTER PLAN ──
-        # Before launching parallel streams, ask AI for a strategic master plan
-        # that provides context and direction for all 3 streams.
         self._master_plan: Dict = {}
-        if self.llm.is_available():
-            try:
-                await self.log("info", "[MASTER PLAN] AI strategic planning before streams")
-                master_plan = await self._ai_master_plan()
-                if master_plan:
-                    self._master_plan = master_plan
-                    profile = master_plan.get("target_profile", "")
-                    risk = master_plan.get("risk_assessment", "")
-                    priority_types = master_plan.get("priority_vuln_types", [])
-                    if profile:
-                        await self.log("info", f"  [MASTER PLAN] Profile: {profile[:120]}")
-                    if risk:
-                        await self.log("info", f"  [MASTER PLAN] Risk: {risk[:120]}")
-                    if priority_types:
-                        await self.log("info", f"  [MASTER PLAN] Priority: {', '.join(priority_types[:8])}")
-            except Exception as e:
-                await self.log("debug", f"  [MASTER PLAN] Planning error: {e}")
 
-        # ── CONCURRENT PHASE (0-50%): 3 parallel streams ──
-        await asyncio.gather(
-            self._stream_recon(),            # Stream 1: Recon pipeline
-            self._stream_junior_pentest(),   # Stream 2: Immediate AI testing
-            self._stream_tool_runner(),      # Stream 3: Dynamic tool execution
-        )
+        # ══════════════════════════════════════════════════════════════
+        # PHASE 1 (0-20%): RECONNAISSANCE
+        # Discover attack surface before dispatching agents
+        # ══════════════════════════════════════════════════════════════
+        await self.log("info", "[RECON] Mapping attack surface...")
+        await self._update_progress(2, "Recon: mapping attack surface")
 
-        parallel_findings = len(self.findings)
-        await self.log("info", f"  Parallel phase complete: {parallel_findings} findings, "
-                       f"{len(self._junior_tested_types)} types pre-tested")
-        await self._update_progress(50, "Parallel streams complete")
+        # Run recon stream (endpoint discovery, tech detection, site analysis)
+        self._recon_complete.clear()
+        self._tools_complete.set()  # No tool stream in agent-first mode
+        await self._stream_recon()
 
-        # ── REASONING CHECKPOINT at 30-50% ──
-        if self.reasoning_engine and self.llm.is_available():
-            try:
-                plan = await self.reasoning_engine.plan_attack(
-                    recon_summary=f"{len(self.recon.endpoints)} endpoints, "
-                                  f"{len(self.recon.technologies)} techs",
-                    findings_so_far=self.findings,
-                    tested_types=self._junior_tested_types,
-                    progress_pct=0.50,
+        ep_count = len(self.recon.endpoints)
+        param_count = len(self.recon.parameters) if isinstance(self.recon.parameters, dict) else 0
+        tech_count = len(self.recon.technologies)
+        form_count = len(self.recon.forms) if hasattr(self.recon, 'forms') else 0
+        js_count = len(self.recon.js_files) if hasattr(self.recon, 'js_files') else 0
+        sink_count = len(self.recon.js_sinks) if hasattr(self.recon, 'js_sinks') else 0
+        api_count = len(self.recon.api_endpoints) if hasattr(self.recon, 'api_endpoints') else 0
+
+        await self.log("info",
+            f"[RECON] Complete: {ep_count} endpoints, {param_count} params, "
+            f"{tech_count} techs, {form_count} forms, {js_count} JS files, "
+            f"{sink_count} sinks, {api_count} API endpoints")
+        await self._update_progress(15, "Recon complete")
+
+        # WAF info for agents
+        waf_name = ""
+        if hasattr(self, '_waf_result') and self._waf_result:
+            if hasattr(self._waf_result, 'detected_wafs') and self._waf_result.detected_wafs:
+                waf_name = ", ".join(
+                    f"{w.name} ({w.confidence:.0%})" for w in self._waf_result.detected_wafs
                 )
-                if plan and plan.priority_vulns:
-                    await self.log("info", f"  [REASONING] Attack plan: "
-                                   f"focus on {', '.join(plan.priority_vulns[:5])}")
-                    # Feed reasoning priorities into the remaining test plan
-                    for vtype in plan.priority_vulns:
-                        if vtype not in self._junior_tested_types:
-                            self._junior_tested_types.discard(vtype)  # ensure retested
-            except Exception as e:
-                await self.log("debug", f"  [REASONING] Plan error: {e}")
+            elif isinstance(self._waf_result, dict):
+                waf_name = self._waf_result.get("waf_name", "")
+            if waf_name:
+                await self.log("warning", f"[WAF] Detected: {waf_name} — agents will adapt payloads")
 
-        # ── STRATEGY CHECKPOINT at 50% ──
-        if self.strategy:
-            try:
-                strat_update = await self.strategy.checkpoint_refine(
-                    progress_pct=0.50,
-                    findings=self.findings,
-                    tested_types=self._junior_tested_types,
-                    all_endpoints=[ep for ep in self.recon.endpoints],
-                    llm=self.llm if self.llm.is_available() else None,
-                    budget=self.token_budget,
-                )
-                if strat_update.get("message"):
-                    await self.log("info", f"  [STRATEGY] {strat_update['message']}")
-            except Exception as e:
-                await self.log("debug", f"  [STRATEGY] Checkpoint error: {e}")
-
-        # ── DEEP ANALYSIS PHASE (50-75%): Full testing with complete context ──
-        await self.log("info", "[DEEP] AI Attack Surface Analysis + Comprehensive Testing")
-        attack_plan = await self._ai_analyze_attack_surface()
-
-        # Merge AI-recommended types with default plan + playbook recommendations
-        default_plan = self._default_attack_plan()
-        ai_types = attack_plan.get("priority_vulns", [])
-        playbook_types = self._playbook_recommended_types[:15] if self._playbook_recommended_types else []
-        all_types = default_plan["priority_vulns"]
-        merged_types = list(dict.fromkeys(ai_types + playbook_types + all_types))
-
-        # Remove types already tested by junior pentest stream
-        remaining = [t for t in merged_types if t not in self._junior_tested_types]
-        attack_plan["priority_vulns"] = remaining
-        await self.log("info", f"  {len(remaining)} remaining types "
-                       f"({len(self._junior_tested_types)} already tested by junior)")
-        await self._update_progress(55, "Deep: attack surface analyzed")
-
-        await self.log("info", "[DEEP] Comprehensive Vulnerability Testing")
-        await self._test_all_vulnerabilities(attack_plan)
-        await self._update_progress(75, "Deep testing complete")
-
-        # ── REASONING CHECKPOINT at 75% ──
-        if self.reasoning_engine and self.llm.is_available():
-            try:
-                plan = await self.reasoning_engine.plan_attack(
-                    recon_summary=f"{len(self.recon.endpoints)} endpoints, "
-                                  f"{len(self.recon.technologies)} techs",
-                    findings_so_far=self.findings,
-                    tested_types=self._junior_tested_types,
-                    progress_pct=0.75,
-                )
-                if plan and plan.priority_vulns:
-                    await self.log("info", f"  [REASONING] 75% plan: "
-                                   f"focus on {', '.join(plan.priority_vulns[:5])}")
-                    # Reflect on what worked so far
-                    try:
-                        reflection = await self.reasoning_engine.reflect(
-                            action_taken="deep_testing_phase",
-                            result_observed={
-                                "findings_count": len(self.findings),
-                                "tested_types": len(self._junior_tested_types),
-                                "endpoints": len(self.recon.endpoints),
-                            }
-                        )
-                        if reflection and reflection.next_suggestion:
-                            await self.log("info", f"  [REASONING] Reflection: {reflection.next_suggestion}")
-                    except Exception:
-                        pass
-            except Exception as e:
-                await self.log("debug", f"  [REASONING] 75% plan error: {e}")
-
-        # ── CVE HUNTING (if we found versions during recon) ──
+        # CVE hunting (quick, parallel with next phase)
         if self.cve_hunter and self.recon.technologies:
             try:
-                await self.log("info", "[CVE] Searching for known CVEs based on detected versions")
                 cve_findings = await self.cve_hunter.hunt(
                     headers=dict(self.auth_headers),
                     body="",
@@ -4824,7 +4713,77 @@ NOT_VULNERABLE: <reason>"""
             except Exception as e:
                 await self.log("debug", f"  [CVE] Hunt error: {e}")
 
-        # ── AI CHAIN DISCOVERY ──
+        await self._update_progress(20, "Recon + CVE complete, launching agents")
+
+        # ══════════════════════════════════════════════════════════════
+        # PHASE 2 (20-85%): AGENT GRID — 108 SPECIALISTS WITH REAL HTTP
+        # Each agent: LLM plans attacks → executes HTTP → LLM analyzes
+        # ══════════════════════════════════════════════════════════════
+        if self._md_orchestrator and not self.is_cancelled():
+            try:
+                n_available = len(self._md_orchestrator.library.agents)
+                await self.log("info", "=" * 60)
+                await self.log("info", f"  [AGENT GRID] Dispatching {n_available} specialist agents")
+                await self.log("info", f"  Each agent: PLAN (LLM) → EXECUTE (HTTP) → ANALYZE (LLM)")
+                await self.log("info", "=" * 60)
+
+                md_result = await self._md_orchestrator.run(
+                    target=self.target,
+                    recon_data=self.recon,
+                    existing_findings=self.findings,
+                    selected_agents=self.selected_md_agents,
+                    headers=dict(self.auth_headers),
+                    waf_info=waf_name,
+                )
+
+                # Merge agent findings into main findings via validation pipeline
+                md_findings_raw = md_result.get("findings", [])
+                md_confirmed = 0
+                for mf in md_findings_raw:
+                    if self.is_cancelled():
+                        break
+                    if not isinstance(mf, dict):
+                        continue
+                    try:
+                        finding = Finding(
+                            id=str(hashlib.md5(
+                                f"{mf.get('title', '')}{mf.get('affected_endpoint', '')}".encode()
+                            ).hexdigest())[:12],
+                            title=mf.get("title", "Agent Finding"),
+                            severity=mf.get("severity", "medium"),
+                            vulnerability_type=mf.get("vulnerability_type", "unknown"),
+                            cvss_score=float(mf.get("cvss_score", 0.0)) if isinstance(mf.get("cvss_score"), (int, float)) else 0.0,
+                            cwe_id=mf.get("cwe_id", ""),
+                            description=mf.get("description", ""),
+                            affected_endpoint=mf.get("affected_endpoint", self.target),
+                            evidence=mf.get("evidence", ""),
+                            poc_code=mf.get("poc_code", ""),
+                            impact=mf.get("impact", ""),
+                            remediation=mf.get("remediation", ""),
+                            confidence_score={"high": 80, "medium": 50, "low": 25}.get(mf.get("confidence", "medium"), 50),
+                            confidence=mf.get("confidence", "medium"),
+                            ai_verified=mf.get("confidence") == "high",
+                            ai_status="confirmed" if mf.get("confidence") == "high" else "pending",
+                        )
+                        await self._add_finding(finding)
+                        md_confirmed += 1
+                    except Exception as e:
+                        await self.log("debug", f"  [AGENT GRID] Finding merge error: {e}")
+
+                agents_run = md_result.get("agents_run", 0)
+                duration = md_result.get("duration", 0)
+                await self.log("info",
+                    f"[AGENT GRID] Complete: {agents_run} agents, "
+                    f"{len(md_findings_raw)} raw findings, "
+                    f"{md_confirmed} validated, {duration}s")
+            except Exception as e:
+                await self.log("warning", f"[AGENT GRID] Dispatch error: {e}")
+        else:
+            await self.log("warning", "[AGENT GRID] MD agent system not available")
+
+        await self._update_progress(80, "Agent grid complete")
+
+        # ── AI CHAIN DISCOVERY (post-agents, if we have findings) ──
         if self.chain_engine and len(self.findings) >= 2 and self.llm.is_available():
             try:
                 chains = await self.chain_engine.ai_discover_chains(
@@ -4838,66 +4797,7 @@ NOT_VULNERABLE: <reason>"""
             except Exception as e:
                 await self.log("debug", f"  [CHAIN] AI discovery error: {e}")
 
-        # ── MD-BASED AGENT DISPATCH (post-recon specialist agents) ──
-        if self._md_orchestrator and not self.is_cancelled():
-            try:
-                await self.log("info", "[MD-AGENTS] Dispatching specialist .md agents with recon context")
-                md_result = await self._md_orchestrator.run(
-                    target=self.target,
-                    recon_data=self.recon,
-                    existing_findings=self.findings,
-                    selected_agents=self.selected_md_agents,
-                    headers=dict(self.auth_headers),
-                    waf_info=(
-                        self._waf_result.get("waf_name", "")
-                        if self._waf_result else ""
-                    ),
-                )
-
-                # Merge MD agent findings into main findings via validation
-                md_findings_raw = md_result.get("findings", [])
-                md_confirmed = 0
-                for mf in md_findings_raw:
-                    if self.is_cancelled():
-                        break
-                    if not isinstance(mf, dict):
-                        continue
-                    try:
-                        finding = Finding(
-                            id=str(hashlib.md5(
-                                f"{mf.get('title', '')}{mf.get('affected_endpoint', '')}".encode()
-                            ).hexdigest())[:12],
-                            title=mf.get("title", "MD Agent Finding"),
-                            severity=mf.get("severity", "medium"),
-                            vulnerability_type=mf.get("vulnerability_type", "unknown"),
-                            cvss_score=mf.get("cvss_score", 0.0),
-                            cwe_id=mf.get("cwe_id", ""),
-                            description=mf.get("description", ""),
-                            affected_endpoint=mf.get("affected_endpoint", self.target),
-                            evidence=mf.get("evidence", ""),
-                            poc_code=mf.get("poc_code", ""),
-                            impact=mf.get("impact", ""),
-                            remediation=mf.get("remediation", ""),
-                            confidence_score=50,
-                            confidence="medium",
-                            ai_verified=False,
-                            ai_status="pending",
-                        )
-                        # Flow through validation pipeline
-                        await self._add_finding(finding)
-                        md_confirmed += 1
-                    except Exception as e:
-                        await self.log("debug", f"  [MD-AGENTS] Finding merge error: {e}")
-
-                agent_summary = md_result.get("agent_results", {})
-                agents_run = md_result.get("agents_run", 0)
-                await self.log("info",
-                    f"[MD-AGENTS] Complete: {agents_run} agents, "
-                    f"{len(md_findings_raw)} raw findings, "
-                    f"{md_confirmed} submitted to validation, "
-                    f"{md_result.get('duration', 0)}s")
-            except Exception as e:
-                await self.log("warning", f"[MD-AGENTS] Dispatch error: {e}")
+        await self._update_progress(85, "Chain analysis complete")
 
         # ── RESEARCHER AI (0-day discovery with Kali sandbox) ──
         if self._researcher and not self.is_cancelled():
@@ -6043,11 +5943,28 @@ NOT_VULNERABLE: <reason>"""
                 prompt,
                 system=self._get_enhanced_system_prompt("strategy")
             )
-            start = resp_text.index('{')
-            end = resp_text.rindex('}') + 1
-            return json.loads(resp_text[start:end])
+            if not resp_text or len(resp_text.strip()) < 20:
+                await self.log("debug", "  [AI RECON] Empty or too short response from LLM")
+                return {}
+
+            # Try to find JSON in response
+            json_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', resp_text)
+            if json_match:
+                return json.loads(json_match.group(1))
+
+            # Try bare JSON
+            start = resp_text.find('{')
+            end = resp_text.rfind('}')
+            if start >= 0 and end > start:
+                return json.loads(resp_text[start:end + 1])
+
+            await self.log("debug", "  [AI RECON] No JSON found in LLM response")
+            return {}
+        except json.JSONDecodeError as e:
+            await self.log("debug", f"  [AI RECON] JSON parse error: {e}")
+            return {}
         except Exception as e:
-            await self.log("debug", f"  [AI RECON] Parse error: {e}")
+            await self.log("debug", f"  [AI RECON] Analysis error: {e}")
             return {}
 
     # ── Stream 2: Junior Pentester ──
