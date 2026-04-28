@@ -18,7 +18,7 @@
 #   - Full Kali apt repos available for on-demand apt-get install of any security tool
 
 # ---- Stage 1: Pre-compile Go security tools ----
-FROM golang:1.24-bookworm AS go-builder
+FROM golang:1.26-bookworm AS go-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git build-essential libpcap-dev \

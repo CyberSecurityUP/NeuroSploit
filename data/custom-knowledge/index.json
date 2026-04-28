@@ -13,7 +13,10 @@
       "knowledge_entries": []
     }
   ],
-  "vuln_type_index": {},
+  "vuln_type_index": {
+    "information_disclosure": [],
+    "clickjacking": []
+  },
   "version": "1.0",
-  "updated_at": "2026-02-16T14:50:31.618046"
+  "updated_at": "2026-04-28T19:00:40.997968"
 }

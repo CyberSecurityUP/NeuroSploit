@@ -71,6 +71,7 @@ class SettingsUpdate(BaseModel):
     llm_model: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
+    nim_api_key: Optional[str] = None
     openrouter_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
     together_api_key: Optional[str] = None
@@ -103,6 +104,7 @@ class SettingsResponse(BaseModel):
     llm_model: str = ""
     has_anthropic_key: bool = False
     has_openai_key: bool = False
+    has_nim_key: bool = False
     has_openrouter_key: bool = False
     has_gemini_key: bool = False
     has_together_key: bool = False
@@ -172,7 +174,9 @@ def _load_settings_from_env() -> dict:
 
     # Detect provider from which keys are set
     provider = "claude"
-    if os.getenv("ANTHROPIC_API_KEY"):
+    if os.getenv("NIM_API_KEY"):
+        provider = "nim"
+    elif os.getenv("ANTHROPIC_API_KEY"):
         provider = "claude"
     elif os.getenv("OPENAI_API_KEY"):
         provider = "openai"
@@ -184,6 +188,7 @@ def _load_settings_from_env() -> dict:
         "llm_model": os.getenv("DEFAULT_LLM_MODEL", ""),
         "anthropic_api_key": os.getenv("ANTHROPIC_API_KEY", ""),
         "openai_api_key": os.getenv("OPENAI_API_KEY", ""),
+        "nim_api_key": os.getenv("NIM_API_KEY", ""),
         "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
         "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
         "together_api_key": os.getenv("TOGETHER_API_KEY", ""),
@@ -224,6 +229,7 @@ async def get_settings():
         llm_model=_settings.get("llm_model", ""),
         has_anthropic_key=bool(_settings["anthropic_api_key"] or os.getenv("ANTHROPIC_API_KEY")),
         has_openai_key=bool(_settings["openai_api_key"] or os.getenv("OPENAI_API_KEY")),
+        has_nim_key=bool(_settings.get("nim_api_key") or os.getenv("NIM_API_KEY")),
         has_openrouter_key=bool(_settings["openrouter_api_key"] or os.getenv("OPENROUTER_API_KEY")),
         has_gemini_key=bool(_settings.get("gemini_api_key") or os.getenv("GEMINI_API_KEY")),
         has_together_key=bool(_settings.get("together_api_key") or os.getenv("TOGETHER_API_KEY")),
@@ -274,6 +280,12 @@ async def update_settings(settings_data: SettingsUpdate):
         if settings_data.openai_api_key:
             os.environ["OPENAI_API_KEY"] = settings_data.openai_api_key
             env_updates["OPENAI_API_KEY"] = settings_data.openai_api_key
+
+    if settings_data.nim_api_key is not None:
+        _settings["nim_api_key"] = settings_data.nim_api_key
+        if settings_data.nim_api_key:
+            os.environ["NIM_API_KEY"] = settings_data.nim_api_key
+            env_updates["NIM_API_KEY"] = settings_data.nim_api_key
 
     if settings_data.openrouter_api_key is not None:
         _settings["openrouter_api_key"] = settings_data.openrouter_api_key
@@ -563,6 +575,11 @@ CLOUD_MODELS = {
     ],
     "codex": [
         {"model_id": "codex-mini-latest", "display_name": "Codex Mini", "context_length": 192000},
+    ],
+    "nim": [
+        {"model_id": "openai/gpt-oss-120b", "display_name": "NVIDIA GPT-OSS 120B", "context_length": 32768},
+        {"model_id": "meta/llama-3.1-70b-instruct", "display_name": "Llama 3.1 70B (NIM)", "context_length": 32768},
+        {"model_id": "meta/llama-3.1-405b-instruct", "display_name": "Llama 3.1 405B (NIM)", "context_length": 32768},
     ],
 }
 

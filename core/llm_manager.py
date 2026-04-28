@@ -25,8 +25,19 @@ logger = logging.getLogger(__name__)
 class LLMManager:
     """Manage multiple LLM providers"""
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Optional[Dict] = None):
         """Initialize LLM manager"""
+        if config is None:
+            # Try to load from default config file or environment
+            config = {}
+            try:
+                config_path = Path("config/config.json")
+                if config_path.exists():
+                    with open(config_path, 'r') as f:
+                        config = json.load(f)
+            except Exception as e:
+                logger.warning(f"Could not load default config: {e}")
+
         self.config = config.get('llm', {})
         self.default_profile_name = self.config.get('default_profile', 'gemini_pro_default')
         self.profiles = self.config.get('profiles', {})
@@ -34,8 +45,37 @@ class LLMManager:
         self.active_profile = self.profiles.get(self.default_profile_name, {})
         
         # Load active profile settings
-        self.provider = self.active_profile.get('provider', 'gemini').lower()
-        self.model = self.active_profile.get('model', 'gemini-pro')
+        self.provider = self.active_profile.get('provider', '').lower()
+        self.model = self.active_profile.get('model', '')
+        
+        # Overriding priority: If NIM_API_KEY is in env and we are using a default/empty provider, use nim
+        if (not self.provider or self.provider == 'gemini') and os.getenv("NIM_API_KEY"):
+            self.provider = "nim"
+            # If the model was specifically gemini-pro (default) or empty, change to a NIM model
+            if not self.model or self.model == 'gemini-pro':
+                self.model = os.getenv("DEFAULT_LLM_MODEL", "meta/llama-3.1-70b-instruct")
+        elif not self.provider:
+            # Detect from environment if not in config
+            if os.getenv("ANTHROPIC_API_KEY"):
+                self.provider = "claude"
+            elif os.getenv("OPENAI_API_KEY"):
+                self.provider = "gpt"
+            elif os.getenv("GEMINI_API_KEY"):
+                self.provider = "gemini"
+            else:
+                self.provider = "gemini" # Final fallback
+
+        # Default models per provider if still empty
+        default_models = {
+            "nim": "meta/llama-3.1-70b-instruct",
+            "claude": "claude-3-5-sonnet-20240620",
+            "gpt": "gpt-4o",
+            "gemini": "gemini-1.5-pro"
+        }
+
+        if not self.model:
+            self.model = os.getenv("DEFAULT_LLM_MODEL", default_models.get(self.provider, "gemini-pro"))
+        
         self.api_key = self._get_api_key(self.active_profile.get('api_key', ''))
         self.temperature = self.active_profile.get('temperature', 0.7)
         self.max_tokens = self.active_profile.get('max_tokens', 4096)
@@ -151,6 +191,8 @@ class LLMManager:
         try:
             if self.provider == 'claude':
                 raw_response = self._generate_claude(prompt, system_prompt)
+            elif self.provider == 'nim':
+                raw_response = self._generate_nim(prompt, system_prompt)
             elif self.provider == 'gpt':
                 raw_response = self._generate_gpt(prompt, system_prompt)
             elif self.provider == 'gemini':
@@ -282,6 +324,42 @@ Identify any potential hallucinations, inconsistencies, or areas where the respo
         finally:
             self.hallucination_mitigation_strategy = original_mitigation_state # Restore original state
     
+    def _generate_nim(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        """Generate using NVIDIA NIM API (OpenAI-compatible)"""
+        api_key = os.getenv("NIM_API_KEY", self.api_key)
+        if not api_key:
+            raise ValueError("NIM_API_KEY not set.")
+
+        base_url = os.getenv("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1/chat/completions")
+        url = base_url
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        data = {
+            "model": self.model or "openai/gpt-oss-120b",
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=180)
+            if response.status_code == 200:
+                result = response.json()
+                return result["choices"][0]["message"]["content"]
+            else:
+                raise ValueError(f"NIM API error {response.status_code}: {response.text}")
+        except Exception as e:
+            logger.error(f"NIM error: {e}")
+            raise
+
     def _generate_claude(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """Generate using Claude API with requests (bypasses httpx/SSL issues on macOS)"""
         if not self.api_key:
