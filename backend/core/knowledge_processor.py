@@ -177,7 +177,7 @@ class KnowledgeProcessor:
 
     def _extract_text_pdf(self, file_path: Path) -> str:
         """Extract text from PDF."""
-        if not HAS_PYPDKF2:
+        if not HAS_PYPDF2:
             logger.warning("PyPDF2 not installed - PDF extraction unavailable. Install: pip install PyPDF2")
             # Try reading as text fallback
             try:

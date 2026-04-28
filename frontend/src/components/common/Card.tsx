@@ -11,17 +11,25 @@ interface CardProps {
 
 export default function Card({ children, className, title, subtitle, action }: CardProps) {
   return (
-    <div className={clsx('bg-dark-800 rounded-xl border border-dark-900/50', className)}>
+    <div className={clsx('cyber-card group', className)}>
       {(title || action) && (
-        <div className="flex items-center justify-between p-4 border-b border-dark-900/50">
-          <div>
-            {title && <h3 className="text-lg font-semibold text-white">{title}</h3>}
-            {subtitle && <p className="text-sm text-dark-400 mt-1">{subtitle}</p>}
+        <div className="flex items-center justify-between p-5 border-b border-cyber-green/10 relative overflow-hidden">
+          {/* Subtle header pulse glow */}
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyber-green/20 to-transparent"></div>
+          
+          <div className="z-10">
+            {title && (
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-cyber-green rounded-full shadow-neon-green"></span>
+                {title}
+              </h3>
+            )}
+            {subtitle && <p className="text-[10px] text-dark-400 mt-1 uppercase tracking-widest font-mono">{subtitle}</p>}
           </div>
-          {action}
+          <div className="z-10">{action}</div>
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   )
 }

@@ -17,19 +17,19 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-700 disabled:opacity-50 disabled:cursor-not-allowed'
+  const baseStyles = 'inline-flex items-center justify-center font-bold uppercase tracking-widest rounded-none transition-all duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed border'
 
   const variants = {
-    primary: 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500',
-    secondary: 'bg-dark-900 text-white hover:bg-dark-800 focus:ring-dark-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'text-dark-300 hover:text-white hover:bg-dark-900/50 focus:ring-dark-500',
+    primary: 'bg-cyber-green/10 text-cyber-green border-cyber-green/50 hover:bg-cyber-green hover:text-black hover:shadow-neon-green',
+    secondary: 'bg-cyber-blue/10 text-cyber-blue border-cyber-blue/50 hover:bg-cyber-blue hover:text-black hover:shadow-neon-blue',
+    danger: 'bg-cyber-red/10 text-cyber-red border-cyber-red/50 hover:bg-cyber-red hover:text-black hover:shadow-[0_0_20px_rgba(255,0,85,0.4)]',
+    ghost: 'bg-transparent text-dark-400 border-transparent hover:text-white hover:bg-white/5',
   }
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
+    sm: 'px-4 py-1.5 text-[10px] font-mono',
+    md: 'px-6 py-2.5 text-xs font-mono',
+    lg: 'px-8 py-3.5 text-sm font-mono',
   }
 
   return (

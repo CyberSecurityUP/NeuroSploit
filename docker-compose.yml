@@ -12,6 +12,7 @@ services:
       # These override .env if set
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - NIM_API_KEY=${NIM_API_KEY:-}
       - DATABASE_URL=sqlite+aiosqlite:///./data/neurosploit.db
     volumes:
       - neurosploit-data:/app/data

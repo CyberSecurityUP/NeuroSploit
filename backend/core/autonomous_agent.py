@@ -217,6 +217,8 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
     anthropic = None
 
+
+
 # Try to import openai
 try:
     import openai
@@ -367,6 +369,7 @@ class LLMClient:
         self.azure_openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
         self.azure_openai_deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
         self.codex_key = os.getenv("CODEX_API_KEY", "")
+        self.nim_key = os.getenv("NIM_API_KEY", "")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2")
         self.configured_model = os.getenv("DEFAULT_LLM_MODEL", "")  # User-configured model name
         self.client = None
@@ -419,6 +422,14 @@ class LLMClient:
 
     def _initialize_provider(self):
         """Initialize the first available LLM provider"""
+        # 0. Try NVIDIA NIM (NVIDIA's OpenAI-compatible endpoint)
+        if self.nim_key:
+            self.client = "nim"  # Placeholder - uses HTTP requests
+            self.provider = "nim"
+            self.model_name = self.configured_model or os.getenv("NIM_MODEL", "openai/gpt-oss-120b")
+            print(f"[LLM] NVIDIA NIM initialized (model: {self.model_name})")
+            return
+
         # 1. Try Claude (Anthropic)
         if ANTHROPIC_AVAILABLE and self.anthropic_key:
             try:
@@ -573,6 +584,7 @@ class LLMClient:
             "openai_lib": OPENAI_AVAILABLE,
             "ollama_available": self._check_ollama(),
             "lmstudio_available": self._check_lmstudio(),
+            "has_nim_key": bool(self.nim_key),
             "has_google_key": bool(self.google_key),
             "has_together_key": bool(self.together_key),
             "has_fireworks_key": bool(self.fireworks_key),
@@ -638,6 +650,14 @@ class LLMClient:
                     messages=[{"role": "user", "content": prompt}]
                 )
                 return message.content[0].text
+
+            elif self.provider == "nim":
+                return await self._generate_openai_compatible(
+                    prompt, system or default_system, max_tokens,
+                    url=os.getenv("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1/chat/completions"),
+                    api_key=self.nim_key,
+                    model=self.model_name or "openai/gpt-oss-120b",
+                )
 
             elif self.provider == "openai":
                 response = self.client.chat.completions.create(

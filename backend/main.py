@@ -128,11 +128,15 @@ async def health_check():
     # Check LLM availability
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
     openai_key = os.getenv("OPENAI_API_KEY", "")
+    nim_key = os.getenv("NIM_API_KEY", "")
 
     llm_status = "not_configured"
     llm_provider = None
 
-    if anthropic_key and anthropic_key not in ["", "your-anthropic-api-key"]:
+    if nim_key and nim_key not in ["", "your-nim-api-key"]:
+        llm_status = "configured"
+        llm_provider = "nim"
+    elif anthropic_key and anthropic_key not in ["", "your-anthropic-api-key"]:
         llm_status = "configured"
         llm_provider = "claude"
     elif openai_key and openai_key not in ["", "your-openai-api-key"]:
@@ -146,7 +150,7 @@ async def health_check():
         "llm": {
             "status": llm_status,
             "provider": llm_provider,
-            "message": "AI agent ready" if llm_status == "configured" else "Set ANTHROPIC_API_KEY or OPENAI_API_KEY to enable AI features"
+            "message": "AI agent ready" if llm_status == "configured" else "Set ANTHROPIC_API_KEY, OPENAI_API_KEY or NIM_API_KEY to enable AI features"
         }
     }
 

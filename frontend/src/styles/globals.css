@@ -3,61 +3,133 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #0f3460;
-  --text-primary: #eee;
-  --text-secondary: #aaa;
-  --accent: #e94560;
-  --border: #333;
+  --bg-primary: #050505;
+  --bg-secondary: #0a0a0a;
+  --bg-card: #121212;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --accent: #00ff66;
+  --border: #1a1a1a;
+  --cyber-green: #00ff66;
+  --cyber-blue: #00f0ff;
+  --cyber-purple: #bd00ff;
+  --cyber-red: #ff0055;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Background Grid Effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    linear-gradient(rgba(0, 255, 102, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 102, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Scanline Effect */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.1) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.02),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.02)
+  );
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.3;
 }
 
 * {
   box-sizing: border-box;
 }
 
-/* Custom scrollbar */
+/* Custom cyber scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-card);
-  border-radius: 4px;
+  background: var(--border);
+  border-radius: 0;
+  border: 1px solid var(--border);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Cyber Text Effects */
+.cyber-glitch {
+  position: relative;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.cyber-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 2px;
+  text-shadow: -1px 0 var(--cyber-red);
+  background: var(--bg-primary);
+  overflow: hidden;
+  clip: rect(0, 900px, 0, 0);
+  animation: glitch-anim 2s infinite linear alternate-reverse;
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+@keyframes glitch-anim {
+  0% { clip: rect(10px, 9999px, 50px, 0); }
+  20% { clip: rect(30px, 9999px, 10px, 0); }
+  40% { clip: rect(80px, 9999px, 40px, 0); }
+  60% { clip: rect(20px, 9999px, 70px, 0); }
+  80% { clip: rect(40px, 9999px, 20px, 0); }
+  100% { clip: rect(60px, 9999px, 80px, 0); }
 }
 
-.animate-pulse {
-  animation: pulse 2s infinite;
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+.cyber-card {
+  @apply glass-panel transition-all duration-300;
+}
+
+.cyber-card:hover {
+  border-color: rgba(0, 255, 102, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.1);
+}
+

@@ -32,7 +32,7 @@ class TokenExtractor:
     """Extracts tokens from CLI tools installed on the system."""
 
     EXTRACTORS = [
-        "claude_code", "codex_cli", "gemini_cli", "cursor",
+        "claude_code", "codex_cli", "cursor",
         "copilot", "iflow", "qwen_code", "kiro",
     ]
 
@@ -124,46 +124,6 @@ class TokenExtractor:
                     refresh_token=refresh,
                     expires_at=expires,
                     label="Codex CLI",
-                )
-        except Exception:
-            pass
-        return None
-
-    def _extract_gemini_cli(self) -> Optional[ExtractedToken]:
-        """Gemini CLI: ~/.gemini/oauth_creds.json"""
-        creds_path = Path.home() / ".gemini" / "oauth_creds.json"
-        if not creds_path.exists():
-            return None
-        try:
-            data = json.loads(creds_path.read_text())
-            access_token = data.get("access_token")
-            refresh = data.get("refresh_token")
-            # Gemini CLI uses multiple field names for expiry
-            expires = (
-                data.get("expiry_date")  # Gemini CLI uses this (milliseconds)
-                or data.get("expires_at")
-                or data.get("expiry")
-            )
-            if access_token and access_token.startswith("ya29."):
-                # Parse expiry: may be ms timestamp, unix timestamp, or ISO string
-                if isinstance(expires, (int, float)):
-                    # If > 1e12, it's milliseconds — convert to seconds
-                    if expires > 1e12:
-                        expires = expires / 1000.0
-                elif isinstance(expires, str):
-                    try:
-                        from datetime import datetime
-                        dt = datetime.fromisoformat(expires.replace("Z", "+00:00"))
-                        expires = dt.timestamp()
-                    except Exception:
-                        expires = None
-                return ExtractedToken(
-                    provider_id="gemini_cli",
-                    credential_type="oauth",
-                    token=access_token,
-                    refresh_token=refresh,
-                    expires_at=expires,
-                    label="Gemini CLI",
                 )
         except Exception:
             pass

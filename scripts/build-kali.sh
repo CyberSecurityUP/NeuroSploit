@@ -67,7 +67,7 @@ docker image inspect "$IMAGE_NAME" --format \
 if [ "$RUN_TEST" = true ]; then
     echo ""
     echo "[*] Running health check..."
-    docker run --rm "$IMAGE_NAME" \
+    docker run --rm "$IMAGE_NAME" bash -c \
         "nuclei -version 2>&1; echo '---'; naabu -version 2>&1; echo '---'; httpx -version 2>&1; echo '---'; subfinder -version 2>&1; echo '---'; nmap --version 2>&1 | head -1; echo '---'; nikto -Version 2>&1 | head -1; echo '---'; sqlmap --version 2>&1; echo '---'; ffuf -V 2>&1; echo '---'; echo 'ALL OK'"
     echo ""
     echo "[+] Health check passed"

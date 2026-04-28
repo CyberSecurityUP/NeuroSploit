@@ -2,7 +2,7 @@
 # Kali-based container with real penetration testing tools
 # Provides Nuclei, Naabu, and other ProjectDiscovery tools via isolated execution
 
-FROM golang:1.24-bookworm AS go-builder
+FROM golang:1.26-bookworm AS go-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends git build-essential && \
     rm -rf /var/lib/apt/lists/*

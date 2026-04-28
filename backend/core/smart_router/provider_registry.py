@@ -77,6 +77,13 @@ class Provider:
 
 # Default provider definitions
 DEFAULT_PROVIDERS: List[Dict] = [
+    # === NVIDIA NIM Provider (Tier 2 - Free) ===
+    {
+        "id": "nim", "name": "NVIDIA NIM", "auth_type": "api_key",
+        "api_format": "openai_compat", "base_url": "https://integrate.api.nvidia.com/v1",
+        "tier": 2, "default_model": os.getenv("NIM_MODEL", "openai/gpt-oss-120b"),
+        "env_key": "NIM_API_KEY",
+    },
     # === OAuth Providers (Tier 1 - Subscription) ===
     {
         "id": "claude_code", "name": "Claude Code", "auth_type": "oauth",

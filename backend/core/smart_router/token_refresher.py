@@ -104,8 +104,6 @@ class TokenRefresher:
                 return await self._refresh_anthropic(account_id, refresh_token)
             elif provider_id == "codex_cli":
                 return await self._refresh_openai(account_id, refresh_token)
-            elif provider_id == "gemini_cli":
-                return await self._refresh_google(account_id, refresh_token)
             else:
                 logger.debug(
                     f"TokenRefresher: No refresh method for {provider_id}"
@@ -114,74 +112,6 @@ class TokenRefresher:
         except Exception as e:
             logger.error(f"TokenRefresher: Refresh failed for {provider_id}: {e}")
             return False
-
-    async def _refresh_google(self, account_id: str, refresh_token: str) -> bool:
-        """Refresh a Google OAuth token."""
-        try:
-            import aiohttp
-
-            # Gemini CLI client_id/secret - extracted at runtime from CLI binary or set via env
-            gemini_client_id = os.environ.get("GEMINI_CLI_CLIENT_ID", "")
-            gemini_client_secret = os.environ.get("GEMINI_CLI_CLIENT_SECRET", "")
-            if not gemini_client_id or not gemini_client_secret:
-                # Try extracting from installed Gemini CLI
-                try:
-                    from backend.core.smart_router.token_extractor import TokenExtractor
-                    extractor = TokenExtractor()
-                    creds = extractor._extract_gemini_oauth_creds()
-                    if creds:
-                        gemini_client_id = creds.get("client_id", "")
-                        gemini_client_secret = creds.get("client_secret", "")
-                except Exception:
-                    pass
-            payload = {
-                "grant_type": "refresh_token",
-                "refresh_token": refresh_token,
-                "client_id": gemini_client_id,
-                "client_secret": gemini_client_secret,
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(GOOGLE_TOKEN_URL, data=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        new_token = data.get("access_token")
-                        expires_in = data.get("expires_in", 3600)
-                        if new_token:
-                            self._registry.update_credential(
-                                account_id,
-                                new_token,
-                                time.time() + expires_in,
-                            )
-                            # Save refreshed token to Gemini CLI creds file
-                            self._save_gemini_cli_token(new_token, expires_in)
-                            logger.info(f"TokenRefresher: Google token refreshed (expires in {expires_in}s)")
-                            return True
-                    else:
-                        body = await resp.text()
-                        logger.warning(f"TokenRefresher: Google refresh failed: {resp.status} {body[:200]}")
-        except ImportError:
-            logger.warning("TokenRefresher: aiohttp not available for token refresh")
-        except Exception as e:
-            logger.error(f"TokenRefresher: Google refresh error: {e}")
-        return False
-
-    @staticmethod
-    def _save_gemini_cli_token(new_token: str, expires_in: int):
-        """Write refreshed token back to Gemini CLI credentials file on disk."""
-        import json
-        from pathlib import Path
-
-        creds_path = Path.home() / ".gemini" / "oauth_creds.json"
-        if not creds_path.exists():
-            return
-        try:
-            data = json.loads(creds_path.read_text())
-            data["access_token"] = new_token
-            data["expiry_date"] = int((time.time() + expires_in) * 1000)
-            creds_path.write_text(json.dumps(data, indent=2))
-            logger.debug("TokenRefresher: Saved refreshed token to Gemini CLI creds file")
-        except Exception as e:
-            logger.debug(f"TokenRefresher: Failed to save Gemini CLI token: {e}")
 
     async def _refresh_anthropic(self, account_id: str, refresh_token: str) -> bool:
         """Refresh an Anthropic/Claude OAuth token."""

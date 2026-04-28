@@ -335,6 +335,7 @@ async def toggle_provider(provider_id: str, req: ToggleRequest):
 # Whitelist of env keys that can be modified via UI
 ALLOWED_ENV_KEYS = {
     "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY",
+    "NIM_API_KEY", "NIM_MODEL", "NIM_BASE_URL",
     "OPENROUTER_API_KEY", "TOGETHER_API_KEY", "FIREWORKS_API_KEY",
     "OLLAMA_HOST", "LMSTUDIO_HOST",
     "ENABLE_SMART_ROUTER", "ENABLE_REASONING", "ENABLE_CVE_HUNT",

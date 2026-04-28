@@ -38,3 +38,6 @@ apscheduler>=3.10.0
 httpx>=0.26.0
 pytest>=7.4.0
 pytest-asyncio>=0.23.0
+
+# Document Processing
+PyPDF2>=3.0.0
